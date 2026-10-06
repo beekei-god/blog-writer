@@ -1,0 +1,35 @@
+---
+type: integration
+project: blog-writer
+system: macOS AppleScript → 평소 크롬
+confidence: high
+source:
+  - blog-writer:server/browser/userChrome.ts:1-483
+updated: 2026-10-07
+---
+# macOS AppleScript로 평소 크롬 조작
+
+## 무엇에 쓰나
+Claude in Chrome이 네이버 블로그를 막을 때, macOS에서 사용자의 평소 크롬(이미 로그인됨)에 새 탭을 열고 SmartEditor ONE에 글을 넣는다. 크롬은 평소 프로필을 Playwright 같은 외부 자동화로 조종하지 못하게 막기 때문에 이 방법을 쓴다 (`blog-writer:server/browser/userChrome.ts:10-16`).
+
+## 호출 방식
+- `osascript -`에 스크립트를 stdin으로: `OPEN_TAB`(앞 창에 새 탭, 창·탭 id 반환), `RUN_JS`(id로 탭을 찾아 `execute javascript`) (`:43-101`).
+- JS는 임시 파일(`bw-js-*.js`)로 넘겨 따옴표 문제를 피하고, 공통 도우미(`fire` 클릭 흉내, 입력 버퍼 iframe `input_buffer*`에 paste, `caretToEnd`, `imageCount`)를 앞에 붙인다. 결과는 JSON 문자열 (`:93-135`).
+- 이미지: `sips`로 JPEG(가로 최대 1600px, 품질 88) 변환 → base64를 400,000자씩 `window.__bwData`에 나눠 넣고 → `File`로 만들어 paste (`:191-207`, `:422-436`).
+- 인증: 크롬의 기존 로그인. 사전 조건: 크롬 "Apple Events의 자바스크립트 허용", macOS 자동화 권한.
+
+## 실패 처리
+| stderr | 원인 | 
+|---|---|
+| "Apple Events의 자바스크립트" 등 | `js_disabled` |
+| `-1743`, Not authorized | `not_authorized` |
+| `-1719`, `-1728`, Invalid index | `tab_closed` |
+| 로그인 URL(`nid.naver.com`) | `login` |
+| 60초 안에 에디터 없음, 이어쓰기 글 | `editor` |
+이미지 업로드 60초 초과, 서식 적용 실패, 검증 차이는 오류가 아니라 `problems`로 모아 로그 "확인 필요"로 남긴다. 임시저장 완료를 15초 안에 확인 못 하면 오류 (`:469-481`).
+
+## 바깥 변화에 취약한 지점
+SmartEditor ONE 클래스(`.se-documentTitle`, `.se-component.se-text`, `.se-text-paragraph`, `.se-sectionTitle`, `iframe[id^="input_buffer"]`, `button[class*="save_btn"]`, `[class*="save_count_btn"]`), 팝업 문구("작성 중인 글"), 토스트("임시저장이 완료"). macOS 전용 (`userChromeSupported`).
+
+## 관련 규칙과 흐름
+[[publishing/business-rules/BR-PUB-009 네이버 이미지 파일 이름과 크기]], [[publishing/business-rules/BR-PUB-010 이어쓰기 글이 있으면 중단]], [[publishing/business-rules/BR-PUB-011 입력 결과 검증]], [[publishing/flows/블로그 임시저장 플로우]]

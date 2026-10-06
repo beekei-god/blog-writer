@@ -1,0 +1,17 @@
+# 의존성·빌드
+node_modules
+dist
+*.tsbuildinfo
+
+# 개인 정보·내 데이터 (비밀 키, 글, 이미지, 크롬 프로필, 사용량 기록)
+.env
+.env.*
+!.env.example
+data/
+
+# 편집기·OS 개인 설정
+.DS_Store
+vault/.obsidian/workspace*.json
+vault/.obsidian/cache
+*.log
+vault/wiki/_snapshot.json
