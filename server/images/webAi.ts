@@ -261,9 +261,8 @@ ${downloadScript(downloadName)}`,
   if (r.status === "login_required") throw new ImageGenError("login", `${site.name}에 로그인되어 있지 않습니다. 평소 쓰는 크롬에서 ${site.name}에 로그인한 뒤 다시 만드세요.`);
   if (r.status === "refused") throw new ImageGenError("refused", `${site.name}가 이미지 대신 글로 답했습니다:${quote || ` ${r.message}`}`);
   if (r.status === "limit") throw new ImageGenError("limit", `${site.name} 이미지 생성 한도 안내:${quote || ` ${r.message}`}`);
-  if (r.status === "failed") throw new ImageGenError("ui_changed", `${site.name}에서 이미지를 만들지 못했습니다: ${r.message}`);
 
-  // 스크립트가 결과를 돌려주지 못했어도(빈 값) 파일은 이미 내려받아졌을 수 있다. 그래서 항상 다운로드 폴더를 확인한다.
+  // 스크립트가 결과를 돌려주지 못했거나 Claude가 failed로 보고해도 파일은 이미 내려받아졌을 수 있다. 그래서 먼저 다운로드 폴더를 확인한다.
   const downloaded = await findNewDownload(since, downloadName, r.downloadClicked ? 60_000 : 20_000);
   if (downloaded) {
     const file = outBase + path.extname(downloaded).toLowerCase().replace(".jpeg", ".jpg");
@@ -272,6 +271,7 @@ ${downloadScript(downloadName)}`,
   }
   const fetched = await fetchImage(r.imageUrl, outBase);
   if (fetched) return fetched;
+  if (r.status === "failed") throw new ImageGenError("ui_changed", `${site.name}에서 이미지를 만들지 못했습니다: ${r.message}`);
   throw new ImageGenError(
     "download",
     `${site.name}에서 이미지는 만들었지만 파일을 받지 못했습니다. 다운로드 폴더(${downloadsDir()})에 새 이미지가 없고, 이미지 주소로도 받을 수 없었습니다. ` +
