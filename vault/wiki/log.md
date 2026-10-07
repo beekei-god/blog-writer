@@ -85,3 +85,10 @@ updated: 2026-10-05
 - 줄 번호 보정: `server/writer.ts`(프롬프트 한 줄 추가), `server/images/webAi.ts`(다운로드 스크립트 보강) 참조 30쪽 76곳
 - 미반영: `server/images/webAi.ts`(다운로드 스크립트 오류 처리·시간 제한, 스크립트 결과와 무관하게 다운로드 폴더 확인)와 `shared/imageErrors.ts`(download 안내 문구) 변경은 image 도메인 범위라 줄 번호만 보정함 → image 업데이트 필요
 - 점검: coverage 82/82, lint 깨진 링크 0·고아 0, 근거 1,194개 모두 실제 줄 범위 안
+
+## [2026-10-07] update | image (웹 AI 이미지 회수: failed 보고여도 폴더 먼저 확인)
+- 읽은 범위: `server/images/webAi.ts`, `shared/imageErrors.ts`, `tests/webAi.test.ts`
+- 변경 내용: 웹 AI(Gemini/ChatGPT)가 `failed`로 보고해도 곧바로 실패하지 않고 다운로드 폴더·이미지 URL을 먼저 확인해, 받아진 파일이 있으면 성공 처리(없을 때만 `ui_changed`). 다운로드 스크립트 오류 처리·시간 제한 보강과 "스크립트 결과와 무관한 폴더 확인"도 연동 페이지에 반영
+- 갱신: [[image/business-rules/BR-IMG-007 이미지 실패 격리와 원인 분류]], [[image/flows/이미지 생성 플로우]], [[image/implementations/blog-writer 구현]], [[_system/integrations/gemini-chatgpt-web]], [[_system/modules/server-images]], [[_system/modules/tests]]
+- 줄 번호 보정: `server/images/webAi.ts` 참조
+- 분석 시점: 스냅샷 (`_snapshot.json`)

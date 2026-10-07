@@ -5,6 +5,7 @@ system: Gemini · ChatGPT 웹 화면 (이미지 생성)
 confidence: high
 source:
   - blog-writer:server/images/webAi.ts:1-281
+  - blog-writer:tests/webAi.test.ts:1-43
   - blog-writer:server/images/styles.ts:7-19
 updated: 2026-10-07
 ---
@@ -20,8 +21,8 @@ updated: 2026-10-07
 - 요청문: 16:9, 화풍 지시문(`STYLE_PROMPT`, 영어) 첨부. headline이 있으면 "한국어 문구를 한 글자도 바꾸지 말고, 다른 글자는 넣지 말 것", 썸네일은 가운데 크게·정사각 크롭 대비. 없으면 "글자 넣지 말 것" (`:199-214`).
 - 입력: 여러 줄을 타이핑하면 줄바꿈에서 전송되므로, `insertScript`를 `javascript_tool`로 실행해 paste 이벤트(실패 시 `execCommand insertText`)로 통째로 넣는다. 입력 셀렉터: Gemini `rich-textarea .ql-editor`, ChatGPT `#prompt-textarea` (`:40-58`).
 - 대기: JS Promise로 최대 60초씩 반복, 최대 4분 정도.
-- 회수: `downloadScript`가 페이지의 가장 최근 큰 이미지(가로 ≥400, 세로 ≥200)를 `fetch(credentials)` 또는 canvas로 읽어 `blogwriter-<이름>` 파일로 다운로드 → 서버가 다운로드 폴더에서 그 이름으로 시작하는 파일(시작 이후 생성, >5KB)만 60초까지 찾아 `data/images/<job>/`로 옮긴다 (`:64-90`, `:129-164`). 실패하면 Claude가 알려 준 이미지 URL을 서버에서 직접 받아 본다 (`:166-181`, `:279-280`).
-- 결과 상태: `ok`/`login_required`/`refused`/`limit`/`failed` → 각각 원인 `login`/`refused`/`limit`/`ui_changed`, 파일을 못 받으면 `download` (`:263-284`).
+- 회수: `downloadScript`가 페이지의 가장 최근 큰 이미지(가로 ≥400, 세로 ≥200)를 `fetch(credentials)` 또는 canvas로 읽어 `blogwriter-<이름>` 파일로 다운로드 → 서버가 다운로드 폴더에서 그 이름으로 시작하는 파일(시작 이후 생성, >5KB)만 최대 60초(스크립트가 ok가 아니면 20초) 찾아 `data/images/<job>/`로 옮긴다 (`:62-94`, `:127-150`). 못 찾으면 Claude가 알려 준 이미지 URL을 서버에서 직접 받아 본다 (`:162-177`). 이 확인은 Claude가 `failed`로 보고했을 때도 먼저 한다: 스크립트가 빈 값을 돌려줘도 파일은 이미 받아졌을 수 있기 때문이다 (`:265-273`).
+- 결과 상태: `ok`/`login_required`/`refused`/`limit`/`failed` → `login_required`/`refused`/`limit`은 바로 각각 `login`/`refused`/`limit`. `ok`와 `failed`는 다운로드 폴더·이미지 URL 확인을 거치고, 파일을 받으면 성공, 못 받으면 `failed`는 `ui_changed`, `ok`는 `download` (`:260-281`).
 
 ## 실패 처리
 타임아웃 10분, 재시도 없음. 실패는 그 이미지에만 기록 → [[image/business-rules/BR-IMG-007 이미지 실패 격리와 원인 분류]].

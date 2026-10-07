@@ -12,6 +12,7 @@ source:
   - blog-writer:shared/imageErrors.ts:1-104
   - blog-writer:server/pipeline.ts:254-258
   - blog-writer:src/job/images.tsx:14-16
+  - blog-writer:server/images/webAi.ts:260-281
 entities: [ImageSpec]
 updated: 2026-10-07
 ---
@@ -28,7 +29,7 @@ updated: 2026-10-07
 | refused | 요청이 거절되었습니다 | 웹 AI가 refused, 정책·가이드라인·"만들 수 없" 등 |
 | limit | 생성 한도를 다 썼습니다 | usage limit, quota, 한도, "나중에 다시" 등 |
 | timeout | 응답이 너무 오래 걸렸습니다 | "생성 시간이 초과" |
-| ui_changed | 화면에서 진행하지 못했습니다 | 웹 AI가 failed, Playwright 셀렉터 대기 초과 |
+| ui_changed | 화면에서 진행하지 못했습니다 | 웹 AI가 failed로 보고했고 다운로드 폴더·이미지 URL에서도 파일을 못 찾음, Playwright 셀렉터 대기 초과 |
 | download | 이미지를 저장하지 못했습니다 | 다운로드·URL 회수 실패 |
 | browser_missing | 크롬을 찾을 수 없습니다 | Playwright 실행 파일 없음 |
 | browser_busy | 크롬이 사용 중입니다 | ProcessSingleton, SingletonLock |
@@ -41,6 +42,7 @@ updated: 2026-10-07
 | 조건 | 결과 |
 |---|---|
 | `ImageGenError`(원인을 알고 던짐) | 그 kind |
+| 웹 AI가 `failed`로 보고했지만 다운로드 폴더에 이번 이미지(`blogwriter-<이름>`)가 있거나 이미지 URL로 받을 수 있음 | 실패가 아니라 성공 (파일 사용) |
 | 그 밖 오류 | `classifyImageError(message)`로 분류 (위 순서대로 정규식) |
 | 실패 | `file` 삭제, `error`·`errorKind`·`errorProvider` 기록, 로그 "썸네일 생성 실패 — 제목: 메시지 첫 줄" |
 | 사용자 중지 | 실패로 기록하지 않음, 만든 이미지는 유지 |
@@ -53,7 +55,7 @@ updated: 2026-10-07
 | 공용 | 종류·안내·분류 | `blog-writer:shared/imageErrors.ts:2-104` |
 | 서버 | `ImageGenError`, `errorKindOf`, `fail`, `record` | `blog-writer:server/images/errors.ts:4-15`, `blog-writer:server/images/index.ts:31-58`, `:98-103` |
 | 화면 | 원인별 묶음 안내, 자세한 오류, 재분류 | `blog-writer:src/job/images.tsx:14-16`, `:80-154` |
-| 테스트 | 메시지별 분류 | `blog-writer:tests/shared.test.ts:136-147` |
+| 테스트 | 메시지별 분류, 웹 AI `failed`여도 받아진 파일 회수·없으면 `ui_changed` | `blog-writer:tests/shared.test.ts:136-147`, `blog-writer:tests/webAi.test.ts:20-42` |
 
 ## 예외 / 경계값
 - 이미지 대신 글로 답한 경우는 Claude가 판단한 status(`refused`/`limit`)로 구분한다. 쓰이지 않던 `classifyReply`는 2026-10-05 삭제했다.
@@ -66,4 +68,5 @@ updated: 2026-10-07
 |---|---|---|
 | 2026-10-05 | 최초 기록 | |
 | 2026-10-05 | 미사용 `classifyReply` 삭제 | `blog-writer:shared/imageErrors.ts` |
+| 2026-10-07 | 웹 AI가 `failed`로 보고해도 다운로드 폴더·이미지 URL을 먼저 확인해, 받아진 파일이 있으면 성공 처리 (이전엔 곧바로 `ui_changed`). 원인 분류표의 `ui_changed` 조건이 좁아짐 | `blog-writer:server/images/webAi.ts:265-274`, `blog-writer:tests/webAi.test.ts` |
 | 2026-10-07 | 리팩터링: 오류 메시지 꺼내기를 공용 `errorText`로, 화면 코드를 `src/job/images.tsx`로 이동. 동작 변화 없음 | `blog-writer:shared/labels.ts:24` |

@@ -19,7 +19,7 @@ updated: 2026-10-07
 | `server/images/index.ts` | `collectTargets`(15-27), `record`(31-58), `generateImages`(64-120). 파일 이름은 `imageKey`+시각 | BR-IMG-007, 009 |
 | `server/images/plan.ts` | `planImages`(67-113), `bodyOutline`(46-65) | [[image/business-rules/BR-IMG-004 본문 기반 이미지 기획]] |
 | `server/images/svg.ts` | `validateSvg`(29-36), `generateSvgImage`(39-80) | [[image/business-rules/BR-IMG-011 SVG 안전 검증과 크기]] |
-| `server/images/webAi.ts` | `generateWithWebAi`(174-271), `findNewDownload`(121-146), `fetchImage`(158-173) | [[_system/integrations/gemini-chatgpt-web]] |
+| `server/images/webAi.ts` | `downloadScript`(62-94), `findNewDownload`(127-150), `fetchImage`(162-177), `generateWithWebAi`(180-281; failed여도 폴더 먼저 확인 265-274) | [[_system/integrations/gemini-chatgpt-web]] |
 | `server/images/styles.ts` | `STYLE_PROMPT`(7-15), `styledPrompt`(17-19) | BR-IMG-002 |
 | `server/images/errors.ts` | `ImageGenError`(4-12), `errorKindOf`(14-15) | BR-IMG-007 |
 | `server/routes/images.ts` | `regenerate-images`(14-67), 한 장 다시 만들기(69-99), 직접 올리기(101-138), 이미지 파일(140-146) | BR-IMG-002, 009, 010 |
@@ -29,6 +29,7 @@ updated: 2026-10-07
 | `src/job/PostEditor.tsx` | `ImageEditor`(57-116), 블록 삭제(132-136) | BR-IMG-005, 006 |
 | `src/job/JobDetail.tsx` | 이미지 도구 연결(113-148), 썸네일 추가(278-297), 실패 안내 표시(299-306) | BR-IMG-009, 012 |
 | `tests/shared.test.ts` | `fitStyle`·`aiFor`·이미지 키·`classifyImageError` 테스트 | BR-IMG-002, 003, 007 |
+| `tests/webAi.test.ts` | 웹 AI가 `failed`로 보고해도 다운로드 폴더의 이번 이미지는 회수, 없으면 `ui_changed` (크롬·Claude 호출은 mock) | BR-IMG-007 |
 | `tests/api.test.ts` | 한 장 다시 만들기·직접 올리기 입력 검사, 미리보기 경로 제한 테스트 | BR-IMG-002, 010 |
 
 모듈 페이지: [[_system/modules/server-images]], [[_system/modules/server-routes]], [[_system/modules/web-job]].

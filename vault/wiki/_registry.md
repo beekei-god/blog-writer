@@ -9,7 +9,7 @@ updated: 2026-10-07
 ## 프로젝트
 | 이름 | 경로 | 역할/스택 | 마지막 분석 커밋 | 분석일 |
 |---|---|---|---|---|
-| blog-writer | /Users/kei/Projects/blog-writer | 블로그 초안 자동 작성 로컬 앱: API 서버(Express 5, tsx) + 화면(React 19, Vite). Claude는 로컬 `claude -p` CLI로 호출 | 스냅샷 2026-10-07 01:40 (git 없음, `_snapshot.json` 참고) | 2026-10-07 |
+| blog-writer | /Users/kei/Projects/blog-writer | 블로그 초안 자동 작성 로컬 앱: API 서버(Express 5, tsx) + 화면(React 19, Vite). Claude는 로컬 `claude -p` CLI로 호출 | 스냅샷 2026-10-07 10:32 (git c4952b8, `_snapshot.json` 참고) | 2026-10-07 |
 
 git 저장소가 아니므로 변경 감지는 `_snapshot.json`의 파일 해시로 한다 (`wiki_tool.py changes`).
 
