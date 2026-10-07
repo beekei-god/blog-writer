@@ -9,7 +9,7 @@ consistency: consistent
 source:
   - blog-writer:server/pipeline.ts:202-243
   - blog-writer:server/images/plan.ts:1-113
-  - blog-writer:server/writer.ts:52-62
+  - blog-writer:server/writer.ts:53-63
 updated: 2026-10-07
 entities: [ImageSpec]
 ---
@@ -32,7 +32,7 @@ entities: [ImageSpec]
 ## 구현 현황
 | 레이어 | 구현 | 근거 |
 |---|---|---|
-| 프롬프트(작성) | 처음 쓸 때 basis 먼저, 범용 이미지 금지, 일관성 | `blog-writer:server/writer.ts:52-62` |
+| 프롬프트(작성) | 처음 쓸 때 basis 먼저, 범용 이미지 금지, 일관성 | `blog-writer:server/writer.ts:53-63` |
 | 프롬프트(기획) | 위 규칙 | `blog-writer:server/images/plan.ts:86-100` |
 | 서버 | 그룹별 기획 호출과 반영 | `blog-writer:server/pipeline.ts:202-243` |
 | 스키마 | basis를 prompt보다 먼저 쓰게 순서 배치 | `blog-writer:server/schema.ts:137-141` |

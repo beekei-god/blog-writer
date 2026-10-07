@@ -6,7 +6,7 @@ paths: [server/pipeline.ts, server/research.ts, server/writer.ts, server/schema.
 source:
   - blog-writer:server/pipeline.ts:1-370
   - blog-writer:server/research.ts:1-88
-  - blog-writer:server/writer.ts:1-274
+  - blog-writer:server/writer.ts:1-275
   - blog-writer:server/schema.ts:1-155
   - blog-writer:server/naver.ts:1-88
 updated: 2026-10-07

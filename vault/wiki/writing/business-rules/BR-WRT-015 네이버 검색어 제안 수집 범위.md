@@ -10,7 +10,7 @@ source:
   - blog-writer:server/naver.ts:19-35
   - blog-writer:server/naver.ts:76-88
   - blog-writer:server/pipeline.ts:72-82
-  - blog-writer:server/writer.ts:126-130
+  - blog-writer:server/writer.ts:127-131
 entities: [Post]
 updated: 2026-10-07
 ---
@@ -33,7 +33,7 @@ updated: 2026-10-07
 |---|---|---|
 | 서버 | `expandQueries`, `collectAutocomplete`, `collectNaverSuggestions` | `blog-writer:server/naver.ts:23-35`, `:79-88` |
 | 서버(파이프라인) | 키워드 = [main, ...sub] | `blog-writer:server/pipeline.ts:73-75` |
-| 프롬프트(작성) | 수집 목록 전달 | `blog-writer:server/writer.ts:126-130` |
+| 프롬프트(작성) | 수집 목록 전달 | `blog-writer:server/writer.ts:127-131` |
 
 ## 예외 / 경계값
 - 수집 실패는 모두 빈 결과로 처리하고 작업은 계속한다 → [[_system/integrations/naver-search]].

@@ -77,3 +77,11 @@ updated: 2026-10-05
 - 줄 번호 보정: 31쪽 87곳 (`server/wordpress.ts`, `server/pipeline.ts`, `server/routes/util.ts`, `shared/types.ts`, `shared/labels.ts`, 테스트 파일)
 - 점검: coverage 82/82, lint 깨진 링크 0·고아 0, 근거 1,190개 모두 실제 줄 범위 안
 - 분석 시점: 스냅샷 (git 없음, `_snapshot.json`)
+
+## [2026-10-07] update | writing, publishing (문단 규칙 정정, 워드프레스 간격 원복)
+- 읽은 범위: `rules/default-writing-rules.md`, `server/writer.ts`, `server/wordpress.ts`, `tests/wordpress.test.ts` (사이트의 다른 글 구조도 비교: 문단 안 `<br>` 줄바꿈 형식)
+- 정정: 같은 날 앞선 갱신("문단 1~3줄로 나누기", 워드프레스 문단·소제목 간격 지정)이 사이트의 다른 글과 달라 되돌렸다. 현재: 문단 2~4줄·문장마다 문단 안 줄바꿈(`\n` → `<br>`), 짧은 내용은 한 줄 문단, 워드프레스 간격은 테마 기본
+- 갱신: [[writing/entities/글쓰기 규칙]], [[writing/entities/Post]], [[publishing/business-rules/BR-PUB-007 소제목 위 빈 줄]]
+- 줄 번호 보정: `server/writer.ts`(프롬프트 한 줄 추가), `server/images/webAi.ts`(다운로드 스크립트 보강) 참조 30쪽 76곳
+- 미반영: `server/images/webAi.ts`(다운로드 스크립트 오류 처리·시간 제한, 스크립트 결과와 무관하게 다운로드 폴더 확인)와 `shared/imageErrors.ts`(download 안내 문구) 변경은 image 도메인 범위라 줄 번호만 보정함 → image 업데이트 필요
+- 점검: coverage 82/82, lint 깨진 링크 0·고아 0, 근거 1,194개 모두 실제 줄 범위 안

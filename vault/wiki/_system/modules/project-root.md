@@ -28,4 +28,4 @@ updated: 2026-10-07
 | `rules/default-writing-rules.md` | 79 | 기본 글쓰기 규칙 6개 장: 쉬운 문장, 존댓말, SEO, 태그, 확인된 내용만, 소제목·섹션 구성 | [[writing/entities/글쓰기 규칙]] |
 
 ## 주의할 점
-- 기본 규칙 문서는 "채팅 답변"·"사용자에게 안내" 같은 대화형 표현을 쓰고, 글 작성 프롬프트가 이를 "본문에 넣지 말고 omittedItems로"로 바꿔 해석한다 (`blog-writer:server/writer.ts:25`).
+- 기본 규칙 문서는 "채팅 답변"·"사용자에게 안내" 같은 대화형 표현을 쓰고, 글 작성 프롬프트가 이를 "본문에 넣지 말고 omittedItems로"로 바꿔 해석한다 (`blog-writer:server/writer.ts:26`).

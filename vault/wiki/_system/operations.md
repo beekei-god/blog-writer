@@ -50,7 +50,7 @@ updated: 2026-10-07
 | 네이버: "macOS가 이 앱의 크롬 제어를 막았습니다" | 자동화 권한 (-1743) | 시스템 설정 > 자동화 | `blog-writer:server/browser/userChrome.ts:23`, `:54` |
 | 네이버: "예전에 작성 중이던 글이 불러와져 있어서 멈췄습니다" | 에디터에 이어쓰기 글 | 탭을 닫거나 비우고 다시 | [[publishing/business-rules/BR-PUB-010 이어쓰기 글이 있으면 중단]] |
 | 자동 조작: "블로그에 로그인되어 있지 않습니다" | 앱 전용 크롬에 로그인 안 됨 (기다리지 않고 바로 중단) | 설정 → 로그인 창 열기 후 다시 시도 | `blog-writer:server/browser/adapters.ts:152-155` |
-| Gemini/ChatGPT "이미지는 만들었지만 파일을 받지 못했습니다" | 크롬 "다운로드 전 저장 위치 확인" 켜짐 등 | 크롬 설정 끄기, `DOWNLOADS_DIR` 확인 | `blog-writer:server/images/webAi.ts:267-270` |
+| Gemini/ChatGPT "이미지는 만들었지만 파일을 받지 못했습니다" | 크롬 "다운로드 전 저장 위치 확인" 켜짐 등 | 크롬 설정 끄기, `DOWNLOADS_DIR` 확인 | `blog-writer:server/images/webAi.ts:275-280` |
 | 이미지 "요청이 거절되었습니다" | 지브리풍 등 화풍·실존 인물 정책 거절 | 다른 스타일/AI | `blog-writer:shared/imageErrors.ts:35-38` |
 | "서버가 재시작되어 작업이 중단되었습니다" | 실행 중 서버 종료 (`tsx watch`가 코드 변경 시 재시작하는 경우 포함) | 다시 시도 | `blog-writer:server/store.ts:135-146` |
 | 워드프레스: "인증 정보를 받지 못했습니다" | 호스팅·보안 설정이 `Authorization` 헤더를 지움 (`rest_not_logged_in`) | 호스팅 업체에 REST API Authorization 헤더 전달 문의 | `blog-writer:server/wordpress.ts:94-98` |

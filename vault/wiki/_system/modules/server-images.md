@@ -7,7 +7,7 @@ source:
   - blog-writer:server/images/index.ts:1-120
   - blog-writer:server/images/plan.ts:1-113
   - blog-writer:server/images/svg.ts:1-80
-  - blog-writer:server/images/webAi.ts:1-271
+  - blog-writer:server/images/webAi.ts:1-281
   - blog-writer:server/images/styles.ts:1-19
   - blog-writer:server/images/errors.ts:1-15
 updated: 2026-10-07

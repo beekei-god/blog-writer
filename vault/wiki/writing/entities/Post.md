@@ -9,7 +9,7 @@ source:
   - blog-writer:shared/types.ts:169-208
   - blog-writer:server/schema.ts:19-41
   - blog-writer:server/schema.ts:79-155
-  - blog-writer:server/writer.ts:148-174
+  - blog-writer:server/writer.ts:149-175
 updated: 2026-10-07
 ---
 # Post (초안)
@@ -30,9 +30,9 @@ updated: 2026-10-07
 | `tagsCheckedAt` | string? | 태그 확인 날짜 YYYY.MM.DD (한국 시간) | |
 | `omittedItems` | string[]? | 자료를 못 찾았거나 분량 때문에 본문에서 뺀 항목 | "본문에서 뺀 항목" |
 | `thumbnail` | ImageSpec? | 썸네일 → [[image/entities/ImageSpec]] | 맨 위 이미지 |
-| `blocks` | PostBlock[] | 본문 블록: `heading`, `paragraph`, `list{items}`, `quote`, `table{headers,rows}`, `image(ImageSpec)` | 본문 |
+| `blocks` | PostBlock[] | 본문 블록: `heading`, `paragraph`(텍스트 안에서 문장마다 `\n`으로 줄을 나눔 → 블로그에는 `<br>`로 들어감, 문단은 2~4줄·짧으면 한 줄), `list{items}`, `quote`, `table{headers,rows}`, `image(ImageSpec)` | 본문 |
 
-텍스트 안의 굵게는 `**…**`만 쓴다. 그 밖의 마크다운은 쓰지 않고, 링크는 "기관 이름: https://…" 일반 텍스트다 (`blog-writer:server/writer.ts:22-23`). 표시·입력할 때 `**`는 `<strong>`, 주소는 `<a>`로 바뀐다 (`blog-writer:shared/postHtml.ts:24-31`).
+텍스트 안의 굵게는 `**…**`만 쓴다. 그 밖의 마크다운은 쓰지 않고, 링크는 "기관 이름: https://…" 일반 텍스트다 (`blog-writer:server/writer.ts:23-24`). 표시·입력할 때 `**`는 `<strong>`, 주소는 `<a>`로 바뀐다 (`blog-writer:shared/postHtml.ts:24-31`).
 
 ## 상태와 전이
 상태 필드는 없다. 생성(writePost) → 사용자 편집(자동 저장) → 이미지 결과 기록 → 블로그 입력에 쓰임. 리서치부터 다시 하면 통째로 바뀐다.

@@ -11,7 +11,7 @@ source:
   - blog-writer:server/browser/blogPost.ts:206
   - blog-writer:server/browser/userChrome.ts:363-371
   - blog-writer:server/browser/adapters.ts:151-155
-  - blog-writer:server/images/webAi.ts:254
+  - blog-writer:server/images/webAi.ts:261
   - blog-writer:server/wordpress.ts:93-109
 updated: 2026-10-07
 ---

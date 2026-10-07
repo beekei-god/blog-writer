@@ -9,8 +9,8 @@ consistency: consistent
 source:
   - blog-writer:shared/length.ts:3-4
   - blog-writer:server/writer.ts:14-17
-  - blog-writer:server/writer.ts:150-154
-  - blog-writer:server/writer.ts:184-213
+  - blog-writer:server/writer.ts:151-155
+  - blog-writer:server/writer.ts:185-214
   - blog-writer:src/job/JobDetail.tsx:270-273
   - blog-writer:tests/shared.test.ts:24-49
   - blog-writer:rules/default-writing-rules.md:18
@@ -35,7 +35,7 @@ updated: 2026-10-07
 |---|---|---|---|
 | 공용 상수 | `MAX_BODY_CHARS` | 3000 | `blog-writer:shared/length.ts:4` |
 | 프롬프트(작성) | 지시 | ≤3,000, 목표 2,300~2,800 | `blog-writer:server/writer.ts:14-17` |
-| 서버 | 줄이기 재요청 | 초과 시 최대 2회, 목표 2,500 | `blog-writer:server/writer.ts:184-213` |
+| 서버 | 줄이기 재요청 | 초과 시 최대 2회, 목표 2,500 | `blog-writer:server/writer.ts:185-214` |
 | 화면 | 경고만 | 3,000 초과 시 "분량 초과" | `blog-writer:src/job/JobDetail.tsx:270-273` |
 | 테스트 | 상한 값 3,000 확인 | | `blog-writer:tests/shared.test.ts:48` |
 | 규칙 문서 | 문장 | 공백 포함 3,000자 이하 | `blog-writer:rules/default-writing-rules.md:18` |

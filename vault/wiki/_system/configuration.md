@@ -22,7 +22,7 @@ updated: 2026-10-07
 | `CLAUDE_MODEL` | 단계 모델이 "Claude Code 설정"(`default`)일 때 쓸 모델 별칭 | 비면 CLI 기본 모델 | 아니오 | `blog-writer:server/claude.ts:36` |
 | `CLAUDE_BIN` | 실행할 claude CLI 경로 | `claude` | 아니오 (`.env.example`에 없음) | `blog-writer:server/claude.ts:79` |
 | `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` | 데이터랩(NAVER API HUB) 키. 둘 다 있으면 파일 키보다 우선 | | 아니오 (`.env.example`에 없음) | `blog-writer:server/secrets.ts:44-45` |
-| `DOWNLOADS_DIR` | Gemini/ChatGPT 이미지 다운로드를 찾을 폴더 | `~/Downloads` | 아니오 (README에만 언급) | `blog-writer:server/images/webAi.ts:115` |
+| `DOWNLOADS_DIR` | Gemini/ChatGPT 이미지 다운로드를 찾을 폴더 | `~/Downloads` | 아니오 (README에만 언급) | `blog-writer:server/images/webAi.ts:121` |
 | `CHROME_PATH` | 로그인 창에 쓸 크롬 실행 파일 | OS별 기본 경로 후보 | 아니오 | `blog-writer:server/browser/loginWindow.ts:29` |
 | `BW_HEADLESS` | `1`이면 앱 전용 크롬 자동 조작을 창 없이 (테스트용) | 꺼짐 | 아니오 | `blog-writer:server/browser/runner.ts:55` |
 

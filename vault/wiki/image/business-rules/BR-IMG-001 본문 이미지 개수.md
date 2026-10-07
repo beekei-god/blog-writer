@@ -11,8 +11,8 @@ source:
   - blog-writer:server/schema.ts:46
   - blog-writer:src/NewJob.tsx:70
   - blog-writer:src/NewJob.tsx:152-168
-  - blog-writer:server/writer.ts:74-81
-  - blog-writer:server/writer.ts:266-274
+  - blog-writer:server/writer.ts:75-82
+  - blog-writer:server/writer.ts:267-275
 entities: [ImageOptions, ImageSpec]
 updated: 2026-10-07
 ---
@@ -36,8 +36,8 @@ updated: 2026-10-07
 | 공용 상수 | `MAX_BODY_IMAGES` | 6 | `blog-writer:shared/types.ts:15` |
 | 서버 검증 | `ImageOptionsSchema.bodyImages` | 정수 0~6 | `blog-writer:server/schema.ts:46` |
 | 화면 | 스테퍼 | 0~6 | `blog-writer:src/NewJob.tsx:70`, `:152-168` |
-| 프롬프트(작성) | 위치·개수 지시 | 정확히 N | `blog-writer:server/writer.ts:74-81` |
-| 서버(작성 후) | `enforceImageOptions` | 초과분 삭제 | `blog-writer:server/writer.ts:266-274` |
+| 프롬프트(작성) | 위치·개수 지시 | 정확히 N | `blog-writer:server/writer.ts:75-82` |
+| 서버(작성 후) | `enforceImageOptions` | 초과분 삭제 | `blog-writer:server/writer.ts:267-275` |
 
 ## 예외 / 경계값
 - 편집 화면에서 이미지 블록을 지울 수는 있지만 추가할 수는 없다 (`blog-writer:src/job/PostEditor.tsx:132-136`).
@@ -50,4 +50,4 @@ updated: 2026-10-07
 | 날짜 | 변경 | 근거 |
 |---|---|---|
 | 2026-10-05 | 최초 기록 | |
-| 2026-10-05 | 이미지가 부족하면 채우지 않고 로그로 안내하기로 결정 | `blog-writer:server/writer.ts:167-172` |
+| 2026-10-05 | 이미지가 부족하면 채우지 않고 로그로 안내하기로 결정 | `blog-writer:server/writer.ts:168-173` |
