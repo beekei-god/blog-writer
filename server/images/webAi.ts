@@ -60,31 +60,37 @@ export const insertScript = (selector: string, text: string) => `(async () => {
  * 사이트 다운로드 버튼은 위치·동작이 자주 바뀌고, 이미지 주소는 blob:이거나 로그인 쿠키가 필요해 서버에서 받을 수 없다.
  */
 export const downloadScript = (name: string) => `(async () => {
-  const imgs = [...document.querySelectorAll("img")].filter((i) => i.naturalWidth >= 400 && i.naturalHeight >= 200);
-  const img = imgs[imgs.length - 1];
-  if (!img) return "실패: 이미지 없음";
-  const src = img.currentSrc || img.src;
-  let blob = null, how = "";
   try {
-    const r = await fetch(src, { credentials: "include" });
-    if (r.ok) { const b = await r.blob(); if (b.type.startsWith("image/")) { blob = b; how = "fetch"; } }
-  } catch {}
-  if (!blob) {
+    const imgs = [...document.querySelectorAll("img")].filter((i) => i.naturalWidth >= 400 && i.naturalHeight >= 200);
+    const img = imgs[imgs.length - 1];
+    if (!img) return "실패: 이미지 없음";
+    const src = img.currentSrc || img.src;
+    const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error("시간 초과")), ms))]);
+    let blob = null, how = "", why = "";
     try {
-      const c = document.createElement("canvas");
-      c.width = img.naturalWidth; c.height = img.naturalHeight;
-      c.getContext("2d").drawImage(img, 0, 0);
-      blob = await new Promise((r) => c.toBlob(r, "image/png"));
-      how = "canvas";
-    } catch { blob = null; }
+      const r = await withTimeout(fetch(src, { credentials: "include" }), 15000);
+      if (r.ok) { const b = await withTimeout(r.blob(), 15000); if (b.type.startsWith("image/")) { blob = b; how = "fetch"; } else why += "fetch 형식 " + b.type + "; "; }
+      else why += "fetch " + r.status + "; ";
+    } catch (e) { why += "fetch 오류 " + (e && e.message || e) + "; "; }
+    if (!blob) {
+      try {
+        const c = document.createElement("canvas");
+        c.width = img.naturalWidth; c.height = img.naturalHeight;
+        c.getContext("2d").drawImage(img, 0, 0);
+        blob = await withTimeout(new Promise((r) => c.toBlob(r, "image/png")), 15000);
+        how = "canvas";
+      } catch (e) { blob = null; why += "canvas 오류 " + (e && e.message || e) + "; "; }
+    }
+    if (!blob) return "실패: 읽을 수 없음 (" + why + ") " + src.slice(0, 60);
+    const ext = { "image/jpeg": ".jpg", "image/webp": ".webp" }[blob.type] || ".png";
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = ${JSON.stringify(name)} + ext;
+    document.body.appendChild(a); a.click(); a.remove();
+    return "ok " + how + " " + blob.size + " " + src.slice(0, 60);
+  } catch (e) {
+    return "실패: 스크립트 오류 " + (e && e.message || e);
   }
-  if (!blob) return "실패: 읽을 수 없음 " + src.slice(0, 60);
-  const ext = { "image/jpeg": ".jpg", "image/webp": ".webp" }[blob.type] || ".png";
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = ${JSON.stringify(name)} + ext;
-  document.body.appendChild(a); a.click(); a.remove();
-  return "ok " + how + " " + blob.size + " " + src.slice(0, 60);
 })()`;
 
 const ResultSchema = z.object({
@@ -215,6 +221,7 @@ ${site.guide}
    N이 M보다 많이 작으면 입력창을 비우고 한 번 더 실행하세요. 다 들어갔으면 보내기 버튼을 누르세요 (Enter 대신 버튼).
 3. 이미지가 나올 때까지 기다립니다 (최대 4분 정도). javascript_tool로 "가장 최근 응답에 큰 img가 생겼거나 응답이 끝났는지"를 확인하며 60초까지 기다리는 Promise를 돌려주게 하고, 아직이면 다시 부르세요. 스크린샷으로 기다리지 마세요. 응답이 끝났는데 이미지 없이 글만 있으면 기다리지 말고 멈추세요.
 4. 이미지가 다 나오면(로딩 표시가 사라진 뒤) 아래 "다운로드 스크립트"를 javascript_tool로 그대로 한 번 실행하세요. "ok ..."를 돌려주면 끝입니다.
+   아무 값도 돌려주지 않으면(빈 값) 같은 스크립트를 한 번만 더 실행하세요. 그래도 "ok"가 아니면 돌려준 문구를 message에 그대로 적으세요.
    "실패..."를 돌려주면 사이트의 다운로드 버튼을 누르지 마세요. 파일 이름이 달라 서버가 찾지 못합니다. 대신 이미지의 img.src를 imageUrl에 담아 돌려주면 서버가 그 주소로 받아 봅니다.
 
 ## 결과
@@ -256,7 +263,8 @@ ${downloadScript(downloadName)}`,
   if (r.status === "limit") throw new ImageGenError("limit", `${site.name} 이미지 생성 한도 안내:${quote || ` ${r.message}`}`);
   if (r.status === "failed") throw new ImageGenError("ui_changed", `${site.name}에서 이미지를 만들지 못했습니다: ${r.message}`);
 
-  const downloaded = r.downloadClicked ? await findNewDownload(since, downloadName) : null;
+  // 스크립트가 결과를 돌려주지 못했어도(빈 값) 파일은 이미 내려받아졌을 수 있다. 그래서 항상 다운로드 폴더를 확인한다.
+  const downloaded = await findNewDownload(since, downloadName, r.downloadClicked ? 60_000 : 20_000);
   if (downloaded) {
     const file = outBase + path.extname(downloaded).toLowerCase().replace(".jpeg", ".jpg");
     await moveFile(downloaded, file);
@@ -266,6 +274,8 @@ ${downloadScript(downloadName)}`,
   if (fetched) return fetched;
   throw new ImageGenError(
     "download",
-    `${site.name}에서 이미지는 만들었지만 파일을 받지 못했습니다. 다운로드 폴더(${downloadsDir()})에 새 이미지가 없고, 이미지 주소로도 받을 수 없었습니다. 크롬 설정의 "다운로드 전에 저장 위치 확인"이 켜져 있으면 꺼 주세요.`,
+    `${site.name}에서 이미지는 만들었지만 파일을 받지 못했습니다. 다운로드 폴더(${downloadsDir()})에 새 이미지가 없고, 이미지 주소로도 받을 수 없었습니다. ` +
+      `(${r.downloadClicked ? "다운로드 스크립트는 성공했다고 했지만 파일이 나타나지 않음" : "다운로드 스크립트가 실패함"}${r.message ? `, 응답: ${r.message.slice(0, 120)}` : ""}) ` +
+      `크롬이 같은 사이트의 연속 다운로드를 막았을 수 있습니다: 주소창 오른쪽의 다운로드 차단 표시에서 허용하거나 chrome://settings/content/automaticDownloads 에서 ${site.url.replace(/^https:\/\//, "").split("/")[0]}를 허용하세요. "다운로드 전에 저장 위치 확인"이 켜져 있으면 꺼 주세요.`,
   );
 }

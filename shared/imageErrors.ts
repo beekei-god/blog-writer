@@ -50,7 +50,7 @@ export const IMAGE_ERROR_INFO: Record<ImageErrorKind, ImageErrorInfo> = {
   },
   download: {
     title: "이미지를 저장하지 못했습니다",
-    advice: "이미지는 만들어졌지만 파일을 받지 못했습니다. 크롬 설정에서 \"다운로드 전에 각 파일의 저장 위치 확인\"이 꺼져 있는지 확인하고 다시 하세요.",
+    advice: "이미지는 만들어졌지만 파일을 받지 못했습니다. 여러 장을 연달아 만들 때 첫 장만 되고 나머지가 실패하면, 크롬이 같은 사이트의 연속 다운로드를 막은 것일 수 있습니다(주소창 오른쪽 다운로드 차단 표시에서 허용하거나 chrome://settings/content/automaticDownloads 에서 해당 사이트 허용). \"다운로드 전에 각 파일의 저장 위치 확인\"이 꺼져 있는지도 확인하고 다시 하세요.",
   },
   browser_missing: {
     title: "크롬을 찾을 수 없습니다",

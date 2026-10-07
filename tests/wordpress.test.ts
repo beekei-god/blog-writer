@@ -42,7 +42,8 @@ describe("Gutenberg 블록", () => {
       (m) => logs.push(m),
     );
     expect(html).toContain('<h2 class="wp-block-heading">제목 &lt;b&gt;</h2>');
-    expect(html).toContain("<p>a<br>b</p>");
+    expect(html).toContain("<p>a<br>b</p>"); // 문단 안 줄바꿈은 <br>로, 문단 사이 간격은 테마 기본(사이트의 다른 글과 같음)
+    expect(html).not.toContain("margin-top:0.7em");
     expect(html).toContain('<!-- wp:image {"id":7,');
     expect(html).toContain('alt="그림" class="wp-image-7"');
     expect(html).toContain("<!-- wp:html -->");
