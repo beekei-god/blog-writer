@@ -4,7 +4,7 @@ project: blog-writer
 module: project-root
 paths: [README.md, package.json, tsconfig.json, vite.config.ts, index.html, public/favicon.svg, .env.example, .gitignore, rules/default-writing-rules.md]
 source:
-  - blog-writer:README.md:1-79
+  - blog-writer:README.md:1-274
   - blog-writer:package.json:1-33
   - blog-writer:rules/default-writing-rules.md:1-79
 updated: 2026-10-07
@@ -17,10 +17,10 @@ updated: 2026-10-07
 ## 파일
 | 파일 | 줄 | 역할 | 관련 페이지 |
 |---|---|---|---|
-| `README.md` | 79 | 기능·실행·Claude 호출 방식·막힌 블로그 대처·이미지·규칙·추천·태그·저장 위치 설명 | [[_system/overview]], [[_system/operations]] |
+| `README.md` | 274 | 처음 쓰는 사람용 단계별 안내: 준비물·설치와 실행·첫 설정·글 쓰는 법·화면별 안내·블로그별 등록·이미지·Claude 호출과 모델·문제 해결·데이터와 보안·개발자 정보 | [[_system/overview]], [[_system/operations]] |
 | `package.json` | 33 | 스크립트(`dev`, `build`, `typecheck`, `test`, `start`)와 의존성 (테스트: vitest) | [[_system/operations]] |
 | `tsconfig.json` | 15 | 단순 파일: TS 설정 (ES2022, bundler, strict, noEmit, `server`·`src`·`shared`·`tests` 포함) | |
-| `vite.config.ts` | 10 | 단순 파일: React 플러그인, 포트 5173, `/api` → `http://127.0.0.1:3001` 프록시 (`localhost`는 IPv6로 풀려 다른 프로그램에 붙을 수 있어 IPv4로 고정) | [[_system/architecture]] |
+| `vite.config.ts` | 10 | 단순 파일: React 플러그인, 포트 5173, `/api` → `http://127.0.0.1:5172` 프록시 (`localhost`는 IPv6로 풀려 다른 프로그램에 붙을 수 있어 IPv4로 고정) | [[_system/architecture]] |
 | `index.html` | 13 | 단순 파일: SPA 진입 HTML (`/src/main.tsx`), 파비콘 링크 | |
 | `public/favicon.svg` | 8 | 단순 파일: 브라우저 탭 아이콘 | |
 | `.env.example` | 4 | `PORT`, `CLAUDE_MODEL` 예시 | [[_system/configuration]] |

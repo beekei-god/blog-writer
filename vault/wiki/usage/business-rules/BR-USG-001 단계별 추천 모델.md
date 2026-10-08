@@ -11,7 +11,7 @@ source:
   - blog-writer:src/labels.ts:26-58
   - blog-writer:server/store.ts:19-22
   - blog-writer:src/SettingsPanel.tsx:291-345
-  - blog-writer:README.md:20
+  - blog-writer:README.md:195-200
 updated: 2026-10-07
 ---
 # BR-USG-001 단계별 추천 모델
@@ -44,7 +44,7 @@ Claude를 부르는 다섯 단계마다 모델을 따로 고를 수 있고, 기�
 | 서버 | 기본 설정에 추천값, 단계별 병합 | `blog-writer:server/store.ts:19-22`, `:36` |
 | 서버 검증 | 단계마다 `MODEL_CHOICES` enum | `blog-writer:server/routes/settings.ts:24` |
 | 화면 | 이유·힌트·추천 배지 | `blog-writer:src/labels.ts:26-58`, `blog-writer:src/SettingsPanel.tsx:291-345` |
-| README | 같은 내용 | `blog-writer:README.md:20` |
+| README | 같은 내용 | `blog-writer:README.md:195-200` |
 
 ## 예외 / 경계값
 - `MODEL_REASON`은 `RECOMMENDED_MODELS`와 함께 고쳐야 한다(코드 주석) — 한쪽만 바꾸면 화면 이유가 틀어진다.

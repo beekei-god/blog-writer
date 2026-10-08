@@ -10,7 +10,7 @@ source:
   - blog-writer:server/usage.ts:11-13
   - blog-writer:server/usage.ts:76-83
   - blog-writer:server/index.ts:10
-  - blog-writer:README.md:21
+  - blog-writer:README.md:204
 entities: [UsageRecord]
 updated: 2026-10-07
 ---
@@ -30,7 +30,7 @@ Claude 호출 기록은 **90일** 보관한다. 서버를 시작할 때 한 번,
 | 레이어 | 구현 | 근거 |
 |---|---|---|
 | 서버 | `KEEP_DAYS = 90`, `pruneUsage` | `blog-writer:server/usage.ts:13`, `:76-83` |
-| README | "90일 보관" | `blog-writer:README.md:21` |
+| README | "90일 보관" | `blog-writer:README.md:204` |
 
 ## 예외 / 경계값
 - 서버를 오래 켜 두면 그동안은 정리하지 않는다.

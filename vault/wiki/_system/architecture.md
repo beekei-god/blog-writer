@@ -16,8 +16,8 @@ updated: 2026-10-07
 ## 실행 단위
 | 프로세스 | 진입점 | 포트/실행 | 역할 |
 |---|---|---|---|
-| API 서버 | `server/index.ts` → `server/app.ts` `createApp()` | `tsx watch server/index.ts`, `127.0.0.1:${PORT ?? 3001}` | REST API, 파이프라인 실행, 파일 저장 |
-| 화면 | `index.html` → `src/main.tsx` | `vite` :5173, `/api`를 `127.0.0.1:3001`로 프록시 | React SPA |
+| API 서버 | `server/index.ts` → `server/app.ts` `createApp()` | `tsx watch server/index.ts`, `127.0.0.1:${PORT ?? 5172}` | REST API, 파이프라인 실행, 파일 저장 |
+| 화면 | `index.html` → `src/main.tsx` | `vite` :5173, `/api`를 `127.0.0.1:5172`로 프록시 | React SPA |
 | Claude 호출 | `server/claude.ts` `runClaude` | 호출마다 `claude -p` 자식 프로세스 (cwd = OS 임시 폴더) | 리서치·글 작성·이미지 기획·SVG·브라우저 조작·추천 |
 | 앱 전용 크롬 | `server/browser/runner.ts` | Playwright `launchPersistentContext(data/chrome-profile)` | Claude in Chrome이 막는 블로그(네이버 외 OS 등)의 자동 조작 |
 | 헤드리스 크롬 | `server/images/svg.ts` | Playwright `chromium.launch({channel:"chrome", headless:true})` | SVG → PNG |

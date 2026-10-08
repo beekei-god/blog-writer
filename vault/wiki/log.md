@@ -92,3 +92,11 @@ updated: 2026-10-05
 - 갱신: [[image/business-rules/BR-IMG-007 이미지 실패 격리와 원인 분류]], [[image/flows/이미지 생성 플로우]], [[image/implementations/blog-writer 구현]], [[_system/integrations/gemini-chatgpt-web]], [[_system/modules/server-images]], [[_system/modules/tests]]
 - 줄 번호 보정: `server/images/webAi.ts` 참조
 - 분석 시점: 스냅샷 (`_snapshot.json`)
+
+## [2026-10-08] update | _system (API 포트 3001 → 5172)
+- 읽은 범위: `server/index.ts`, `vite.config.ts`, `.env.example`, `README.md`(전면 개편본, 274줄)
+- 변경 내용: API 서버 기본 포트 3001 → 5172, 화면의 `/api` 프록시 주소도 `127.0.0.1:5172`로. 3001은 다른 로컬 프로젝트가 쓰고 있어 바꿈(커밋 d84d474)
+- 갱신: [[_system/configuration]], [[_system/architecture]], [[_system/operations]], [[_system/overview]], [[_system/modules/server-routes]], [[_system/modules/project-root]]
+- README 근거 보정: README가 단계별 안내로 다시 쓰여(033e462) 줄 번호가 달라짐 → _system 4쪽과 [[usage/business-rules/BR-USG-001 단계별 추천 모델]], [[usage/business-rules/BR-USG-003 사용 기록 보관 기간]], [[writing/business-rules/BR-WRT-006 스마트블록 주제 태그 금지]]의 README 근거를 새 줄로 맞춤. 새 README는 스마트블록 태그를 직접 언급하지 않음
+- `CLAUDE.md` 변경(사용량 한도 대응 절)은 wiki가 다루지 않는 작업 지침이라 반영 없음
+- 분석 시점: 스냅샷 (`_snapshot.json`, git d84d474)

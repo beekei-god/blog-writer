@@ -23,7 +23,7 @@ HTTP 진입점. 서버 시작(복구·listen), 공통 처리(로컬 전용 검�
 ## 파일
 | 파일 | 줄 | 역할 | 주요 export | 관련 페이지 |
 |---|---|---|---|---|
-| `server/index.ts` | 11 | 서버 시작: `recoverStuckJobs` → `recoverRecommendations` → `pruneUsage` → `127.0.0.1:${PORT ?? 3001}` listen | (진입점) | [[_system/operations]] |
+| `server/index.ts` | 11 | 서버 시작: `recoverStuckJobs` → `recoverRecommendations` → `pruneUsage` → `127.0.0.1:${PORT ?? 5172}` listen | (진입점) | [[_system/operations]] |
 | `server/app.ts` | 40 | `createApp()`: 로컬 전용 검사, JSON 2MB, 라우터 6개 연결, 공통 오류 처리. 테스트도 이것으로 앱을 만든다 | `createApp` | [[_system/api]] |
 | `server/routes/util.ts` | 28 | 라우터 공용: 비동기 오류 전달, 작업 전 상태를 먼저 진행 중으로(올리는 블로그 `postingTo`도 기록), 워드프레스 연결 여부 | `wrap`, `markBusy`, `wordpressStatus` | |
 | `server/routes/settings.ts` | 125 | 설정(`SettingsSchema` 블로그별 형식 검사), 글쓰기 규칙, 데이터랩 키, 워드프레스 연결·카테고리 | `router` | [[publishing/entities/블로그 설정]], [[_system/integrations/wordpress-rest]] |

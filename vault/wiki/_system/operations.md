@@ -2,7 +2,7 @@
 type: operations
 project: blog-writer
 source:
-  - blog-writer:README.md:1-79
+  - blog-writer:README.md:1-274
   - blog-writer:package.json:6-13
   - blog-writer:server/index.ts:7-11
 updated: 2026-10-07
@@ -30,14 +30,14 @@ updated: 2026-10-07
 
 서버를 어느 폴더에서 실행해도 된다. `data/`와 `rules/default-writing-rules.md`는 `server/store.ts` 위치에서 구한 프로젝트 루트 기준이다 (`blog-writer:server/store.ts:9-12`, `blog-writer:server/rules.ts:11-12`). 데이터를 따로 쓰려면 `BLOG_WRITER_DATA_DIR`, 포트는 `PORT`로 바꾼다 (테스트용 앱을 따로 띄울 때).
 
-화면 개발 서버는 `/api`를 `http://127.0.0.1:3001`로 넘긴다. `localhost`로 두면 IPv6(`::1`)로 풀려 같은 포트를 쓰는 다른 프로그램에 붙을 수 있다 (`blog-writer:vite.config.ts:6-9`).
+화면 개발 서버는 `/api`를 `http://127.0.0.1:5172`로 넘긴다. `localhost`로 두면 IPv6(`::1`)로 풀려 같은 포트를 쓰는 다른 프로그램에 붙을 수 있다 (`blog-writer:vite.config.ts:6-9`).
 
 ## 로그와 진단
 - **작업 진행 로그**: 각 job의 `logs`에 쌓이고 화면 "진행 로그"에 보인다. 서버 콘솔에도 `[jobId 앞 8자] 메시지`로 찍힌다 (`blog-writer:server/store.ts:122-127`).
 - **추천 로그**: recommendation의 `logs`.
 - **Claude 호출 기록**: `data/usage.jsonl`.
 - **자동 조작 실패 스크린샷**: `data/last-error.png`.
-- **브라우저 작업**: Claude in Chrome이 연 탭(그룹)을 일부러 닫지 않고 남겨 두므로 크롬에서 멈춘 지점을 볼 수 있다 (README "블로그 작성·이미지 생성이 실패하면").
+- **브라우저 작업**: Claude in Chrome이 연 탭(그룹)을 일부러 닫지 않고 남겨 두므로 크롬에서 멈춘 지점을 볼 수 있다 (`blog-writer:README.md:226`).
 - 500 오류는 서버 콘솔에 `console.error`로 남는다.
 
 ## 자주 생기는 실패와 대처
