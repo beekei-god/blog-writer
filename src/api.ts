@@ -1,4 +1,4 @@
-import type { ImageMethod, ImageOptions, ImageProvider, ImageStyle, Job, Platform, Post, PublishMode, Recommendation, Settings, TokenTotals, UsageSummary } from "../shared/types";
+import type { ImageMethod, ImageOptions, ImageProvider, ImageStyle, Job, ManualStatus, Platform, Post, PublishMode, Recommendation, Settings, TokenTotals, UsageSummary } from "../shared/types";
 
 export interface DatalabStatus {
   configured: boolean;
@@ -42,6 +42,9 @@ export interface Rules {
   isDefault: boolean;
   updatedAt: string | null;
 }
+
+/** 작업 이미지 파일 주소 */
+export const imageUrl = (jobId: string, file: string) => `/api/images/${jobId}/${encodeURIComponent(file)}`;
 
 async function req<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, {
@@ -103,8 +106,8 @@ export const api = {
     req<WordPressStatus>("/api/wordpress", { method: "PUT", body: JSON.stringify({ username, appPassword }) }),
   deleteWordPress: () => req<WordPressStatus>("/api/wordpress", { method: "DELETE" }),
   getWordPressCategories: () => req<{ id: number; name: string }[]>("/api/wordpress/categories"),
-  /** 임시저장 이후 상태를 직접 바꾼다: 발행 완료 표시/취소, 초안 완료로 되돌리기 */
-  setStatus: (id: string, status: "draft_ready" | "posted" | "published") =>
+  /** 임시저장 이후 상태를 직접 바꾼다: 블로그 발행완료 표시/취소, 초안 검토로 되돌리기 */
+  setStatus: (id: string, status: ManualStatus) =>
     req<Job>(`/api/jobs/${id}/status`, { method: "PUT", body: JSON.stringify({ status }) }),
   retry: (id: string) => req<void>(`/api/jobs/${id}/retry`, { method: "POST" }),
   remove: (id: string) => req<void>(`/api/jobs/${id}`, { method: "DELETE" }),

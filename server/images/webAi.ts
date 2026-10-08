@@ -5,7 +5,10 @@ import { z } from "zod";
 import type { ImageStyle } from "../../shared/types";
 import { assertExtensionInstalled, BROWSER_RULES, ChromeExtensionError } from "../browser/claudeChrome";
 import { runClaude } from "../claude";
+import { sleep } from "../fsutil";
+import { saveImageFile } from "./api";
 import { ImageGenError } from "./errors";
+import { classifyImageError } from "../../shared/imageErrors";
 import { imageRequest } from "./styles";
 
 /**
@@ -35,7 +38,7 @@ const SITE: Record<WebAi, { name: string; url: string; input: string; guide: str
  * 요청 전체를 입력창에 한 번에 넣는 스크립트. 여러 줄을 타이핑하면 줄바꿈(Enter)에서 중간까지만 보내지므로
  * paste 이벤트로 통째로 넣고, 안 되면 insertText로 넣는다. 들어간 글자 수를 돌려준다.
  */
-export const insertScript = (selector: string, text: string) => `(async () => {
+const insertScript = (selector: string, text: string) => `(async () => {
   const TEXT = ${JSON.stringify(text)};
   const el = document.querySelector(${JSON.stringify(selector)});
   if (!el) return "입력창 없음";
@@ -59,7 +62,7 @@ export const insertScript = (selector: string, text: string) => `(async () => {
  * 가장 최근 이미지를 페이지 안에서 읽어 지정한 이름으로 내려받는 스크립트.
  * 사이트 다운로드 버튼은 위치·동작이 자주 바뀌고, 이미지 주소는 blob:이거나 로그인 쿠키가 필요해 서버에서 받을 수 없다.
  */
-export const downloadScript = (name: string) => `(async () => {
+const downloadScript = (name: string) => `(async () => {
   try {
     const imgs = [...document.querySelectorAll("img")].filter((i) => i.naturalWidth >= 400 && i.naturalHeight >= 200);
     const img = imgs[imgs.length - 1];
@@ -115,8 +118,6 @@ const RESULT_JSON_SCHEMA = {
 };
 
 const IMAGE_EXT = /\.(png|jpe?g|webp)$/i;
-const EXT_BY_MIME: Record<string, string> = { "image/png": ".png", "image/jpeg": ".jpg", "image/webp": ".webp" };
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 const downloadsDir = () => process.env.DOWNLOADS_DIR || path.join(os.homedir(), "Downloads");
 
@@ -167,10 +168,7 @@ async function fetchImage(url: string, outBase: string): Promise<string | null> 
     if (!res.ok || !mime.startsWith("image/")) return null;
     const body = Buffer.from(await res.arrayBuffer());
     if (body.length < 5_000) return null;
-    const file = outBase + (EXT_BY_MIME[mime] ?? ".png");
-    await fs.mkdir(path.dirname(file), { recursive: true });
-    await fs.writeFile(file, body);
-    return file;
+    return await saveImageFile(outBase, mime, body);
   } catch {
     return null;
   }
@@ -209,7 +207,7 @@ ${site.guide}
    "실패..."를 돌려주면 사이트의 다운로드 버튼을 누르지 마세요. 파일 이름이 달라 서버가 찾지 못합니다. 대신 이미지의 img.src를 imageUrl에 담아 돌려주면 서버가 그 주소로 받아 봅니다.
 
 ## 결과
-- status: 이미지를 받았으면 "ok". 로그인이 필요하면 "login_required". 이미지 대신 거절·정책 안내 글을 받았으면 "refused", 한도·나중에 다시 하라는 안내면 "limit". 그 밖에는 "failed".
+- status: 이미지를 받았으면 "ok". 로그인이 필요하면 "login_required". 이미지 대신 거절·정책 안내 글을 받았으면 "refused", 한도·나중에 다시 하라는 안내면 "limit". 그 밖에는 "failed" (사이트가 "문제가 발생했습니다" 같은 오류 안내를 보였으면 message에 그 문구를 그대로 넣으세요).
 - imageUrl: 다운로드 스크립트가 돌려준 문자열 끝의 주소 또는 이미지 img.src (모르면 빈 문자열). downloadClicked: 다운로드 스크립트가 "ok"를 돌려줬으면 true (그 밖에는 false).
 - replyText: 이미지 대신 글로 답했다면 그 답변 (300자 이내, 없으면 빈 문자열). message: 한국어로 한 문장.`;
 
@@ -255,7 +253,11 @@ ${downloadScript(downloadName)}`,
   }
   const fetched = await fetchImage(r.imageUrl, outBase);
   if (fetched) return fetched;
-  if (r.status === "failed") throw new ImageGenError("ui_changed", `${site.name}에서 이미지를 만들지 못했습니다: ${r.message}`);
+  if (r.status === "failed") {
+    // 사이트가 오류 안내를 보여 멈춘 경우는 화면 조작 문제와 따로 알린다.
+    const kind = classifyImageError(r.message) === "site_error" ? "site_error" : "ui_changed";
+    throw new ImageGenError(kind, `${site.name}에서 이미지를 만들지 못했습니다: ${r.message}`);
+  }
   throw new ImageGenError(
     "download",
     `${site.name}에서 이미지는 만들었지만 파일을 받지 못했습니다. 다운로드 폴더(${downloadsDir()})에 새 이미지가 없고, 이미지 주소로도 받을 수 없었습니다. ` +

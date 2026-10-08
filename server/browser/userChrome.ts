@@ -3,10 +3,12 @@ import { randomUUID } from "node:crypto";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { MAX_TAGS, type Post, type PostBlock, type PostSettings } from "../../shared/types";
+import { type Post, type PostBlock, type PostSettings } from "../../shared/types";
+import { sleep } from "../fsutil";
 import { jobImageDir } from "../store";
-import { altFileName, BLANK_LINE, esc, pasteBlockHtml, TAG_GAP_LINES, urlsIn } from "./postHtml";
+import { altFileName, BLANK_LINE, esc, pasteBlockHtml, skippedImageLabel, TAG_GAP_LINES, tagLine, urlsIn, writeUrl } from "./postHtml";
 import { errorText } from "../../shared/labels";
+import { naverPublishSteps, PUBLISH_HELPERS, PublishStepError, runPublishSteps, type PublishRequest } from "./publish";
 
 /**
  * 사용자가 평소 쓰는 크롬(macOS)에서 네이버 블로그 글을 쓴다.
@@ -38,7 +40,6 @@ export class UserChromeError extends Error {
 
 export const userChromeSupported = () => process.platform === "darwin";
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 function osascript(script: string, args: string[]): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -150,7 +151,7 @@ function segmentsOf(post: Post, jobId: string, log: (m: string) => void): { segm
   for (const b of post.blocks) {
     if (b.type === "image") {
       if (!b.file) {
-        log(`이미지 건너뜀 (생성되지 않음): ${b.alt || b.prompt.slice(0, 30)}`);
+        log(`이미지 건너뜀 (생성되지 않음): ${skippedImageLabel(b)}`);
         continue;
       }
       flush();
@@ -172,7 +173,7 @@ function segmentsOf(post: Post, jobId: string, log: (m: string) => void): { segm
   // 태그 입력란은 발행 창에만 있어서 본문 끝에 #태그 줄로 넣는다.
   // 본문과 태그 사이에는 빈 줄을 TAG_GAP_LINES개 둔다. 이미지 뒤에서도 지워지지 않도록 공백 문자가 든 문단으로 넣는다.
   if (post.tags.length) {
-    const line = post.tags.slice(0, MAX_TAGS).map((t) => `#${t.replace(/\s+/g, "")}`).join(" ");
+    const line = tagLine(post);
     for (let i = 0; i < TAG_GAP_LINES; i++) {
       html.push("<p>&nbsp;</p>");
       text.push("");
@@ -256,7 +257,7 @@ function expectedAtoms(post: Post): { atoms: Atom[]; boldChars: number; links: n
       atoms.push({ k: "table", t: "" });
     }
   }
-  if (post.tags.length) atoms.push({ k: "p", t: normText(post.tags.slice(0, MAX_TAGS).map((t) => `#${t.replace(/\s+/g, "")}`).join(" ")) });
+  if (post.tags.length) atoms.push({ k: "p", t: normText(tagLine(post)) });
   return { atoms, boldChars, links };
 }
 
@@ -345,14 +346,17 @@ export interface UserChromeResult {
   problems: string[];
 }
 
-/** 평소 크롬의 새 탭에서 네이버 블로그 글을 입력하고 임시저장한다. 탭은 사용자가 확인하도록 열어 둔다. */
+/**
+ * 평소 크롬의 새 탭에서 네이버 블로그 글을 입력하고 임시저장한다. 탭은 사용자가 확인하도록 열어 둔다.
+ * publish가 예약발행·자동발행이면 임시저장을 확인한 뒤 발행 창에서 발행까지 한다 (못 하면 PublishStepError).
+ */
 export async function postNaverInUserChrome(
   post: Post,
   jobId: string,
   settings: PostSettings,
   log: (m: string) => void,
   /** save=false면 입력만 하고 임시저장은 누르지 않는다 (점검용) */
-  opts: { save?: boolean } = {},
+  opts: { save?: boolean; publish?: PublishRequest } = {},
 ): Promise<UserChromeResult> {
   if (!userChromeSupported()) throw new UserChromeError("other", "macOS에서만 쓸 수 있습니다.");
   if (!settings.blogId) throw new Error("설정에서 네이버 블로그 ID를 입력하세요.");
@@ -360,7 +364,7 @@ export async function postNaverInUserChrome(
   const { segments, headings } = segmentsOf(post, jobId, log);
 
   log("평소 크롬에 네이버 블로그 글쓰기 탭을 엽니다. 끝날 때까지 그 탭은 그대로 두세요.");
-  const tab = await openTab(`https://blog.naver.com/${settings.blogId}/postwrite`);
+  const tab = await openTab(writeUrl("naver", settings.blogId));
 
   // 글쓰기 화면이 뜰 때까지 (로그인 화면이면 바로 알린다)
   const ready = await waitFor(async () => {
@@ -479,5 +483,12 @@ export async function postNaverInUserChrome(
     15_000,
   );
   if (!saved) throw new Error("임시저장 완료를 확인하지 못했습니다. 크롬에 열린 탭에서 직접 저장 버튼을 눌러 주세요.");
+  if (opts.publish && opts.publish.mode !== "draft") {
+    // 입력이 초안과 다르면 그대로 공개하지 않는다.
+    if (problems.length) {
+      throw new PublishStepError(`입력 결과에 확인할 점이 있어 발행하지 않고 임시저장만 했습니다: ${problems.join(" / ")}. 크롬에 열린 탭에서 확인한 뒤 직접 발행하세요.`);
+    }
+    await runPublishSteps(naverPublishSteps(opts.publish), (js) => runJs(tab, PUBLISH_HELPERS + js), log);
+  }
   return { imagesInserted, problems };
 }

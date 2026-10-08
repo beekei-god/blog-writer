@@ -1,7 +1,7 @@
 // 붙여넣기용 HTML은 화면의 "본문 복사"와 같이 쓰도록 shared/postHtml.ts에 있다.
 import { esc, rich, tableHtml } from "../../shared/postHtml";
 import type { PostBlock } from "../../shared/types";
-export { BLANK_LINE, esc, rich, TABLE_COLORS, tableHtml, TAG_GAP_LINES, urlsIn } from "../../shared/postHtml";
+export { BLANK_LINE, esc, skippedImageLabel, tableHtml, TAG_GAP_LINES, tagLine, urlsIn } from "../../shared/postHtml";
 
 /** 에디터에 붙여넣을 블록 하나의 HTML. 소제목 태그는 에디터 경로마다 다르다. */
 export function pasteBlockHtml(b: Exclude<PostBlock, { type: "image" }>, headingTag: "h3" | "p"): string {
@@ -19,6 +19,9 @@ export function pasteBlockHtml(b: Exclude<PostBlock, { type: "image" }>, heading
   }
 }
 
+/** 크롬으로 올리는 블로그의 글쓰기 화면 주소 */
+export const writeUrl = (platform: "naver" | "tistory", blogId: string) =>
+  platform === "naver" ? `https://blog.naver.com/${blogId}/postwrite` : `https://${blogId}.tistory.com/manage/newpost`;
 
 /**
  * 네이버 SmartEditor ONE에는 대체 텍스트 입력 칸이 없고, 올린 파일 이름이 이미지의 alt가 된다

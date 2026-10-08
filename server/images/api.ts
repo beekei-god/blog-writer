@@ -60,6 +60,14 @@ const authHeaders = (ai: WebAi, key: string): Record<string, string> =>
 
 const EXT_BY_MIME: Record<string, string> = { "image/png": ".png", "image/jpeg": ".jpg", "image/webp": ".webp" };
 
+/** 받은 이미지를 형식에 맞는 확장자로 outBase(+확장자)에 저장하고 최종 경로를 돌려준다. 모르는 형식은 .png */
+export async function saveImageFile(outBase: string, mime: string, data: Buffer): Promise<string> {
+  const file = outBase + (EXT_BY_MIME[mime] ?? ".png");
+  await fs.mkdir(path.dirname(file), { recursive: true });
+  await fs.writeFile(file, data);
+  return file;
+}
+
 /** 이미지 하나를 만들어 outBase(+확장자)로 저장하고 최종 경로를 돌려준다. */
 export async function generateWithApi(ai: WebAi, request: string, outBase: string): Promise<string> {
   const auth = await getImageApiKey(ai);
@@ -108,10 +116,7 @@ export async function generateWithApi(ai: WebAi, request: string, outBase: strin
     mime = image.mimeType ?? mime;
   }
 
-  const file = outBase + (EXT_BY_MIME[mime] ?? ".png");
-  await fs.mkdir(path.dirname(file), { recursive: true });
-  await fs.writeFile(file, Buffer.from(data, "base64"));
-  return file;
+  return saveImageFile(outBase, mime, Buffer.from(data, "base64"));
 }
 
 /** 저장 전에 키가 맞는지 가볍게 확인한다 (모델 목록 조회, 이미지 생성 비용 없음). */

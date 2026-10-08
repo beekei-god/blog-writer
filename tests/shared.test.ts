@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { classifyImageError } from "../shared/imageErrors";
 import { errorText, PLATFORM_LABEL, STATUS_LABEL, statusLabel } from "../shared/labels";
 import { countBodyChars, MAX_BODY_CHARS } from "../shared/length";
-import { postToText } from "../shared/postHtml";
 import {
   aiFor,
   blogIdOf,
@@ -12,7 +11,6 @@ import {
   imageKey,
   methodFor,
   settingsFor,
-  type Post,
   type Settings,
 } from "../shared/types";
 
@@ -93,51 +91,19 @@ describe("이미지 AI·스타일", () => {
 
 describe("라벨", () => {
   it("상태·블로그 이름", () => {
-    expect(STATUS_LABEL.scheduled).toBe("예약됨");
-    expect(STATUS_LABEL.published).toBe("발행 완료");
+    expect(STATUS_LABEL.scheduled).toBe("블로그 발행 예약");
+    expect(STATUS_LABEL.published).toBe("블로그 발행완료");
     expect(PLATFORM_LABEL.naver).toBe("네이버 블로그");
   });
-  it("올리는 중 라벨: 워드프레스는 크롬 작성이 아니다", () => {
-    expect(statusLabel({ status: "posting", postingTo: "wordpress" })).toBe("워드프레스 등록 중");
-    expect(statusLabel({ status: "posting", postingTo: "naver" })).toBe("크롬 작성 중");
-    expect(statusLabel({ status: "posting" })).toBe("크롬 작성 중");
-    expect(statusLabel({ status: "posted", postingTo: "wordpress" })).toBe("임시저장 완료");
+  it("올리는 중 라벨: 올리는 블로그와 관계없이 단계 이름과 같다", () => {
+    expect(statusLabel({ status: "posting", postingTo: "wordpress" })).toBe("블로그 임시저장 중");
+    expect(statusLabel({ status: "posting", postingTo: "naver" })).toBe("블로그 임시저장 중");
+    expect(statusLabel({ status: "posting" })).toBe("블로그 임시저장 중");
+    expect(statusLabel({ status: "posted", postingTo: "wordpress" })).toBe("블로그 임시저장 완료");
   });
   it("errorText", () => {
     expect(errorText(new Error("x"))).toBe("x");
     expect(errorText("y")).toBe("y");
-  });
-});
-
-describe("복사용 텍스트", () => {
-  it("소제목 앞 빈 줄, 이미지 자리, 태그는 빈 줄 3개 뒤", () => {
-    const post: Pick<Post, "blocks" | "thumbnail" | "tags"> = {
-      thumbnail: { prompt: "p", alt: "썸" },
-      blocks: [
-        { type: "paragraph", text: "**굵게** 문단" },
-        { type: "heading", text: "소제목" },
-        { type: "image", prompt: "p", alt: "그림" },
-        { type: "quote", text: "인용" },
-        { type: "list", items: ["a"] },
-        { type: "table", headers: ["h1", "h2"], rows: [["1", "2"]] },
-      ],
-      tags: ["태그 하나", "둘"],
-    };
-    expect(postToText(post).split("\n")).toEqual([
-      "[썸네일]",
-      "굵게 문단",
-      "",
-      "소제목",
-      "[이미지 1: 그림]",
-      "“인용”",
-      "• a",
-      "h1\th2",
-      "1\t2",
-      "",
-      "",
-      "",
-      "#태그하나 #둘",
-    ]);
   });
 });
 
@@ -149,6 +115,8 @@ describe("이미지 오류 분류", () => {
     ["I can't create that image due to policy", "refused"],
     ["Target page, context or browser has been closed", "browser_closed"],
     ["Timeout 30000ms exceeded", "ui_changed"],
+    ['Gemini에서 이미지를 만들지 못했습니다: Gemini에 요청을 입력하고 보내기를 여러 번 눌렀지만 "문제가 발생했습니다 (1155)" 오류가 나서 이미지가 생성되지 않았고, 탭은 닫았습니다.', "site_error"],
+    ["ChatGPT: Something went wrong while generating the response.", "site_error"],
     ["뭔지 모를 오류", "unknown"],
     [undefined, "unknown"],
   ] as const)("%s → %s", (msg, kind) => expect(classifyImageError(msg)).toBe(kind));

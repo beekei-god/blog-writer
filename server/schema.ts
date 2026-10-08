@@ -2,6 +2,10 @@ import { z } from "zod";
 import { MAX_BODY_IMAGES, MAX_TAGS, STYLES_BY_PROVIDER, TAG_SOURCES } from "../shared/types";
 import { IMAGE_ERROR_KINDS } from "../shared/imageErrors";
 
+export const ProviderEnum = z.enum(["claude", "gemini", "chatgpt"]);
+export const StyleEnum = z.enum(["flat", "ghibli", "realistic", "anime"]);
+export const MethodEnum = z.enum(["api", "chrome"]);
+
 const ImageSpecShape = {
   basis: z.string().optional(),
   // 모델이 길게 써도 글 전체가 실패하지 않도록 잘라서 받는다.
@@ -13,7 +17,7 @@ const ImageSpecShape = {
   file: z.string().regex(/^(?!\.)[\w.-]+$/).optional(),
   error: z.string().optional(),
   errorKind: z.enum(IMAGE_ERROR_KINDS).optional(),
-  errorProvider: z.enum(["claude", "gemini", "chatgpt"]).optional(),
+  errorProvider: ProviderEnum.optional(),
 };
 
 export const PostSchema = z.object({
@@ -44,12 +48,12 @@ export const ImageOptionsSchema = z
   .object({
     thumbnail: z.boolean(),
     bodyImages: z.number().int().min(0).max(MAX_BODY_IMAGES),
-    provider: z.enum(["claude", "gemini", "chatgpt"]),
-    style: z.enum(["flat", "ghibli", "realistic", "anime"]).default("flat"),
-    thumbnailProvider: z.enum(["claude", "gemini", "chatgpt"]).optional(),
-    thumbnailStyle: z.enum(["flat", "ghibli", "realistic", "anime"]).optional(),
-    method: z.enum(["api", "chrome"]).optional(),
-    thumbnailMethod: z.enum(["api", "chrome"]).optional(),
+    provider: ProviderEnum,
+    style: StyleEnum.default("flat"),
+    thumbnailProvider: ProviderEnum.optional(),
+    thumbnailStyle: StyleEnum.optional(),
+    method: MethodEnum.optional(),
+    thumbnailMethod: MethodEnum.optional(),
   })
   .refine((o) => STYLES_BY_PROVIDER[o.provider].includes(o.style), {
     path: ["style"],

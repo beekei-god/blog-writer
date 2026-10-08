@@ -1,18 +1,21 @@
 import { useEffect, useRef, useState } from "react";
 import { STYLES_BY_PROVIDER, fitStyle, type ImageMethod, type ImageProvider, type ImageSpec, type ImageStyle } from "../../shared/types";
 import { classifyImageError, IMAGE_ERROR_INFO, type ImageErrorKind } from "../../shared/imageErrors";
-import { api, type ImageApiStatus } from "../api";
+import { api, imageUrl, type ImageApiStatus } from "../api";
 import { PROVIDER_LABEL, STYLE_LABEL } from "../labels";
 
 // ───────────────────────── 이미지 실패 · 한 장씩 다시 만들기 ─────────────────────────
 
 // "unknown"으로 저장된 예전 기록은 분류 규칙이 늘어났을 수 있으니 메시지로 다시 분류한다.
-const kindOf = (spec: ImageSpec): ImageErrorKind =>
-  spec.errorKind && spec.errorKind !== "unknown" ? spec.errorKind : classifyImageError(spec.error);
+// 사이트 오류가 생기기 전에는 사이트 오류도 "ui_changed"로 저장했으므로 메시지가 사이트 오류면 그것으로 본다.
+const kindOf = (spec: ImageSpec): ImageErrorKind => {
+  const byMessage = classifyImageError(spec.error);
+  if (!spec.errorKind || spec.errorKind === "unknown") return byMessage;
+  return spec.errorKind === "ui_changed" && byMessage === "site_error" ? byMessage : spec.errorKind;
+};
 /** 화면에 보여 줄 실패 이유: 실제 오류 메시지의 첫 줄 (없으면 원인 종류의 제목) */
 const reasonOf = (spec: ImageSpec): string => spec.error?.split("\n")[0].trim() || IMAGE_ERROR_INFO[kindOf(spec)].title;
 const PROVIDERS = Object.keys(PROVIDER_LABEL) as ImageProvider[];
-
 
 export function FailedPlaceholder({ spec, generating }: { spec: ImageSpec; generating?: boolean }) {
   if (generating) {
@@ -43,7 +46,53 @@ export function useImageApi() {
   return status;
 }
 
-/** AI와 스타일 고르기 */
+/** 이 AI의 이미지를 API로 만들 수 있는지 (설정에서 API 키를 연결했는지) */
+export const hasImageApi = (provider: ImageProvider, apiStatus: ImageApiStatus | null) =>
+  provider !== "claude" && !!apiStatus?.[provider].configured;
+
+/** API로 만들 수 없을 때 버튼 툴팁에 보여 줄 이유 */
+export const noImageApiReason = (provider: ImageProvider, apiStatus: ImageApiStatus | null) =>
+  !apiStatus
+    ? "API 연결 상태를 확인하는 중입니다."
+    : `${PROVIDER_LABEL[provider]} API 키가 연결되어 있지 않습니다. 설정 → 이미지 API 설정에서 키를 연결하면 쓸 수 있습니다.`;
+
+/** 스타일 고르기. 고른 AI가 그릴 수 없는 스타일은 누를 수 없다 (새 글 쓰기와 이미지 다시 생성이 같이 쓴다) */
+export function StylePicker({ provider, style, onChange }: { provider: ImageProvider; style: ImageStyle; onChange: (style: ImageStyle) => void }) {
+  return (
+    <div className="segmented" role="radiogroup" aria-label="이미지 스타일">
+      {(Object.keys(STYLE_LABEL) as ImageStyle[]).map((st) => {
+        const allowed = STYLES_BY_PROVIDER[provider].includes(st);
+        return (
+          <button
+            type="button"
+            key={st}
+            className={style === st ? "on" : ""}
+            disabled={!allowed}
+            title={allowed ? undefined : "Gemini 또는 ChatGPT에서 고를 수 있습니다"}
+            onClick={() => onChange(st)}
+          >
+            {STYLE_LABEL[st]}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/** 이미지를 만들 AI 고르기 */
+export function ProviderPicker({ provider, onChange }: { provider: ImageProvider; onChange: (provider: ImageProvider) => void }) {
+  return (
+    <div className="segmented" role="radiogroup" aria-label="이미지를 만들 AI">
+      {PROVIDERS.map((p) => (
+        <button key={p} type="button" className={provider === p ? "on" : ""} onClick={() => onChange(p)}>
+          {PROVIDER_LABEL[p]}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** 스타일과 AI를 한 줄에서 고르기 (스타일 → AI 순서). AI를 바꾸면 그 AI가 그릴 수 있는 스타일로 맞춘다 */
 export function AiPicker({
   provider,
   style,
@@ -55,73 +104,55 @@ export function AiPicker({
 }) {
   return (
     <div className="ai-picker">
-      <div className="segmented" role="radiogroup" aria-label="이미지를 만들 AI">
-        {PROVIDERS.map((p) => (
-          <button key={p} type="button" className={provider === p ? "on" : ""} onClick={() => onChange(p, fitStyle(p, style))}>
-            {PROVIDER_LABEL[p]}
-          </button>
-        ))}
-      </div>
-      <select
-        className="inline-select"
-        value={style}
-        disabled={STYLES_BY_PROVIDER[provider].length === 1}
-        onChange={(e) => onChange(provider, e.target.value as ImageStyle)}
-        aria-label="이미지 스타일"
-        title={provider === "claude" ? "Claude는 플랫 일러스트만 그릴 수 있습니다" : undefined}
-      >
-        {STYLES_BY_PROVIDER[provider].map((st) => (
-          <option key={st} value={st}>
-            {STYLE_LABEL[st]}
-          </option>
-        ))}
-      </select>
+      <StylePicker provider={provider} style={style} onChange={(st) => onChange(provider, st)} />
+      <ProviderPicker provider={provider} onChange={(p) => onChange(p, fitStyle(p, style))} />
     </div>
   );
 }
 
+/** 화면에 보여 줄 만드는 방법: 키가 없으면 "API"를 골라도 서버가 크롬에서 만들므로 크롬으로 보여 준다. */
+export const shownMethod = (provider: ImageProvider, method: ImageMethod, apiStatus: ImageApiStatus | null): ImageMethod =>
+  hasImageApi(provider, apiStatus) ? method : "chrome";
+
 /**
- * 고른 AI로 만드는 버튼. Gemini/ChatGPT는 "API로"와 "크롬에서" 두 버튼을 나란히 보여 주어 누르는 버튼으로 방법을 정한다.
- * 설정에서 API 키를 연결하지 않았으면 API 버튼은 누를 수 없게 하고 툴팁으로 이유를 알려 준다.
+ * Gemini/ChatGPT 이미지를 API로 만들지 크롬에서 만들지 고르기 (새 글 쓰기와 이미지 다시 생성이 같이 쓴다).
+ * 설정에서 API 키를 연결하지 않았으면 API는 누를 수 없게 하고 툴팁으로 이유를 알려 준다.
  */
-function MakeButtons({
+export function MethodPicker({
   provider,
+  method,
   apiStatus,
-  verb,
-  disabled,
-  onMake,
+  onChange,
 }: {
   provider: ImageProvider;
+  method: ImageMethod;
   apiStatus: ImageApiStatus | null;
-  /** "다시 만들기", "만들기" 등 */
-  verb: string;
-  disabled?: boolean;
-  onMake: (method: ImageMethod) => void;
+  onChange: (method: ImageMethod) => void;
 }) {
-  const name = PROVIDER_LABEL[provider];
-  if (provider === "claude") {
-    return (
-      <button type="button" className="primary" disabled={disabled} onClick={() => onMake("api")}>
-        {name}로 {verb}
-      </button>
-    );
-  }
-  const hasApi = !!apiStatus?.[provider].configured;
-  const why = !apiStatus
-    ? "API 연결 상태를 확인하는 중입니다."
-    : `${name} API 키가 연결되어 있지 않습니다. 설정 → 이미지 API 설정에서 키를 연결하면 쓸 수 있습니다.`;
+  const hasApi = hasImageApi(provider, apiStatus);
+  const shown = shownMethod(provider, method, apiStatus);
   return (
-    <>
+    <div className="segmented" role="radiogroup" aria-label="만드는 방법">
       {/* 누를 수 없는 버튼에는 툴팁이 뜨지 않는 브라우저가 있어 감싼 요소에 툴팁을 단다 */}
-      <span className="tip-wrap" title={hasApi ? undefined : why}>
-        <button type="button" className={hasApi ? "primary" : ""} disabled={disabled || !hasApi} onClick={() => onMake("api")}>
-          {name} API로 {verb}
+      <span className="tip-wrap" title={hasApi ? undefined : noImageApiReason(provider, apiStatus)}>
+        <button type="button" className={shown === "api" ? "on" : ""} disabled={!hasApi} onClick={() => onChange("api")}>
+          {PROVIDER_LABEL[provider]} API
         </button>
       </span>
-      <button type="button" className={hasApi ? "" : "primary"} disabled={disabled} onClick={() => onMake("chrome")}>
-        크롬에서 {name}로 {verb}
+      <button type="button" className={shown === "chrome" ? "on" : ""} onClick={() => onChange("chrome")}>
+        크롬
       </button>
-    </>
+    </div>
+  );
+}
+
+/** 이미지 다시 생성 창의 한 줄: 왼쪽 이름표와 고르기 */
+function RegenRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="regen-row">
+      <span className="regen-label">{label}</span>
+      <div className="ai-picker">{children}</div>
+    </div>
   );
 }
 
@@ -140,23 +171,36 @@ export function ImageTools({ target, tools, again }: { target: string; tools: Im
   const initial = target === "thumbnail" ? tools.defaults.thumbnail : tools.defaults.body;
   const [open, setOpen] = useState(false);
   const [ai, setAi] = useState<ImageAi>(initial);
+  const [method, setMethod] = useState<ImageMethod>("api");
   const apiStatus = useImageApi();
   const runText = again ? "다시 만들기" : "만들기";
   if (open) {
     return (
       <div className="image-actions open">
-        <AiPicker provider={ai.provider} style={ai.style} onChange={(provider, style) => setAi({ provider, style })} />
+        {/* 고르는 항목마다 한 줄씩 나눠 보여 준다 */}
+        <RegenRow label="스타일">
+          <StylePicker provider={ai.provider} style={ai.style} onChange={(style) => setAi({ ...ai, style })} />
+        </RegenRow>
+        <RegenRow label="만드는 곳">
+          <ProviderPicker provider={ai.provider} onChange={(provider) => setAi({ provider, style: fitStyle(provider, ai.style) })} />
+        </RegenRow>
+        {ai.provider !== "claude" && (
+          <RegenRow label="만드는 방법">
+            <MethodPicker provider={ai.provider} method={method} apiStatus={apiStatus} onChange={setMethod} />
+          </RegenRow>
+        )}
         <div className="retry-actions">
-          <MakeButtons
-            provider={ai.provider}
-            apiStatus={apiStatus}
-            verb={runText}
+          <button
+            type="button"
+            className="primary"
             disabled={tools.disabled}
-            onMake={(method) => {
+            onClick={() => {
               setOpen(false);
-              tools.onRegenerate(target, { ...ai, method });
+              tools.onRegenerate(target, { ...ai, method: ai.provider === "claude" ? "api" : shownMethod(ai.provider, method, apiStatus) });
             }}
-          />
+          >
+            이미지 {runText}
+          </button>
           <button type="button" className="ghost" onClick={() => setOpen(false)}>
             취소
           </button>
@@ -172,6 +216,7 @@ export function ImageTools({ target, tools, again }: { target: string; tools: Im
         disabled={tools.disabled}
         onClick={() => {
           setAi(initial);
+          setMethod("api");
           setOpen(true);
         }}
       >
@@ -215,7 +260,7 @@ export function PreviewImage({
   return (
     <figure className={`pv-image ${thumbnail ? "thumb" : ""}`}>
       {spec.file ? (
-        <img src={`/api/images/${jobId}/${encodeURIComponent(spec.file)}`} alt={spec.alt} />
+        <img src={imageUrl(jobId, spec.file)} alt={spec.alt} />
       ) : (
         <FailedPlaceholder spec={spec} generating={generating} />
       )}

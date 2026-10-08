@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { MAX_TAGS, bodyImageKey, type ImageSpec, type Post, type PostBlock } from "../../shared/types";
 import { FailedPlaceholder, ImageTools, type ImageToolsProps } from "./images";
+import { imageUrl } from "../api";
 
 // ───────────────────────── 편집기 ─────────────────────────
 
@@ -74,7 +75,7 @@ function ImageEditor({
   return (
     <div className="image-editor">
       {spec.file ? (
-        <img src={`/api/images/${jobId}/${encodeURIComponent(spec.file)}`} alt={spec.alt} />
+        <img src={imageUrl(jobId, spec.file)} alt={spec.alt} />
       ) : (
         <FailedPlaceholder spec={spec} />
       )}

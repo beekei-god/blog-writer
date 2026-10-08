@@ -137,7 +137,7 @@ ${input.notes}
 ${sourceList || "(없음)"}`;
 
   const raw = await runClaude<unknown>({
-    system: BASE_SYSTEM(input.rules, input.today) + imageInstructions(input.options),
+    system: systemFor(input),
     prompt,
     schema: POST_JSON_SCHEMA,
     effort: "high",
@@ -146,7 +146,7 @@ ${sourceList || "(없음)"}`;
     jobId: input.jobId,
   });
 
-  let parsed = PostSchema.omit({ tags: true }).parse(raw);
+  let parsed = ParsedPostSchema.parse(raw);
 
   parsed = await enforceLength(parsed, input, onProgress);
   const finalChars = countBodyChars(parsed);
@@ -174,6 +174,9 @@ ${sourceList || "(없음)"}`;
 }
 
 type ParsedPost = Omit<Post, "tags">;
+/** 모델이 내는 글 (태그는 tagDetails에서 따로 정한다) */
+const ParsedPostSchema = PostSchema.omit({ tags: true });
+const systemFor = (input: Pick<WriteInput, "rules" | "today" | "options">) => BASE_SYSTEM(input.rules, input.today) + imageInstructions(input.options);
 
 /** "최종 업데이트: 2026.10.04" 같은 날짜 표시줄. 글쓰기 규칙에서 금지했지만 모델이 쓰더라도 본문에서 뺀다. */
 const UPDATE_LINE = /^(최종|마지막)?\s*(업데이트|수정|갱신|작성|확인)\s*(일|날짜|일자)?\s*[:：]?\s*\d{4}\s*[.\-/년]/;
@@ -192,7 +195,7 @@ export async function enforceLength(
     if (chars <= MAX_BODY_CHARS) break;
     onProgress(`본문 ${chars.toLocaleString()}자 → ${MAX_BODY_CHARS.toLocaleString()}자 이내로 줄이는 중 (${attempt}차)`);
     const shortened = await runClaude<unknown>({
-      system: BASE_SYSTEM(input.rules, input.today) + imageInstructions(input.options),
+      system: systemFor(input),
       prompt: `아래 블로그 글(JSON)의 본문이 공백 포함 ${chars.toLocaleString()}자로, 상한 ${MAX_BODY_CHARS.toLocaleString()}자를 넘습니다.
 2,500자 안팎이 되도록 줄여서 같은 JSON 구조로 다시 내 주세요.
 - 글자수는 "참고 자료" 소제목 앞까지만, 공백 포함으로 셉니다.
@@ -208,7 +211,7 @@ ${JSON.stringify(parsed)}`,
       stage: "writing",
       jobId: input.jobId,
     });
-    parsed = PostSchema.omit({ tags: true }).parse(shortened);
+    parsed = ParsedPostSchema.parse(shortened);
   }
   return parsed;
 }

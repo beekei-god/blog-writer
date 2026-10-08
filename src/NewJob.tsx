@@ -1,17 +1,17 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   fitStyle,
   MAX_BODY_IMAGES,
+  MAX_LINKS,
   methodFor,
-  STYLES_BY_PROVIDER,
   type ImageMethod,
   type ImageOptions,
   type ImageProvider,
   type ImageStyle,
 } from "../shared/types";
 import { api, type ImageApiStatus } from "./api";
-import { useImageApi } from "./job/images";
-import { errorText, PROVIDER_HINT, PROVIDER_LABEL, STYLE_LABEL } from "./labels";
+import { MethodPicker, ProviderPicker, shownMethod, StylePicker, useImageApi } from "./job/images";
+import { errorText, PROVIDER_HINT, PROVIDER_LABEL } from "./labels";
 
 interface Props {
   topic: string;
@@ -22,7 +22,6 @@ interface Props {
   onOpenRecommend: () => void;
 }
 
-const MAX_LINKS = 20; // 서버(POST /api/jobs)와 같은 상한
 
 /** 서버 검사와 같은 기준: http(s)로 시작하는 올바른 URL */
 const isHttpUrl = (s: string) => {
@@ -53,12 +52,19 @@ export function NewJob({ topic, links, onTopicChange, onLinksChange, onCreated, 
   });
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  // 사용자가 이미지 옵션을 이미 바꿨으면 늦게 도착한 저장값으로 덮어쓰지 않는다.
+  const touched = useRef(false);
+  const change = (fn: (o: ImageOptions) => ImageOptions) => {
+    touched.current = true;
+    setImages(fn);
+  };
 
   // 마지막으로 쓴 이미지 옵션을 기본값으로 (썸네일은 항상 켬)
   useEffect(() => {
     api
       .getSettings()
       .then((s) => {
+        if (touched.current) return;
         const o = s.images;
         const tp = o.thumbnailProvider ?? o.provider;
         const ts = o.thumbnailStyle ?? o.style;
@@ -67,16 +73,17 @@ export function NewJob({ topic, links, onTopicChange, onLinksChange, onCreated, 
       .catch(() => {});
   }, []);
 
-  const setBodyImages = (n: number) => setImages({ ...images, bodyImages: Math.min(MAX_BODY_IMAGES, Math.max(0, n)) });
+  const setBodyImages = (n: number) => change((o) => ({ ...o, bodyImages: Math.min(MAX_BODY_IMAGES, Math.max(0, n)) }));
   // 썸네일과 본문 이미지는 서로 영향을 주지 않는다 (한쪽을 바꿔도 다른 쪽은 그대로).
   const setBodyAi = (provider: ImageProvider, style: ImageStyle, method: ImageMethod) =>
-    setImages((o) => ({ ...o, provider, style, method }));
+    change((o) => ({ ...o, provider, style, method }));
   const setThumbAi = (provider: ImageProvider, style: ImageStyle, method: ImageMethod) =>
-    setImages((o) => ({ ...o, thumbnailProvider: provider, thumbnailStyle: style, thumbnailMethod: method }));
+    change((o) => ({ ...o, thumbnailProvider: provider, thumbnailStyle: style, thumbnailMethod: method }));
+  // 만드는 방법은 Gemini·ChatGPT에만 있으므로 Claude끼리는 방법을 비교하지 않는다.
   const thumbSame =
     images.thumbnailProvider === images.provider &&
     images.thumbnailStyle === images.style &&
-    methodFor(images, "thumbnail") === methodFor(images, "body");
+    (images.provider === "claude" || methodFor(images, "thumbnail") === methodFor(images, "body"));
   const apiStatus = useImageApi();
 
   const linkList = links.split("\n").map((l) => l.trim()).filter(Boolean);
@@ -151,7 +158,10 @@ export function NewJob({ topic, links, onTopicChange, onLinksChange, onCreated, 
           <div className="option-row">
             <span>썸네일(대표 이미지)</span>
             <label className="switch">
-              <input type="checkbox" checked={images.thumbnail} onChange={(e) => setImages({ ...images, thumbnail: e.target.checked })} />
+              <input type="checkbox" checked={images.thumbnail} onChange={(e) => {
+                const thumbnail = e.target.checked;
+                change((o) => ({ ...o, thumbnail }));
+              }} />
               <span>{images.thumbnail ? "만들기" : "안 만들기"}</span>
             </label>
           </div>
@@ -232,66 +242,29 @@ function AiRows({
   apiStatus: ImageApiStatus | null;
   onChange: (provider: ImageProvider, style: ImageStyle, method: ImageMethod) => void;
 }) {
-  // 키가 없으면 "API"를 골라도 서버가 크롬에서 만들므로 화면도 크롬으로 보여 준다.
-  const hasApi = provider !== "claude" && !!apiStatus?.[provider].configured;
-  const shown: ImageMethod = hasApi ? method : "chrome";
+  const shown = shownMethod(provider, method, apiStatus);
   const name = PROVIDER_LABEL[provider];
-  const noApiWhy = !apiStatus
-    ? "API 연결 상태를 확인하는 중입니다."
-    : `${name} API 키가 연결되어 있지 않습니다. 설정 → 이미지 API 설정에서 키를 연결하면 쓸 수 있습니다.`;
   return (
     <div className="ai-rows">
       <div className="option-row">
+        <span>{title} 스타일</span>
+        <StylePicker provider={provider} style={style} onChange={(st) => onChange(provider, st, method)} />
+      </div>
+      <div className="option-row">
         <span>{title} 만드는 곳</span>
-        <div className="segmented">
-          {(Object.keys(PROVIDER_LABEL) as ImageProvider[]).map((p) => (
-            <button type="button" key={p} className={provider === p ? "on" : ""} onClick={() => onChange(p, style, method)}>
-              {PROVIDER_LABEL[p]}
-            </button>
-          ))}
-        </div>
+        <ProviderPicker provider={provider} onChange={(p) => onChange(p, style, method)} />
       </div>
       {provider !== "claude" && (
         <div className="option-row">
           <span>{title} 만드는 방법</span>
-          <div className="segmented">
-            {/* 누를 수 없는 버튼에는 툴팁이 뜨지 않는 브라우저가 있어 감싼 요소에 툴팁을 단다 */}
-            <span className="tip-wrap" title={hasApi ? undefined : noApiWhy}>
-              <button type="button" className={shown === "api" ? "on" : ""} disabled={!hasApi} onClick={() => onChange(provider, style, "api")}>
-                {name} API
-              </button>
-            </span>
-            <button type="button" className={shown === "chrome" ? "on" : ""} onClick={() => onChange(provider, style, "chrome")}>
-              크롬
-            </button>
-          </div>
+          <MethodPicker provider={provider} method={method} apiStatus={apiStatus} onChange={(m) => onChange(provider, style, m)} />
         </div>
       )}
       <p className="hint small">
-        {provider !== "claude" && shown === "api"
+        {shown === "api"
           ? `${name} API로 만듭니다. 크롬을 쓰지 않아 다른 작업과 동시에 만들 수 있고, API 사용 요금이 듭니다.`
           : PROVIDER_HINT[provider]}
       </p>
-      <div className="option-row">
-        <span>{title} 스타일</span>
-        <div className="segmented">
-          {(Object.keys(STYLE_LABEL) as ImageStyle[]).map((st) => {
-            const allowed = STYLES_BY_PROVIDER[provider].includes(st);
-            return (
-              <button
-                type="button"
-                key={st}
-                className={style === st ? "on" : ""}
-                disabled={!allowed}
-                title={allowed ? undefined : "Gemini 또는 ChatGPT에서 고를 수 있습니다"}
-                onClick={() => onChange(provider, st, method)}
-              >
-                {STYLE_LABEL[st]}
-              </button>
-            );
-          })}
-        </div>
-      </div>
       {provider === "claude" && <p className="hint small">Claude는 플랫 일러스트만 그릴 수 있습니다.</p>}
       {style === "ghibli" && (
         <p className="hint small">지브리풍은 서비스 정책 때문에 거절될 수 있습니다. 거절되면 초안 화면에서 다른 스타일로 다시 만들 수 있습니다.</p>

@@ -2,6 +2,7 @@ import { chromium, type BrowserContext, type Page } from "playwright-core";
 import type { Post, PostSettings } from "../../shared/types";
 import { CHROME_PROFILE_DIR, DATA_DIR } from "../store";
 import { ADAPTERS } from "./adapters";
+import type { PublishRequest } from "./publish";
 import { closeLoginWindow, isLoginWindowOpen } from "./loginWindow";
 import { CURSOR_OVERLAY_SCRIPT, HumanMouse } from "./mouse";
 
@@ -30,7 +31,7 @@ export async function closeAutomationWindow() {
  * 같은 프로필을 두 번 열 수 없으므로 호출자는 직렬로 실행해야 한다.
  * keepOpen=true면 작업 후에도 창을 남겨 사용자가 결과를 확인/발행할 수 있게 한다.
  */
-export async function withChrome<T>(
+async function withChrome<T>(
   fn: (s: ChromeSession) => Promise<T>,
   opts: { keepOpen?: boolean; log?: (m: string) => void } = {},
 ): Promise<T> {
@@ -83,10 +84,10 @@ async function runWithChrome<T>(fn: (s: ChromeSession) => Promise<T>, opts: { ke
   }
 }
 
-export function postWithChrome(post: Post, jobId: string, settings: PostSettings, log: (m: string) => void) {
+export function postWithChrome(post: Post, jobId: string, settings: PostSettings, log: (m: string) => void, publish?: PublishRequest) {
   if (settings.platform === "wordpress") throw new Error("워드프레스는 크롬이 아니라 REST API로 올립니다.");
   const adapter = ADAPTERS[settings.platform];
-  return withChrome(({ page, mouse }) => adapter({ page, mouse, post, jobId, settings, log }), {
+  return withChrome(({ page, mouse }) => adapter({ page, mouse, post, jobId, settings, log, publish }), {
     keepOpen: true,
     log,
   });

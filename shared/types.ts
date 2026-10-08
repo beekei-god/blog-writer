@@ -13,9 +13,12 @@ export const STYLES_BY_PROVIDER: Record<ImageProvider, ImageStyle[]> = {
 };
 
 export const MAX_BODY_IMAGES = 6;
+/** 네이버 예약 발행은 분을 10분 단위로만 고를 수 있다 */
+export const NAVER_MINUTE_STEP = 10;
+/** 새 글의 참고 링크 최대 개수 */
+export const MAX_LINKS = 20;
 
-/** 이미지를 다시 만들 범위: 전부 / 아직 파일이 없는 것(실패) / 썸네일만 */
-/** body-<블록 번호>: 본문 이미지 한 장만 */
+/** 이미지를 다시 만들 범위: 전부 / 아직 파일이 없는 것(실패) / 썸네일만 / body-<블록 번호>: 본문 이미지 한 장만 */
 export type ImageScope = "all" | "failed" | "thumbnail" | `body-${number}`;
 
 /** Gemini/ChatGPT 이미지를 만드는 방법. api: API 키가 있으면 API로(없으면 크롬), chrome: 크롬(Claude in Chrome)에서 직접 */
@@ -218,6 +221,17 @@ export interface Post {
   blocks: PostBlock[];
 }
 
+/** 키("thumbnail" 또는 "body-<블록 번호>")가 가리키는 이미지. 없으면 undefined */
+export function imageSpecAt(post: Post | undefined, key: string): ImageSpec | undefined {
+  if (key === "thumbnail") return post?.thumbnail;
+  const b = post?.blocks[bodyIndexOf(key) ?? -1];
+  return b?.type === "image" ? b : undefined;
+}
+
+/** 글의 모든 이미지: 썸네일(있으면) 다음에 본문 이미지 순서 */
+export const imageSpecsOf = (post: Post): ImageSpec[] =>
+  [post.thumbnail, ...post.blocks.filter((b) => b.type === "image")].filter(Boolean) as ImageSpec[];
+
 export type SourceKind = "official" | "press" | "blog" | "other";
 
 export interface Source {
@@ -235,7 +249,7 @@ export type JobStatus =
   | "posted"
   /** 워드프레스 API로 예약 발행을 걸어 둔 상태 (예약 시각에 사이트가 공개한다) */
   | "scheduled"
-  /** 사용자가 블로그에서 직접 발행한 뒤 "발행 완료"로 표시한 상태 (앱은 발행하지 않는다) */
+  /** 사용자가 블로그에서 직접 발행한 뒤 "블로그 발행완료"로 표시한 상태 (앱은 발행하지 않는다) */
   | "published"
   | "failed";
 
@@ -255,6 +269,12 @@ export interface WordPressRecord {
 
 export const BUSY_STATUSES: JobStatus[] = ["researching", "writing", "generating_images", "posting"];
 
+/** 사용자가 직접 고를 수 있는 글 상태 (앱이 블로그에 올리거나 발행하지는 않고 표시만 바꾼다) */
+export const MANUAL_STATUSES = ["draft_ready", "posted", "published"] as const;
+export type ManualStatus = (typeof MANUAL_STATUSES)[number];
+/** 이 상태(초안 검토 이후)의 글만 상태를 직접 바꿀 수 있다 */
+export const canSetStatus = (status: JobStatus) => (["draft_ready", "posted", "scheduled", "published"] as JobStatus[]).includes(status);
+
 export interface Job {
   id: string;
   topic: string;
@@ -263,7 +283,7 @@ export interface Job {
   status: JobStatus;
   /** 이 작업을 만들 때 선택한 이미지 옵션 */
   imageOptions: ImageOptions;
-  /** 블로그에 올리는 중(status "posting")일 때 올리는 블로그. 화면 라벨이 크롬 작성인지 워드프레스 등록인지 구분한다 */
+  /** 블로그에 올리는 중(status "posting")일 때 올리는 블로그. 화면 안내 문구가 크롬 작성인지 워드프레스 등록인지 구분한다 */
   postingTo?: Platform;
   /** 지금 만들고 있는 이미지 ("thumbnail" 또는 "body-<블록 번호>"). 화면에서 그 이미지만 진행 중으로 보인다 */
   generatingImages?: string[];

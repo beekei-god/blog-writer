@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { BUSY_STATUSES, aiFor, type ImageProvider, type ImageStyle, type Job, type Platform, type Post, type PublishMode } from "../../shared/types";
+import { BUSY_STATUSES, aiFor, canSetStatus, type ImageProvider, type ImageStyle, type Job, type Platform, type Post, type PublishMode } from "../../shared/types";
 import { countBodyChars, MAX_BODY_CHARS } from "../../shared/length";
 import { PLATFORM_LABEL } from "../../shared/labels";
 import { api } from "../api";
@@ -7,9 +7,9 @@ import { ExtensionStatus } from "../ExtensionStatus";
 import { LoginWindow } from "../LoginWindow";
 import { errorText } from "../labels";
 import { JobUsage } from "./JobUsage";
-import { NextStep } from "./NextStep";
+import { NextStep, StatusPicker } from "./NextStep";
 import { PostEditor } from "./PostEditor";
-import { CopyBar, Preview } from "./Preview";
+import { Preview } from "./Preview";
 import { Progress } from "./Progress";
 import { Report } from "./Report";
 import { AiPicker, type ImageToolsProps } from "./images";
@@ -192,6 +192,9 @@ export function JobDetail({ job, ready, onChange, onDeleted, onOpenSettings }: P
       </header>
 
       <Progress job={job} />
+      {draft && !busy && canSetStatus(job.status) && (
+        <StatusPicker status={job.status} onSetStatus={(status) => run(() => api.setStatus(job.id, status))} />
+      )}
 
       {busy && lastLog && (
         <p className="current-activity">
@@ -242,7 +245,6 @@ export function JobDetail({ job, ready, onChange, onDeleted, onOpenSettings }: P
         onPost={postToBlog}
         onRetry={retry}
         onOpenSettings={onOpenSettings}
-        onSetStatus={(status) => run(() => api.setStatus(job.id, status))}
       />
 
       <details className="logs">
@@ -272,8 +274,6 @@ export function JobDetail({ job, ready, onChange, onDeleted, onOpenSettings }: P
               {chars > MAX_BODY_CHARS && " · 분량 초과"}
             </span>
           </div>
-
-          <CopyBar post={draft} />
 
           {!draft.thumbnail && !busy && (
             <div className="thumb-missing">

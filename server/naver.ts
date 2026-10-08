@@ -1,3 +1,5 @@
+import { sleep } from "./fsutil";
+
 /** 네이버 검색 자동완성 (공개 엔드포인트). 실패하면 빈 배열을 돌려준다. */
 export async function naverAutocomplete(query: string): Promise<string[]> {
   const url =
@@ -28,7 +30,7 @@ function expandQueries(keyword: string): string[] {
 }
 
 /** 여러 키워드의 자동완성을 한 번에 모은다. 결과가 없는 검색어는 빼고 돌려준다. */
-export async function collectAutocomplete(keywords: string[]): Promise<Record<string, string[]>> {
+async function collectAutocomplete(keywords: string[]): Promise<Record<string, string[]>> {
   const queries = [...new Set(keywords.flatMap(expandQueries))].slice(0, 20);
   const results = await Promise.all(queries.map(async (q) => [q, await naverAutocomplete(q)] as const));
   return Object.fromEntries(results.filter(([, items]) => items.length > 0));
@@ -42,7 +44,7 @@ const BROWSER_UA =
  * 공개 API가 아니라 검색 화면 내부 요청이다: 검색 결과 HTML에 들어 있는 요청 주소를 꺼내 다시 호출한다.
  * 네이버가 검색어별로 이 영역을 끄기도 해서(disabled by manager) 빈 배열이 정상일 수 있다.
  */
-export async function naverRelated(query: string): Promise<string[]> {
+async function naverRelated(query: string): Promise<string[]> {
   try {
     const page = await fetch(`https://search.naver.com/search.naver?query=${encodeURIComponent(query)}`, {
       headers: { "User-Agent": BROWSER_UA, "Accept-Language": "ko-KR,ko;q=0.9" },
@@ -73,7 +75,6 @@ export interface NaverSuggestions {
   related: Record<string, string[]>;
 }
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /** 자동완성 + 함께 많이 찾는. 함께 많이 찾는은 검색 페이지를 받아야 해서 키워드 원형만, 천천히 차례로 조회한다. */
 export async function collectNaverSuggestions(keywords: string[]): Promise<NaverSuggestions> {

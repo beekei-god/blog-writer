@@ -32,6 +32,16 @@ describe("generateWithWebAi: Claude가 failed로 보고해도", () => {
     expect(fs.existsSync(file)).toBe(true);
   }, 30_000);
 
+  it("사이트가 오류 안내를 보였으면 site_error로 실패한다", async () => {
+    claude.result = { ...failed, message: 'Gemini에 요청을 보냈지만 "문제가 발생했습니다 (1155)" 오류가 나서 이미지가 생성되지 않았습니다.' };
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const p = generateWithWebAi("gemini", "p", "flat", outBase, { log: () => {} });
+    const assertion = expect(p).rejects.toMatchObject({ kind: "site_error" });
+    await vi.advanceTimersByTimeAsync(25_000);
+    await assertion;
+    vi.useRealTimers();
+  }, 30_000);
+
   it("파일이 없으면 ui_changed로 실패한다", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     const p = generateWithWebAi("gemini", "p", "flat", outBase, { log: () => {} });

@@ -36,13 +36,8 @@ export async function resetRules(): Promise<Rules> {
   return getRules();
 }
 
+/** 한국 시간 기준 날짜 (YYYY-MM-DD) */
+export const kstDate = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul" }).format(d);
+
 /** 한국 시간 기준 오늘 날짜 (YYYY.MM.DD) */
-export function todayKST(): string {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Seoul",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date());
-  return parts.replaceAll("-", ".");
-}
+export const todayKST = () => kstDate(new Date()).replaceAll("-", ".");

@@ -20,20 +20,22 @@ const TABS: { view: View; label: string }[] = [
   { view: "settings", label: "설정" },
 ];
 
-/** "내 글" 목록의 상태 필터. busy는 진행 중인 상태(BUSY_STATUSES) 전체 */
-type StatusFilter = "all" | "busy" | "draft_ready" | "posted" | "scheduled" | "published" | "failed";
+/** "내 글" 목록의 상태 필터. 글 작성 단계별로 묶는다 (실패한 글은 "전체"에서만 보인다) */
+type StatusFilter = "all" | "researching" | "draft" | "saved" | "published";
 
-const FILTERS: { key: StatusFilter; label: string }[] = [
+const FILTERS: { key: StatusFilter; label: string; statuses?: Job["status"][] }[] = [
   { key: "all", label: "전체" },
-  { key: "busy", label: "진행 중" },
-  { key: "draft_ready", label: "초안 완료" },
-  { key: "posted", label: "임시저장 완료" },
-  { key: "scheduled", label: "예약됨" },
-  { key: "published", label: "발행 완료" },
-  { key: "failed", label: "실패" },
+  // 초안이 나오기 전 (자료 조사·글 작성·이미지 생성 중)
+  { key: "researching", label: "자료 조사 중", statuses: ["researching", "writing", "generating_images"] },
+  { key: "draft", label: "초안 검토", statuses: ["draft_ready"] },
+  { key: "saved", label: "임시 저장", statuses: ["posting", "posted"] },
+  { key: "published", label: "발행 완료", statuses: ["scheduled", "published"] },
 ];
 
-const matchesFilter = (j: Job, f: StatusFilter) => (f === "all" ? true : f === "busy" ? BUSY_STATUSES.includes(j.status) : j.status === f);
+const matchesFilter = (j: Job, f: StatusFilter) => {
+  const statuses = FILTERS.find((x) => x.key === f)?.statuses;
+  return !statuses || statuses.includes(j.status);
+};
 
 function shortDate(iso: string) {
   const d = new Date(iso);

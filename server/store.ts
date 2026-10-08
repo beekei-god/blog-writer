@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
-import { keyedQueue, writeJsonAtomic } from "./fsutil";
+import { keyedQueue, readJson, writeJsonAtomic } from "./fsutil";
 import { BUSY_STATUSES, RECOMMENDED_MODELS } from "../shared/types";
 import type { ImageOptions, Job, Settings } from "../shared/types";
 
@@ -55,13 +55,7 @@ export function saveSettings(s: Settings) {
 
 const jobFile = (id: string) => path.join(JOBS_DIR, `${path.basename(id)}.json`);
 
-export async function getJob(id: string): Promise<Job | null> {
-  try {
-    return JSON.parse(await fs.readFile(jobFile(id), "utf8"));
-  } catch {
-    return null;
-  }
-}
+export const getJob = (id: string) => readJson<Job | null>(jobFile(id), null);
 
 export async function listJobs(): Promise<Job[]> {
   await fs.mkdir(JOBS_DIR, { recursive: true });
@@ -81,10 +75,12 @@ export async function listJobs(): Promise<Job[]> {
 }
 
 export const jobImageDir = (id: string) => path.join(IMAGES_DIR, path.basename(id));
+/** 작업 이미지 폴더 안의 파일 경로 (파일명은 basename으로 제한해 폴더 밖을 가리키지 않는다) */
+export const jobImagePath = (id: string, file: string) => path.join(jobImageDir(id), path.basename(file));
 
 /** 이미지를 새 파일로 바꾼 뒤 예전 파일을 지운다 (이미지 폴더 밖은 건드리지 않는다). */
 export const removeImageFile = (jobId: string, file: string) =>
-  fs.rm(path.join(jobImageDir(jobId), path.basename(file)), { force: true }).catch(() => {});
+  fs.rm(jobImagePath(jobId, file), { force: true }).catch(() => {});
 
 export async function createJob(
   topic: string,

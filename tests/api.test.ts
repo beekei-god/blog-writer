@@ -69,10 +69,16 @@ describe("블로그 등록 요청 검사", () => {
     const id = await draftJob();
     expect((await call("POST", `/api/jobs/${id}/post-to-blog`, {})).body.error).toBe("올릴 블로그를 선택하세요.");
   });
-  it("크롬으로 올리는 블로그는 임시저장만", async () => {
+  it("네이버·티스토리 예약발행: 과거 시각, 네이버는 10분 단위", async () => {
+    await saveSettings({ ...(await getSettings()), naverBlogId: "nid" });
     const id = await draftJob();
-    const r = await call("POST", `/api/jobs/${id}/post-to-blog`, { platform: "naver", mode: "publish" });
-    expect(r).toEqual({ status: 400, body: { error: "예약발행·자동발행은 워드프레스에서만 쓸 수 있습니다." } });
+    const past = await call("POST", `/api/jobs/${id}/post-to-blog`, { platform: "naver", mode: "schedule", scheduledAt: new Date().toISOString() });
+    expect(past.body.error).toContain("1분 이상");
+    const at = new Date(Date.now() + 86_400_000);
+    at.setUTCMinutes(5, 0, 0);
+    const odd = await call("POST", `/api/jobs/${id}/post-to-blog`, { platform: "naver", mode: "schedule", scheduledAt: at.toISOString() });
+    expect(odd.body.error).toBe("네이버 예약 시각은 10분 단위로 고를 수 있습니다.");
+    expect((await getJob(id))?.status).toBe("draft_ready");
   });
   it("블로그 ID가 없으면 거절", async () => {
     const id = await draftJob();
@@ -94,15 +100,24 @@ describe("블로그 등록 요청 검사", () => {
 });
 
 describe("수기 상태 변경", () => {
-  it("허용된 전이만", async () => {
+  it("초안 검토 이후의 글은 초안 검토·임시저장 완료·발행완료 사이를 오갈 수 있다", async () => {
     const id = await draftJob();
-    expect((await call("PUT", `/api/jobs/${id}/status`, { status: "published" })).body.error).toBe("초안 완료 상태의 글은 발행 완료(으)로 바꿀 수 없습니다.");
-    await updateJob(id, (j) => void (j.status = "posted"));
     const r = await call("PUT", `/api/jobs/${id}/status`, { status: "published" });
     expect(r.status).toBe(200);
     expect(r.body.status).toBe("published");
-    expect((await getJob(id))?.logs.at(-1)?.message).toBe("발행 완료로 표시했습니다.");
+    expect((await getJob(id))?.logs.at(-1)?.message).toBe("블로그 발행완료로 표시했습니다.");
+    expect((await call("PUT", `/api/jobs/${id}/status`, { status: "posted" })).body.status).toBe("posted");
+    expect((await getJob(id))?.logs.at(-1)?.message).toBe("블로그 임시저장 완료로 표시했습니다.");
     expect((await call("PUT", `/api/jobs/${id}/status`, { status: "draft_ready" })).body.status).toBe("draft_ready");
+    expect((await call("PUT", `/api/jobs/${id}/status`, { status: "posted" })).body.status).toBe("posted");
+    await updateJob(id, (j) => void (j.status = "scheduled"));
+    expect((await call("PUT", `/api/jobs/${id}/status`, { status: "posted" })).body.status).toBe("posted");
+  });
+  it("같은 상태나 초안 검토 전의 글은 거절", async () => {
+    const id = await draftJob();
+    expect((await call("PUT", `/api/jobs/${id}/status`, { status: "draft_ready" })).body.error).toBe("초안 검토 상태의 글은 초안 검토(으)로 바꿀 수 없습니다.");
+    await updateJob(id, (j) => void (j.status = "failed"));
+    expect((await call("PUT", `/api/jobs/${id}/status`, { status: "published" })).body.error).toBe("실패 상태의 글은 블로그 발행완료(으)로 바꿀 수 없습니다.");
   });
   it("수기로 바꿀 수 없는 상태 값", async () => {
     const id = await draftJob("posted");

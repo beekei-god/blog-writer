@@ -6,12 +6,12 @@ import path from "node:path";
  * Claude in Chrome 확장 프로그램 (https://claude.ai/chrome).
  * 블로그 작성과 Gemini·ChatGPT 이미지 생성은 모두 이 확장 프로그램으로, 사용자가 평소 쓰는 크롬에서 진행한다.
  */
-export const EXTENSION_ID = "fcoeoabgfenejglbffodgkkbkcdhcgfn";
+const EXTENSION_ID = "fcoeoabgfenejglbffodgkkbkcdhcgfn";
 export const INSTALL_URL = "https://claude.ai/chrome";
 
 export type ExtensionProblem = "not_installed" | "not_connected";
 
-export const EXTENSION_HELP: Record<ExtensionProblem, string> = {
+const EXTENSION_HELP: Record<ExtensionProblem, string> = {
   not_installed:
     "Claude in Chrome 확장 프로그램이 설치되어 있지 않습니다. 크롬에서 https://claude.ai/chrome 을 열어 설치하고, Claude Code와 같은 Claude 계정으로 로그인하세요.",
   not_connected:
@@ -44,7 +44,7 @@ function chromeUserDataDir(): string {
 }
 
 /** 확장 프로그램이 설치되어 켜져 있는 크롬 프로필 이름들 (설치 여부만 파일로 확인, 연결 여부는 알 수 없음) */
-export async function installedProfiles(): Promise<string[]> {
+async function installedProfiles(): Promise<string[]> {
   const base = chromeUserDataDir();
   let names: string[] = [];
   try {

@@ -1,10 +1,32 @@
 import { useState } from "react";
-import type { Job, Platform, PublishMode } from "../../shared/types";
-import { PLATFORM_LABEL } from "../../shared/labels";
+import { MANUAL_STATUSES, NAVER_MINUTE_STEP, type Job, type ManualStatus, type Platform, type PublishMode } from "../../shared/types";
+import { PLATFORM_LABEL, PUBLISH_MODE_LABEL } from "../../shared/labels";
 import { STATUS_LABEL, statusLabel } from "../labels";
 
-function confirmRevert(set: (status: "draft_ready") => void) {
-  if (confirm("초안 완료 상태로 되돌릴까요?\n블로그에 이미 저장·발행된 글은 그대로 남습니다.")) set("draft_ready");
+
+/**
+ * 초안 검토 이후의 글 상태를 직접 바꾼다 (앱이 블로그에 올리거나 발행하지는 않는다).
+ * 초안 검토로 되돌릴 때는 블로그에 올라간 글은 그대로이니 확인을 받는다.
+ */
+export function StatusPicker({ status, onSetStatus }: { status: Job["status"]; onSetStatus: (status: ManualStatus) => void }) {
+  const pick = (s: ManualStatus) => {
+    if (s === status) return;
+    if (s === "draft_ready" && !confirm("초안 검토 상태로 되돌릴까요?\n블로그에 이미 저장·발행된 글은 그대로 남습니다.")) return;
+    onSetStatus(s);
+  };
+  return (
+    <div className="option-row status-picker">
+      <span className="field-label">글 상태</span>
+      <div className="segmented" role="radiogroup" aria-label="글 상태">
+        {MANUAL_STATUSES.map((s) => (
+          <button key={s} type="button" className={status === s ? "on" : ""} onClick={() => pick(s)}>
+            {STATUS_LABEL[s]}
+          </button>
+        ))}
+      </div>
+      {status === "scheduled" && <span className="hint small">지금은 {STATUS_LABEL.scheduled} 상태입니다.</span>}
+    </div>
+  );
 }
 
 export function NextStep({
@@ -17,7 +39,6 @@ export function NextStep({
   onPost,
   onRetry,
   onOpenSettings,
-  onSetStatus,
 }: {
   job: Job;
   hasDraft: boolean;
@@ -29,7 +50,6 @@ export function NextStep({
   onPost: (opts?: { mode?: PublishMode; scheduledAt?: string }) => void;
   onRetry: () => void;
   onOpenSettings: () => void;
-  onSetStatus: (status: "draft_ready" | "posted" | "published") => void;
 }) {
   if (busy) {
     const msg =
@@ -69,14 +89,6 @@ export function NextStep({
               </p>
             )}
           </div>
-          {registered && (
-            <div className="actions">
-              <button className="primary" onClick={() => onSetStatus("published")}>
-                발행 완료로 표시
-              </button>
-              <button onClick={() => confirmRevert(onSetStatus)}>초안 완료로 되돌리기</button>
-            </div>
-          )}
         </div>
       </>
     );
@@ -85,7 +97,7 @@ export function NextStep({
     return (
       <>
         {destPicker}
-        <WordPressNext job={job} blogReady={blogReady} onPost={onPost} onSetStatus={onSetStatus} onOpenSettings={onOpenSettings} />
+        <WordPressNext job={job} blogReady={blogReady} onPost={onPost} onOpenSettings={onOpenSettings} />
       </>
     );
   }
@@ -93,10 +105,8 @@ export function NextStep({
     return (
       <div className="next-step ok">
         <div>
-          <b>발행 완료된 글입니다.</b>{" "}
-          {job.wordpress
-            ? "워드프레스에 발행했거나 발행 완료로 표시한 글입니다."
-            : "앱은 발행하지 않으며, 블로그에서 직접 발행한 것을 표시한 상태입니다."}
+          <b>블로그 발행완료된 글입니다.</b>{" "}
+          {job.wordpress ? "워드프레스에 발행했거나 블로그 발행완료로 표시한 글입니다." : "블로그에 발행했거나 블로그 발행완료로 표시한 글입니다."}
           {job.wordpress?.link && (
             <>
               {" "}
@@ -106,27 +116,67 @@ export function NextStep({
             </>
           )}
         </div>
-        <div className="actions">
-          <button onClick={() => onSetStatus("posted")}>발행 완료 취소</button>
-          <button onClick={() => confirmRevert(onSetStatus)}>초안 완료로 되돌리기</button>
-        </div>
       </div>
     );
   }
   return (
     <>
-    {destPicker}
-    <div className={`next-step ${job.status === "posted" ? "ok" : ""}`}>
+      {destPicker}
+      <ChromeBlogNext job={job} target={target} platform={platform} blogReady={blogReady} onPost={onPost} onOpenSettings={onOpenSettings} />
+    </>
+  );
+}
+
+/**
+ * 네이버·티스토리는 크롬으로 올린다: 임시저장 / 예약발행 / 자동발행 중에서 고른다.
+ * 늘 임시저장을 먼저 하고, 예약·자동이면 이어서 블로그의 발행 창에서 발행한다. 다시 올리면 블로그에 새 글이 하나 더 생긴다.
+ */
+function ChromeBlogNext({
+  job,
+  target,
+  platform,
+  blogReady,
+  onPost,
+  onOpenSettings,
+}: {
+  job: Job;
+  target: string;
+  platform?: Platform;
+  blogReady: boolean;
+  onPost: (opts?: { mode?: PublishMode; scheduledAt?: string }) => void;
+  onOpenSettings: () => void;
+}) {
+  const pm = usePublishMode(platform === "naver" ? NAVER_MINUTE_STEP : 1);
+  const registered = job.status === "posted" || job.status === "scheduled";
+  // 마지막으로 올린 블로그가 이 블로그일 때만 "올렸다"고 본다 (예전 글은 올린 블로그 기록이 없으면 이 블로그로 본다).
+  const again = registered && (!job.postingTo || job.postingTo === platform);
+  const go = () => {
+    const dup = again ? "\n이전에 올린 글은 그대로 두고 블로그에 새 글이 하나 더 생깁니다." : "";
+    if (pm.mode === "publish" && !confirm(`${target}에 임시저장한 뒤 바로 공개합니다. 계속할까요?${dup}`)) return;
+    if (pm.mode === "schedule" && !confirm(`${target}에 임시저장한 뒤 ${new Date(pm.when).toLocaleString("ko-KR")}에 공개되도록 예약합니다. 계속할까요?${dup}`)) return;
+    onPost(pm.request());
+  };
+  return (
+    <div className={`next-step ${again ? "ok" : ""}`}>
       <div>
-        {job.status === "posted" ? (
+        {registered && !again ? (
           <>
-            <b>{target}에 임시저장했습니다.</b> 크롬 창에서 내용을 확인하고 직접 발행하세요. 초안을 고쳤다면 다시 임시저장할 수 있지만, 이전 임시저장 글을 고치지 않고 블로그에 새 임시저장 글이 하나 더 생깁니다. 이전 글은 블로그에서 직접 지워 주세요.
+            <b>다른 블로그에 올린 글입니다.</b> {target}에도 올릴 수 있습니다. 올리면 글의 상태가 {target} 기준으로 바뀝니다.
+          </>
+        ) : job.status === "posted" ? (
+          <>
+            <b>{target}에 임시저장했습니다.</b> 크롬 창에서 내용을 확인하고 직접 발행하거나, 아래에서 다시 올릴 수 있습니다. 다시 올리면 이전 글을 고치지 않고 블로그에 새 글이 하나 더 생깁니다. 이전 글은 블로그에서 직접 지워 주세요.
+          </>
+        ) : job.status === "scheduled" ? (
+          <>
+            <b>{target}에 발행 예약했습니다.</b> 예약 시각은 진행 로그에서 볼 수 있습니다. 다시 올리면 블로그에 새 글이 하나 더 생깁니다.
           </>
         ) : (
           <>
-            <b>초안이 준비됐습니다.</b> 아래에서 내용을 검토하고 고친 뒤, {target}에 임시저장하세요. 평소 쓰는 크롬에서 Claude in Chrome이 입력하며, 발행은 하지 않습니다.
+            <b>초안이 준비됐습니다.</b> 아래에서 내용을 검토하고 고친 뒤 {target}에 올리세요. 평소 쓰는 크롬에서 입력하며, 늘 임시저장을 먼저 한 뒤 고른 방식대로 발행합니다.
           </>
         )}
+        <PublishModeFields pm={pm} hints={CHROME_MODE_HINT} />
         {!blogReady && (
           <p className="hint small">
             블로그 ID가 없어 아직 올릴 수 없습니다.{" "}
@@ -137,28 +187,25 @@ export function NextStep({
         )}
       </div>
       <div className="actions">
-        {job.status === "posted" && (
-          <button className="primary" onClick={() => onSetStatus("published")}>
-            발행 완료로 표시
-          </button>
-        )}
-        {job.status === "posted" && <button onClick={() => confirmRevert(onSetStatus)}>초안 완료로 되돌리기</button>}
-        <button className={job.status === "posted" ? "" : "primary"} onClick={() => onPost()} disabled={!blogReady}>
-          {job.status === "posted" ? "다시 임시저장" : `${target}에 임시저장`}
+        <button className={again ? "" : "primary"} onClick={go} disabled={!blogReady || !!pm.problem}>
+          {again ? `다시 올리기 (${PUBLISH_MODE_LABEL[pm.mode]})` : `${target}에 ${PUBLISH_MODE_LABEL[pm.mode]}`}
         </button>
       </div>
     </div>
-    </>
   );
 }
 
 // ───────────────────────── 워드프레스 API 등록 ─────────────────────────
 
-const MODE_TEXT: Record<PublishMode, string> = { draft: "임시저장", schedule: "예약발행", publish: "자동발행" };
-const MODE_HINT: Record<PublishMode, string> = {
+const WP_MODE_HINT: Record<PublishMode, string> = {
   draft: "사이트에 초안으로 저장합니다. 공개되지 않습니다.",
   schedule: "정한 시각에 사이트가 자동으로 공개합니다.",
   publish: "누르는 즉시 공개됩니다.",
+};
+const CHROME_MODE_HINT: Record<PublishMode, string> = {
+  draft: "블로그에 임시저장만 합니다. 공개되지 않습니다.",
+  schedule: "임시저장한 뒤 블로그의 발행 창에서 예약합니다. 정한 시각에 블로그가 공개합니다.",
+  publish: "임시저장한 뒤 바로 공개합니다.",
 };
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -171,30 +218,66 @@ const tomorrowNine = () => {
   return toLocalInput(d);
 };
 
+/** 올리는 방식(임시저장·예약발행·자동발행)과 예약 시각. minuteStep: 예약 분 단위 (네이버는 10분) */
+function usePublishMode(minuteStep = 1, initialWhen?: string) {
+  const [mode, setMode] = useState<PublishMode>("draft");
+  const [when, setWhen] = useState(() => initialWhen ?? tomorrowNine());
+  const at = new Date(when);
+  const problem =
+    mode !== "schedule"
+      ? ""
+      : !(at.getTime() > Date.now() + 60_000)
+        ? "지금보다 1분 이상 뒤여야 합니다."
+        : at.getMinutes() % minuteStep
+          ? `${minuteStep}분 단위로 고를 수 있습니다.`
+          : "";
+  const request = () => ({ mode, scheduledAt: mode === "schedule" ? at.toISOString() : undefined });
+  return { mode, setMode, when, setWhen, problem, minuteStep, request };
+}
+
+/** 올리는 방식 고르기와 예약 시각 칸 */
+function PublishModeFields({ pm, hints }: { pm: ReturnType<typeof usePublishMode>; hints: Record<PublishMode, string> }) {
+  return (
+    <div className="wp-publish">
+      <div className="segmented" role="radiogroup" aria-label="올리는 방식">
+        {(Object.keys(PUBLISH_MODE_LABEL) as PublishMode[]).map((m) => (
+          <button key={m} type="button" className={pm.mode === m ? "on" : ""} onClick={() => pm.setMode(m)}>
+            {PUBLISH_MODE_LABEL[m]}
+          </button>
+        ))}
+      </div>
+      <span className="hint small">{hints[pm.mode]}</span>
+      {pm.mode === "schedule" && (
+        <label className="mini-label">
+          공개 시각
+          <input type="datetime-local" step={pm.minuteStep * 60} value={pm.when} onChange={(e) => pm.setWhen(e.target.value)} />
+          {pm.problem && <span className="error small">{pm.problem}</span>}
+        </label>
+      )}
+    </div>
+  );
+}
+
 /** 워드프레스는 API로 올린다: 임시저장 / 예약발행 / 자동발행 중에서 고른다. 다시 등록하면 같은 글을 갱신한다. */
 function WordPressNext({
   job,
   blogReady,
   onPost,
-  onSetStatus,
   onOpenSettings,
 }: {
   job: Job;
   blogReady: boolean;
   onPost: (opts?: { mode?: PublishMode; scheduledAt?: string }) => void;
-  onSetStatus: (status: "draft_ready" | "posted" | "published") => void;
   onOpenSettings: () => void;
 }) {
   const wp = job.wordpress;
-  const [mode, setMode] = useState<PublishMode>("draft");
-  const [when, setWhen] = useState(() => (wp?.scheduledAt ? toLocalInput(new Date(wp.scheduledAt)) : tomorrowNine()));
-  const whenMs = new Date(when).getTime();
-  const tooSoon = mode === "schedule" && !(whenMs > Date.now() + 60_000);
+  const pm = usePublishMode(1, wp?.scheduledAt ? toLocalInput(new Date(wp.scheduledAt)) : undefined);
+  const { mode } = pm;
 
   const go = () => {
     if (mode === "publish" && !confirm("지금 바로 공개됩니다. 계속할까요?")) return;
-    if (mode === "schedule" && !confirm(`${new Date(when).toLocaleString("ko-KR")}에 공개되도록 예약합니다. 계속할까요?`)) return;
-    onPost({ mode, scheduledAt: mode === "schedule" ? new Date(when).toISOString() : undefined });
+    if (mode === "schedule" && !confirm(`${new Date(pm.when).toLocaleString("ko-KR")}에 공개되도록 예약합니다. 계속할까요?`)) return;
+    onPost(pm.request());
   };
 
   const link = wp?.link && (
@@ -225,23 +308,7 @@ function WordPressNext({
             <b>초안이 준비됐습니다.</b> 아래에서 내용을 검토하고 고친 뒤 워드프레스에 올리세요. API로 올리므로 크롬이 필요 없습니다.
           </>
         )}
-        <div className="wp-publish">
-          <div className="segmented" role="radiogroup" aria-label="등록 방식">
-            {(Object.keys(MODE_TEXT) as PublishMode[]).map((m) => (
-              <button key={m} type="button" className={mode === m ? "on" : ""} onClick={() => setMode(m)}>
-                {MODE_TEXT[m]}
-              </button>
-            ))}
-          </div>
-          <span className="hint small">{MODE_HINT[mode]}</span>
-          {mode === "schedule" && (
-            <label className="mini-label">
-              공개 시각
-              <input type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} />
-              {tooSoon && <span className="error small">지금보다 1분 이상 뒤여야 합니다.</span>}
-            </label>
-          )}
-        </div>
+        <PublishModeFields pm={pm} hints={WP_MODE_HINT} />
         {!blogReady && (
           <p className="hint small">
             워드프레스 사이트 주소가 없어 아직 올릴 수 없습니다.{" "}
@@ -252,14 +319,8 @@ function WordPressNext({
         )}
       </div>
       <div className="actions">
-        {registered && (
-          <button className="primary" onClick={() => onSetStatus("published")}>
-            발행 완료로 표시
-          </button>
-        )}
-        {registered && <button onClick={() => confirmRevert(onSetStatus)}>초안 완료로 되돌리기</button>}
-        <button className={registered ? "" : "primary"} onClick={go} disabled={!blogReady || tooSoon}>
-          {registered ? `다시 등록 (${MODE_TEXT[mode]})` : `워드프레스에 ${MODE_TEXT[mode]}`}
+        <button className={registered ? "" : "primary"} onClick={go} disabled={!blogReady || !!pm.problem}>
+          {registered ? `다시 등록 (${PUBLISH_MODE_LABEL[mode]})` : `워드프레스에 ${PUBLISH_MODE_LABEL[mode]}`}
         </button>
       </div>
     </div>

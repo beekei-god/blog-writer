@@ -14,8 +14,19 @@ export async function writeFileAtomic(file: string, content: string, mode?: numb
   await fs.rename(tmp, file);
 }
 
+/** JSON 파일을 읽는다. 없거나 읽을 수 없으면 fallback */
+export async function readJson<T>(file: string, fallback: T): Promise<T> {
+  try {
+    return JSON.parse(await fs.readFile(file, "utf8")) as T;
+  } catch {
+    return fallback;
+  }
+}
+
 export const writeJsonAtomic = (file: string, data: unknown, mode?: number) =>
   writeFileAtomic(file, JSON.stringify(data, null, 2), mode);
+
+export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /** 작업을 하나씩 차례로 실행한다. 앞 작업이 실패해도 다음 작업은 실행된다. */
 export function serialQueue() {

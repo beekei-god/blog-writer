@@ -1,14 +1,15 @@
 import { countBodyChars } from "../shared/length";
-import { aiFor, bodyImageKey, bodyIndexOf, imageKey, methodFor, type ImageMethod, type ImageOptions, type ImageProvider, type ImageScope, type ImageStyle } from "../shared/types";
+import { aiFor, bodyImageKey, bodyIndexOf, imageKey, imageSpecAt, imageSpecsOf, methodFor, type ImageMethod, type ImageOptions, type ImageProvider, type ImageScope, type ImageStyle, type Job, type Post } from "../shared/types";
 import { type Platform, type PublishMode, settingsFor } from "../shared/types";
 import { postWithClaudeInChrome } from "./browser/blogPost";
 import { isBlocked, markBlocked } from "./browser/blockedSites";
 import { SiteBlockedError } from "./browser/claudeChrome";
+import { kstText, publishedText, PublishStepError, type PublishRequest } from "./browser/publish";
 import { postWithChrome } from "./browser/runner";
 import { postNaverInUserChrome, userChromeSupported } from "./browser/userChrome";
 import { CancelledError, throwIfCancelled, withCancel } from "./cancel";
 import { getImageApiKey } from "./secrets";
-import { collectTargets, countImages, generateImages } from "./images";
+import { collectTargets, generateImages } from "./images";
 import { collectNaverSuggestions } from "./naver";
 import { planImages, type PlanTarget } from "./images/plan";
 import { deepResearch } from "./research";
@@ -17,7 +18,7 @@ import { serialQueue } from "./fsutil";
 import { getJob, getSettings, log, updateJob } from "./store";
 import { writePost } from "./writer";
 import { publishToWordPress } from "./wordpress";
-import { errorText } from "../shared/labels";
+import { errorText, PUBLISH_MODE_LABEL } from "../shared/labels";
 
 const running = new Set<string>();
 // Claude in Chrome 작업(블로그 작성, Gemini·ChatGPT 이미지)은 같은 크롬을 쓰므로 하나씩 실행한다.
@@ -25,6 +26,23 @@ const enqueueBrowser = serialQueue();
 
 const NO_IMAGES: ImageOptions = { thumbnail: false, bodyImages: 0, provider: "claude", style: "flat" };
 const optionsOf = (job: { imageOptions?: Partial<ImageOptions> }): ImageOptions => ({ ...NO_IMAGES, ...job.imageOptions });
+
+/** 초안이 있는 작업. 없으면 "작성된 초안이 없습니다." 오류 */
+async function requireDraft(id: string): Promise<Job & { post: Post }> {
+  const job = await getJob(id);
+  if (!job?.post) throw new Error("작성된 초안이 없습니다.");
+  return job as Job & { post: Post };
+}
+
+/** 단계가 실패하거나 중지되면 기록하고 초안이 있으면 초안 상태로 돌린다 (중지는 오류로 남기지 않는다). */
+async function failStep(id: string, e: unknown, cancelledMsg: string, failPrefix: string) {
+  const cancelled = e instanceof CancelledError;
+  await log(id, cancelled ? cancelledMsg : `${failPrefix}: ${errorText(e)}`);
+  await updateJob(id, (j) => {
+    j.status = j.post ? "draft_ready" : "failed";
+    j.error = cancelled ? undefined : errorText(e);
+  });
+}
 
 /** 한 장씩 다시 만드는 중인 이미지 (작업 id → 이미지 키). 이것만 돌고 있으면 다른 이미지는 동시에 더 만들 수 있다 */
 const imageRuns = new Map<string, Set<string>>();
@@ -174,8 +192,7 @@ export function runImage(id: string, target: "thumbnail" | `body-${number}`, ai:
 
 async function imagesStep(id: string, scope: ImageScope, ai?: { provider: ImageProvider; style: ImageStyle }, method?: ImageMethod) {
   try {
-    const job = await getJob(id);
-    if (!job?.post) throw new Error("작성된 초안이 없습니다.");
+    const job = await requireDraft(id);
     await updateJob(id, (j) => {
       j.error = undefined;
     });
@@ -200,7 +217,8 @@ async function imagesStep(id: string, scope: ImageScope, ai?: { provider: ImageP
 async function makeImages(id: string, topic: string, options: ImageOptions, scope: ImageScope = "all") {
   const job = await getJob(id);
   if (!job?.post) return;
-  const count = countImages(job.post, options, scope);
+  const targets = collectTargets(job.post, options, scope);
+  const count = targets.length;
   if (count === 0) {
     if (scope === "failed") await log(id, "다시 만들 실패한 이미지가 없습니다.");
     if (scope === "thumbnail") await log(id, "썸네일이 없거나 꺼져 있어 만들 것이 없습니다.");
@@ -209,7 +227,6 @@ async function makeImages(id: string, topic: string, options: ImageOptions, scop
   }
 
   // 다른 이미지가 동시에 만들어지고 있을 수 있어 목록을 덮어쓰지 않고 이번 대상만 더하고 뺀다.
-  const targets = collectTargets(job.post!, options, scope);
   const keys: string[] = targets.map(imageKey);
   await updateJob(id, (j) => {
     j.status = "generating_images";
@@ -253,7 +270,7 @@ async function makeImagesInner(id: string, topic: string, options: ImageOptions,
   if (planTargets.length) {
     say(`본문을 참고해 이미지 ${planTargets.length}개의 설명과 문구를 정하는 중`);
     // 썸네일과 본문 이미지의 AI·스타일이 다르면 따로 기획한다 (설명 언어와 화풍이 다르다).
-    const groups = new Map<string, { provider: ImageOptions["provider"]; style: ImageOptions["style"]; list: PlanTarget[] }>();
+    const groups = new Map<string, { provider: ImageProvider; style: ImageStyle; list: PlanTarget[] }>();
     for (const t of planTargets) {
       const ai = aiFor(options, t.kind);
       const key = `${ai.provider}|${ai.style}`;
@@ -265,10 +282,7 @@ async function makeImagesInner(id: string, topic: string, options: ImageOptions,
         const plans = await planImages(job.post, g.provider, g.style, g.list, id);
         await updateJob(id, (j) => {
           for (const p of plans) {
-            const spec = p.key === "thumbnail" ? j.post?.thumbnail : (() => {
-              const b = j.post?.blocks[bodyIndexOf(p.key) ?? -1];
-              return b?.type === "image" ? b : undefined;
-            })();
+            const spec = imageSpecAt(j.post, p.key);
             if (!spec || spec.userEdited) continue;
             spec.prompt = p.prompt;
             spec.basis = p.basis || spec.basis;
@@ -298,9 +312,7 @@ async function makeImagesInner(id: string, topic: string, options: ImageOptions,
     await generateImages(id, topic, post, options, say, scope);
   }
   const after = await getJob(id);
-  const failed = [after?.post?.thumbnail, ...(after?.post?.blocks ?? [])].filter(
-    (s) => s && "error" in s && s.error,
-  ).length;
+  const failed = after?.post ? imageSpecsOf(after.post).filter((s) => s.error).length : 0;
   if (failed) say(`이미지 ${failed}개 생성 실패 — 초안 화면의 각 이미지에서 이유를 확인하고 "이미지 다시 생성"으로 한 장씩 다시 만들 수 있습니다.`);
 }
 
@@ -312,25 +324,22 @@ export function runPost(id: string, opts: { platform: Platform; mode?: PublishMo
     // 워드프레스는 API로 올리므로 크롬을 쓰지 않는다 (크롬 큐를 거치지 않는다).
     const platform = opts.platform; // 올릴 블로그는 글을 올릴 때마다 고른다 (기본 블로그 없음)
     if (platform === "wordpress") return doWordPressPost(id, opts.mode ?? "draft", opts.scheduledAt);
-    return enqueueBrowser(() => doPost(id, platform));
+    return enqueueBrowser(() => doPost(id, platform, { mode: opts.mode ?? "draft", scheduledAt: opts.scheduledAt }));
   });
 }
-
-const MODE_LABEL: Record<PublishMode, string> = { draft: "임시저장", schedule: "예약발행", publish: "자동발행" };
 
 /** 워드프레스 REST API로 등록한다. 사이트가 돌려준 글 상태(draft/future/publish)대로 작업 상태를 정한다. */
 async function doWordPressPost(id: string, mode: PublishMode, scheduledAt?: string) {
   try {
     throwIfCancelled();
-    const job = await getJob(id);
-    if (!job?.post) throw new Error("작성된 초안이 없습니다.");
+    const job = await requireDraft(id);
     const settings = await getSettings();
     await updateJob(id, (j) => {
       j.status = "posting";
       j.postingTo = "wordpress";
       j.error = undefined;
     });
-    await log(id, `워드프레스 API로 ${MODE_LABEL[mode]} 시작`);
+    await log(id, `워드프레스 API로 ${PUBLISH_MODE_LABEL[mode]} 시작`);
     const say = (m: string) => void log(id, m);
     const r = await publishToWordPress(job.post, id, settings, mode, scheduledAt, job.wordpress, say);
     const status = r.wpStatus === "publish" ? "published" : r.wpStatus === "future" ? "scheduled" : "posted";
@@ -341,25 +350,23 @@ async function doWordPressPost(id: string, mode: PublishMode, scheduledAt?: stri
     const done = { published: "발행했습니다", scheduled: "예약했습니다", posted: "임시저장했습니다" }[status];
     await log(id, `워드프레스에 ${done}: ${r.link}`);
     if ((mode === "publish" && status !== "published") || (mode === "schedule" && status !== "scheduled")) {
-      await log(id, `확인 필요: ${MODE_LABEL[mode]}을 요청했지만 사이트에서는 "${r.wpStatus}" 상태입니다. 사용자 권한을 확인하세요.`);
+      await log(id, `확인 필요: ${PUBLISH_MODE_LABEL[mode]}을 요청했지만 사이트에서는 "${r.wpStatus}" 상태입니다. 사용자 권한을 확인하세요.`);
     }
   } catch (e) {
-    const cancelled = e instanceof CancelledError;
-    await log(id, cancelled ? "워드프레스 등록을 중지했습니다." : `워드프레스 등록 실패: ${errorText(e)}`);
-    await updateJob(id, (j) => {
-      j.status = j.post ? "draft_ready" : "failed";
-      j.error = cancelled ? undefined : errorText(e);
-    });
+    await failStep(id, e, "워드프레스 등록을 중지했습니다.", "워드프레스 등록 실패");
   } finally {
     running.delete(id);
   }
 }
 
-async function doPost(id: string, platform: Platform) {
+/**
+ * 크롬으로 네이버·티스토리에 올린다. 늘 임시저장을 먼저 하고, 예약발행·자동발행이면 이어서 발행 창에서 발행한다.
+ * 발행 창에서 멈추면(PublishStepError) 글은 임시저장된 채이므로 상태를 임시저장 완료로 두고 이유를 오류로 남긴다.
+ */
+async function doPost(id: string, platform: Platform, publish: PublishRequest) {
   try {
     throwIfCancelled(); // 브라우저 큐에서 기다리는 동안 중지했으면 시작하지 않는다
-    const job = await getJob(id);
-    if (!job?.post) throw new Error("작성된 초안이 없습니다.");
+    const job = await requireDraft(id);
     // 고른 블로그의 ID로 맞춘 설정 (기본 블로그와 달라도 된다)
     const settings = settingsFor(await getSettings(), platform);
     await updateJob(id, (j) => {
@@ -367,7 +374,7 @@ async function doPost(id: string, platform: Platform) {
       j.postingTo = platform;
       j.error = undefined;
     });
-    await log(id, `${settings.platform} 작성 시작`);
+    await log(id, `${settings.platform} 작성 시작 (${PUBLISH_MODE_LABEL[publish.mode]}${publish.mode === "schedule" ? `: ${kstText(publish.scheduledAt!)}` : ""})`);
     const say = (m: string) => void log(id, m);
     // Claude in Chrome이 막는 블로그는 제한을 우회하지 않고 다른 방법으로 쓴다.
     // - 네이버 + macOS: 평소 크롬의 새 탭에서 (이미 로그인된 크롬, 새 창·로그인 불필요)
@@ -376,11 +383,11 @@ async function doPost(id: string, platform: Platform) {
     const fallback = async () => {
       throwIfCancelled();
       if (useUserChrome) {
-        const r = await postNaverInUserChrome(job.post!, id, settings, say);
-        await log(id, `평소 크롬에서 임시저장 완료 (이미지 ${r.imagesInserted}개). 크롬에 열린 탭에서 확인한 뒤 직접 발행하세요.`);
+        const r = await postNaverInUserChrome(job.post, id, settings, say, { publish });
+        await log(id, `평소 크롬에서 임시저장 완료 (이미지 ${r.imagesInserted}개).${publish.mode === "draft" ? " 크롬에 열린 탭에서 확인한 뒤 직접 발행하세요." : ""}`);
         for (const p of r.problems) await log(id, `확인 필요: ${p}`);
       } else {
-        await postWithChrome(job.post!, id, settings, say);
+        await postWithChrome(job.post, id, settings, say, publish);
         await log(id, "자동 조작으로 임시저장 완료");
       }
     };
@@ -390,7 +397,7 @@ async function doPost(id: string, platform: Platform) {
       await fallback();
     } else {
       try {
-        const result = await postWithClaudeInChrome(job.post, id, settings, say);
+        const result = await postWithClaudeInChrome(job.post, id, settings, say, publish);
         await log(id, `임시저장 완료 (이미지 ${result.imagesInserted}개): ${result.message}`);
         for (const p of result.problems) await log(id, `확인 필요: ${p}`);
       } catch (e) {
@@ -400,16 +407,22 @@ async function doPost(id: string, platform: Platform) {
         await fallback();
       }
     }
+    const status = publish.mode === "publish" ? "published" : publish.mode === "schedule" ? "scheduled" : "posted";
+    if (publish.mode !== "draft") await log(id, `${settings.platform}에 ${publishedText(publish)}.`);
     await updateJob(id, (j) => {
-      j.status = "posted";
+      j.status = status;
     });
   } catch (e) {
-    const cancelled = e instanceof CancelledError;
-    await log(id, cancelled ? "블로그 작성을 중지했습니다. 크롬에 열린 탭에 일부만 들어갔을 수 있으니 확인하세요." : `블로그 작성 실패: ${errorText(e)}`);
-    await updateJob(id, (j) => {
-      j.status = j.post ? "draft_ready" : "failed";
-      j.error = cancelled ? undefined : errorText(e);
-    });
+    if (e instanceof PublishStepError) {
+      // 임시저장까지는 됐다.
+      await log(id, e.message);
+      await updateJob(id, (j) => {
+        j.status = "posted";
+        j.error = e.message;
+      });
+      return;
+    }
+    await failStep(id, e, "블로그 작성을 중지했습니다. 크롬에 열린 탭에 일부만 들어갔을 수 있으니 확인하세요.", "블로그 작성 실패");
   } finally {
     running.delete(id);
   }

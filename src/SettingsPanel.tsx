@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { MODEL_CHOICES, RECOMMENDED_MODELS, STAGES, blogIdOf, type ModelChoice, type Platform, type Settings } from "../shared/types";
+import { MODEL_CHOICES, RECOMMENDED_MODELS, STAGES, blogIdOf, type ModelChoice, type Settings } from "../shared/types";
 import { api, type DatalabStatus, type WordPressStatus } from "./api";
 import { BlockedSites } from "./BlockedSites";
 import { ExtensionStatus } from "./ExtensionStatus";
@@ -8,7 +8,8 @@ import { errorText, MODEL_CHOICE_LABEL, MODEL_REASON, prettyModel, STAGE_HINT, S
 import { PLATFORM_LABEL } from "../shared/labels";
 
 
-const BLOG_ID: Record<Platform, { label: string; placeholder: string; help: string }> = {
+/** 네이버·티스토리 블로그 ID 칸 (워드프레스는 카드에서 따로 그린다) */
+const BLOG_ID: Record<"naver" | "tistory", { label: string; placeholder: string; help: string }> = {
   naver: {
     label: "네이버 블로그 ID",
     placeholder: "myblog",
@@ -18,11 +19,6 @@ const BLOG_ID: Record<Platform, { label: string; placeholder: string; help: stri
     label: "티스토리 블로그 이름",
     placeholder: "myblog",
     help: "myblog.tistory.com 에서 myblog 부분입니다.",
-  },
-  wordpress: {
-    label: "워드프레스 사이트 주소",
-    placeholder: "https://myblog.com",
-    help: "https:// 로 시작하는 사이트 주소입니다. 글은 REST API로 올리므로 아래 \"워드프레스 설정\"에서 사용자명과 Application Password를 연결하세요.",
   },
 };
 

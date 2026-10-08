@@ -13,6 +13,7 @@ export const IMAGE_ERROR_KINDS = [
   "svg_invalid",
   "claude_error",
   "api_error",
+  "site_error",
   "unknown",
 ] as const;
 export type ImageErrorKind = (typeof IMAGE_ERROR_KINDS)[number];
@@ -77,6 +78,11 @@ export const IMAGE_ERROR_INFO: Record<ImageErrorKind, ImageErrorInfo> = {
     title: "이미지 API 호출에 실패했습니다",
     advice: "Gemini·OpenAI API가 이미지를 만들지 못했습니다. 설정 → 이미지 API에서 키를 확인하고 다시 하거나, \"이미지 다시 생성\"에서 크롬이나 다른 AI로 만드세요.",
   },
+  site_error: {
+    title: "사이트에서 오류가 났습니다",
+    advice:
+      "Gemini·ChatGPT 사이트가 \"문제가 발생했습니다\" 같은 오류를 보여 이미지를 만들지 못했습니다. 사이트 쪽 일시적인 문제일 때가 많습니다. 잠시 뒤 다시 하거나, \"이미지 다시 생성\"에서 API로 또는 다른 AI로 만드세요.",
+  },
   unknown: {
     title: "알 수 없는 오류",
     advice: "아래 자세한 내용을 확인하고 다시 하거나 다른 AI로 만드세요.",
@@ -84,6 +90,8 @@ export const IMAGE_ERROR_INFO: Record<ImageErrorKind, ImageErrorInfo> = {
 };
 
 const LIMIT = /usage limit|rate limit|limit reached|quota|too many requests|try again later|한도|나중에 다시/i;
+/** 사이트가 보여 준 오류 안내 (예: Gemini "문제가 발생했습니다 (1155)") */
+const SITE_ERROR = /문제가 발생|오류가 발생|something went wrong|an error occurred/i;
 const REFUSED =
   /polic|guideline|violat|can['’]t (help|create|generate|make)|cannot (help|create|generate|make)|unable to (create|generate|make)|not able to (create|generate)|정책|가이드라인|만들 수 없|생성할 수 없|그릴 수 없|도와드릴 수 없|도와 드릴 수 없|처리할 수 없/i;
 
@@ -103,6 +111,7 @@ export function classifyImageError(message: string | undefined): ImageErrorKind 
   if (REFUSED.test(m)) return "refused";
   if (/SVG/i.test(m)) return "svg_invalid";
   if (/다운로드 실패|너무 작습니다|이미지 데이터를 읽지/.test(m)) return "download";
+  if (SITE_ERROR.test(m)) return "site_error";
   if (/시간이 초과|생성 시간/.test(m)) return "timeout";
   if (/Timeout \d+ms exceeded|waiting for (locator|selector)|위치를 찾지 못|element is not/i.test(m)) return "ui_changed";
   return "unknown";

@@ -165,7 +165,6 @@ details > summary:hover { color: var(--text); }
 
 /* ───── 초안: 도구 막대 ───── */
 .draft-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 20px 0 12px; }
-.image-actions { display: flex; gap: 6px; margin-left: auto; }
 .inline-select { width: auto; }
 .char-count { font-size: 12px; color: var(--muted); }
 .char-count.over { color: var(--danger); font-weight: 600; }
@@ -324,7 +323,11 @@ details > summary:hover { color: var(--text); }
 .ai-picker .segmented button.on { background: var(--accent-soft); color: var(--accent-text); box-shadow: none; }
 .failed-mark { font-size: 11px; color: var(--danger); font-weight: normal; }
 .image-actions { display: flex; gap: 8px; margin-left: auto; align-items: center; flex-wrap: wrap; }
-.image-actions.open { margin-left: 0; width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+.image-actions.open { margin-left: 0; width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); flex-direction: column; align-items: stretch; gap: 10px; }
+.status-picker { justify-content: flex-start; margin: 4px 0 12px; }
+.regen-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.regen-label { min-width: 104px; font-size: 13px; font-weight: 600; color: var(--muted); }
+.image-actions.open .retry-actions { padding-top: 10px; border-top: 1px solid var(--line); }
 .image-placeholder .small-note { font-size: 12px; color: var(--muted); }
 @media (max-width: 760px) { .image-actions { margin-left: 0; } .retry-actions { width: 100%; } .retry-actions button { flex: 1 1 auto; } }
 
@@ -358,11 +361,6 @@ details > summary:hover { color: var(--text); }
 .thumb-missing { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 14px; margin: 0 0 16px; border: 1px dashed var(--accent); border-radius: 12px; background: var(--accent-soft); font-size: 13px; }
 .thumb-missing > div:first-child { flex: 1 1 260px; }
 
-/* ───── 복사 ───── */
-.copy-bar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: -4px 0 14px; }
-.copy-label { font-size: 12px; color: var(--muted); margin-right: 2px; }
-.copy-bar button { font-size: 13px; padding: 5px 10px; }
-.copy-bar button.copied { border-color: var(--ok); color: var(--ok); }
 .preview a { color: var(--accent); word-break: break-all; }
 
 /* ───── 썸네일/본문 이미지 AI 선택 ───── */

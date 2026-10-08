@@ -7,11 +7,11 @@ export function Progress({ job }: { job: Job }) {
   const steps: { key: Job["status"]; label: string }[] = [
     { key: "researching", label: "자료 조사" },
     { key: "writing", label: "글 작성" },
-    ...(wantImages ? [{ key: "generating_images" as const, label: "이미지" }] : []),
+    ...(wantImages ? [{ key: "generating_images" as const, label: "이미지 생성" }] : []),
     { key: "draft_ready", label: "초안 검토" },
-    { key: "posting", label: "블로그 작성" },
-    { key: "posted", label: "임시저장" },
-    { key: "published", label: "발행 완료" },
+    // 블로그에 올리는 중(posting)과 임시저장 완료(posted)는 한 단계다.
+    { key: "posted", label: "블로그 임시저장" },
+    { key: "published", label: "블로그 발행완료" },
   ];
 
   let current: number;
@@ -20,11 +20,11 @@ export function Progress({ job }: { job: Job }) {
     failed = true;
     current = job.researchNotes ? 1 : 0;
   } else {
-    // 예약됨(워드프레스 예약발행)은 임시저장 단계까지 끝난 것과 같게 본다.
-    const key = job.status === "scheduled" ? "posted" : job.status;
+    // 올리는 중은 블로그 임시저장 단계를 진행 중으로, 발행 예약(워드프레스 예약발행)은 그 단계까지 끝난 것으로 본다.
+    const key = job.status === "scheduled" || job.status === "posting" ? "posted" : job.status;
     current = steps.findIndex((s) => s.key === key);
   }
-  // 임시저장까지 끝났으면 그 단계는 완료이고 다음 단계(발행 완료)가 남은 일이다.
+  // 임시저장까지 끝났으면 그 단계는 완료이고 다음 단계(블로그 발행완료)가 남은 일이다.
   if (job.status === "posted" || job.status === "scheduled") current += 1;
   const allDone = job.status === "published";
 
@@ -42,5 +42,3 @@ export function Progress({ job }: { job: Job }) {
     </ol>
   );
 }
-
-/** 임시저장·발행 완료 표시를 풀고 초안 완료로 되돌린다 (블로그에 올라간 글은 그대로이니 확인을 받는다) */

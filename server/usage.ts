@@ -1,7 +1,8 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import type { PlanLimits, TokenTotals, UsageStage, UsageSummary } from "../shared/types";
-import { serialQueue, writeFileAtomic, writeJsonAtomic } from "./fsutil";
+import { readJson, serialQueue, writeFileAtomic, writeJsonAtomic } from "./fsutil";
+import { kstDate } from "./rules";
 import { DATA_DIR } from "./store";
 
 /**
@@ -46,13 +47,7 @@ export function savePlanLimits(plan: PlanLimits) {
   return serial(() => writeJsonAtomic(PLAN_FILE, plan)).catch((e) => console.error("한도 정보 저장 실패:", e));
 }
 
-async function readPlan(): Promise<PlanLimits | null> {
-  try {
-    return JSON.parse(await fs.readFile(PLAN_FILE, "utf8"));
-  } catch {
-    return null;
-  }
-}
+const readPlan = () => readJson<PlanLimits | null>(PLAN_FILE, null);
 
 async function readRecords(): Promise<UsageRecord[]> {
   let raw: string;
@@ -95,7 +90,6 @@ export async function getJobUsage(jobId: string): Promise<{ model: string; total
 
 // ───── 집계 (날짜는 한국 시간 기준) ─────
 
-const kstDate = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul" }).format(d); // YYYY-MM-DD
 const DAY = 24 * 3600_000;
 
 const empty = (): TokenTotals => ({ input: 0, output: 0, cacheRead: 0, cacheWrite: 0, costUSD: 0, calls: 0 });

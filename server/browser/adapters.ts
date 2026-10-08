@@ -3,9 +3,11 @@ import os from "node:os";
 import path from "node:path";
 import type { FrameLocator, Locator, Page } from "playwright-core";
 import { MAX_TAGS, type Platform, type Post, type PostBlock, type PostSettings } from "../../shared/types";
-import { jobImageDir } from "../store";
+import { sleep } from "../fsutil";
+import { jobImagePath } from "../store";
 import { HumanMouse } from "./mouse";
-import { altFileName, tableHtml } from "./postHtml";
+import { altFileName, skippedImageLabel, tableHtml, writeUrl } from "./postHtml";
+import { naverPublishSteps, PUBLISH_HELPERS, runPublishSteps, tistoryPublishSteps, type PublishRequest } from "./publish";
 
 /**
  * 예전 자동 조작 방식의 블로그별 입력 순서. Claude in Chrome이 막는 사이트에서만 쓴다.
@@ -18,15 +20,23 @@ export interface AdapterContext {
   jobId: string;
   settings: PostSettings;
   log: (msg: string) => void;
+  /** 예약발행·자동발행이면 임시저장 뒤 발행 창에서 발행까지 한다 */
+  publish?: PublishRequest;
+}
+
+/** 임시저장 뒤 발행 창 단계를 실행한다 (임시저장만이면 아무것도 하지 않는다) */
+async function publishIfAsked(ctx: AdapterContext, target: Pick<Page, "evaluate">, steps: (req: PublishRequest) => ReturnType<typeof naverPublishSteps>) {
+  const req = ctx.publish;
+  if (!req || req.mode === "draft") return;
+  await runPublishSteps(steps(req), (js) => target.evaluate(`(() => { ${PUBLISH_HELPERS}\n${js} })()`), ctx.log);
 }
 
 /** 에디터가 iframe 안에 있을 수도, 페이지에 바로 있을 수도 있다 */
 type EditorRoot = Pick<FrameLocator, "locator" | "getByRole">;
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 // file은 화면에서 수정 가능한 초안 JSON에서 오므로 basename으로 잘라 이미지 폴더 밖 파일이 업로드되지 않게 한다.
-const imagePath = (ctx: AdapterContext, file: string) => path.join(jobImageDir(ctx.jobId), path.basename(file));
+const imagePath = (ctx: AdapterContext, file: string) => jobImagePath(ctx.jobId, file);
 
 /** 파일이 실제로 생성된 이미지 블록만 */
 function hasFile(b: PostBlock): b is Extract<PostBlock, { type: "image" }> & { file: string } {
@@ -126,7 +136,7 @@ async function fillPlainBody(ctx: AdapterContext, h: BodyHandlers) {
   for (const b of post.blocks) {
     if (b.type === "image") {
       if (!hasFile(b)) {
-        log(`이미지 건너뜀 (생성되지 않음): ${b.alt || b.prompt.slice(0, 30)}`);
+        log(`이미지 건너뜀 (생성되지 않음): ${skippedImageLabel(b)}`);
         continue;
       }
       log("본문 이미지 삽입");
@@ -202,7 +212,7 @@ async function naver(ctx: AdapterContext) {
   const { page, mouse, post, settings, log } = ctx;
   if (!settings.blogId) throw new Error("설정에서 네이버 블로그 ID를 입력하세요.");
 
-  const url = `https://blog.naver.com/${settings.blogId}/postwrite`;
+  const url = writeUrl("naver", settings.blogId);
   log("네이버 블로그 글쓰기 페이지로 이동");
   await page.goto(url, { waitUntil: "domcontentloaded" });
   await waitForLogin(ctx, (u) => u.includes("nid.naver.com"));
@@ -269,7 +279,9 @@ async function naver(ctx: AdapterContext) {
     ctx,
     editor.locator('button[class*="save_btn"], button[data-click-area="tpb.save"]').or(editor.getByRole("button", { name: /^저장$/ })),
   );
-  log("임시저장 완료. 크롬에서 내용을 검토한 뒤 직접 발행해 주세요.");
+  log("임시저장 완료.");
+  // 에디터가 #mainFrame 안에 있으면 그 프레임에서 발행 창을 다룬다.
+  await publishIfAsked(ctx, editor === page ? page : (page.frame({ name: "mainFrame" }) ?? page), naverPublishSteps);
 }
 
 let naverFormatWarned = false;
@@ -304,7 +316,7 @@ async function tistory(ctx: AdapterContext) {
 
   page.on("dialog", (d) => d.dismiss().catch(() => {})); // "저장된 글이 있습니다" 등
 
-  const url = `https://${settings.blogId}.tistory.com/manage/newpost`;
+  const url = writeUrl("tistory", settings.blogId);
   log("티스토리 글쓰기 페이지로 이동");
   await page.goto(url, { waitUntil: "domcontentloaded" });
   await waitForLogin(ctx, (u) => /accounts\.kakao\.com|tistory\.com\/auth\/login/.test(u));
@@ -376,7 +388,8 @@ async function tistory(ctx: AdapterContext) {
   }
 
   await clickSaveDraft(ctx, page.locator(".btn-draft, button.action:has-text('임시저장')").or(page.getByRole("button", { name: /임시\s*저장/ })));
-  log("임시저장 완료. 크롬에서 내용을 검토한 뒤 직접 발행해 주세요.");
+  log("임시저장 완료.");
+  await publishIfAsked(ctx, page, tistoryPublishSteps);
 }
 
 /** 크롬으로 올리는 블로그. 워드프레스는 REST API로 올린다 (server/wordpress.ts). */

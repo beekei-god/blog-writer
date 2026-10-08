@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { errorText, PLATFORM_SHORT_LABEL, STATUS_LABEL } from "../../shared/labels";
-import { settingsFor, type ImageSpec, type Job, type Post } from "../../shared/types";
+import { canSetStatus, imageSpecsOf, MANUAL_STATUSES, MAX_LINKS, NAVER_MINUTE_STEP, settingsFor, type ImageSpec, type ManualStatus, type Post } from "../../shared/types";
 import { extensionStatus, INSTALL_URL } from "../browser/claudeChrome";
 import { cancelJob } from "../cancel";
 import { isRunning, runDraft, runPost } from "../pipeline";
@@ -23,9 +23,9 @@ const resultOf = (s: ImageSpec): ImageResult => ({ file: s.file, error: s.error,
  */
 function keepImageResults(next: Post, prev: Post | undefined): Post {
   if (!prev) return next;
-  const prevImages = [prev.thumbnail, ...prev.blocks.filter((b) => b.type === "image")].filter(Boolean) as ImageSpec[];
+  const prevImages = imageSpecsOf(prev);
   const used = new Set<ImageSpec>();
-  const nextImages = [next.thumbnail, ...next.blocks.filter((b) => b.type === "image")].filter(Boolean) as ImageSpec[];
+  const nextImages = imageSpecsOf(next);
   const sameCount = prevImages.length === nextImages.length;
   nextImages.forEach((spec, i) => {
     const match =
@@ -47,7 +47,7 @@ router.post(
       .object({
         topic: z.string().trim().min(2).max(300),
         images: ImageOptionsSchema,
-        links: z.array(z.string().trim().url().regex(/^https?:\/\//i)).max(20).default([]),
+        links: z.array(z.string().trim().url().regex(/^https?:\/\//i)).max(MAX_LINKS).default([]),
       })
       .safeParse(req.body);
     if (!parsed.success) {
@@ -130,8 +130,17 @@ router.post(
         return void res.status(400).json({ error: "워드프레스 연결 정보가 없습니다. 설정 → 워드프레스 설정에서 연결하세요." });
       }
     } else {
-      // 크롬으로 올리는 블로그는 임시저장만 한다 (발행은 사용자가 직접).
-      if (mode !== "draft") return void res.status(400).json({ error: "예약발행·자동발행은 워드프레스에서만 쓸 수 있습니다." });
+      // 크롬으로 올리는 블로그도 임시저장·예약발행·자동발행을 고른다 (늘 임시저장을 먼저 하고 발행 창에서 발행한다).
+      if (mode === "schedule") {
+        try {
+          checkSchedule(scheduledAt);
+        } catch (e) {
+          return void res.status(400).json({ error: errorText(e) });
+        }
+        if (platform === "naver" && new Date(scheduledAt!).getUTCMinutes() % NAVER_MINUTE_STEP) {
+          return void res.status(400).json({ error: `네이버 예약 시각은 ${NAVER_MINUTE_STEP}분 단위로 고를 수 있습니다.` });
+        }
+      }
       if (!(await extensionStatus()).installed) {
         return void res.status(400).json({ error: `블로그 작성은 Claude in Chrome 확장 프로그램으로 합니다. 크롬에 설치해 주세요: ${INSTALL_URL}` });
       }
@@ -142,36 +151,31 @@ router.post(
   }),
 );
 
-// 임시저장 이후 상태를 사용자가 직접 바꾼다 (앱이 발행하지는 않는다).
-// 발행 완료 표시/취소, 초안 완료로 되돌리기. 이 전이만 허용한다.
-const MANUAL_TRANSITIONS: Partial<Record<Job["status"], Job["status"][]>> = {
-  posted: ["published", "draft_ready"],
-  published: ["posted", "draft_ready"],
-  scheduled: ["published", "draft_ready"],
-};
-const MANUAL_LOG: Partial<Record<Job["status"], string>> = {
-  published: "발행 완료로 표시했습니다.",
-  posted: "발행 완료 표시를 취소했습니다 (임시저장 완료로 되돌림).",
-  draft_ready: "초안 완료로 되돌렸습니다.",
+// 초안 검토 이후의 글은 사용자가 상태를 직접 바꾼다 (앱이 블로그에 올리거나 발행하지는 않는다).
+// 초안 검토·블로그 임시저장 완료·블로그 발행 예약·블로그 발행완료인 글을 초안 검토·블로그 임시저장 완료·블로그 발행완료 중 다른 상태로.
+const MANUAL_LOG: Record<ManualStatus, string> = {
+  published: "블로그 발행완료로 표시했습니다.",
+  posted: "블로그 임시저장 완료로 표시했습니다.",
+  draft_ready: "초안 검토로 되돌렸습니다.",
 };
 router.put(
   "/api/jobs/:id/status",
   wrap(async (req, res) => {
-    const parsed = z.object({ status: z.enum(["draft_ready", "posted", "published"]) }).safeParse(req.body);
+    const parsed = z.object({ status: z.enum(MANUAL_STATUSES) }).safeParse(req.body);
     if (!parsed.success) return void res.status(400).json({ error: "요청 형식이 올바르지 않습니다." });
     const id = String(req.params.id);
     const job = await getJob(id);
     if (!job) return void res.status(404).json({ error: "not found" });
     if (isRunning(id)) return void res.status(409).json({ error: "이미 진행 중입니다." });
     const { status } = parsed.data;
-    if (!MANUAL_TRANSITIONS[job.status]?.includes(status)) {
+    if (!canSetStatus(job.status) || job.status === status) {
       return void res.status(400).json({ error: `${STATUS_LABEL[job.status]} 상태의 글은 ${STATUS_LABEL[status]}(으)로 바꿀 수 없습니다.` });
     }
     const next = await updateJob(id, (j) => {
       j.status = status;
       j.error = undefined;
     });
-    await log(id, MANUAL_LOG[status]!);
+    await log(id, MANUAL_LOG[status]);
     res.json(next);
   }),
 );

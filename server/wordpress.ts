@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { MAX_TAGS, type Post, type PostBlock, type PublishMode, type Settings, type WordPressRecord } from "../shared/types";
-import { esc, rich, TABLE_COLORS } from "../shared/postHtml";
+import { esc, plain, rich, skippedImageLabel, tableHtml } from "../shared/postHtml";
 import { currentSignal, throwIfCancelled } from "./cancel";
 import { getWordPressAuth, type WordPressAuth } from "./secrets";
 import { getSettings, jobImageDir } from "./store";
@@ -196,20 +196,13 @@ async function resolveTagIds(ctx: Ctx, names: string[]): Promise<number[]> {
 // ───────── 본문 ─────────
 
 /** 워드프레스용 표: 본문 폭을 꽉 채우고 칸 안쪽 여백을 넉넉하게 둔다 (테마 기본 표는 칸이 좁게 나온다). */
-function wpTableHtml(b: Extract<PostBlock, { type: "table" }>): string {
-  const border = `border:1px solid ${TABLE_COLORS.border};`;
-  const cell = `${border}padding:12px 16px;text-align:left;vertical-align:top;line-height:1.7;`;
-  const th = `${cell}background-color:${TABLE_COLORS.headerBg};font-weight:bold;`;
-  const head = `<tr>${b.headers.map((h) => `<th style="${th}">${rich(h)}</th>`).join("")}</tr>`;
-  const body = b.rows.map((r) => `<tr>${r.map((c) => `<td style="${cell}">${rich(c)}</td>`).join("")}</tr>`).join("");
-  return `<table style="border-collapse:collapse;width:100%;font-size:1em;margin:1.5em 0;${border}"><thead>${head}</thead><tbody>${body}</tbody></table>`;
-}
+const wpTableHtml = (b: Extract<PostBlock, { type: "table" }>) =>
+  tableHtml(b, "padding:12px 16px;text-align:left;vertical-align:top;line-height:1.7;", "width:100%;font-size:1em;margin:1.5em 0;");
 
 /** 초안 블록을 Gutenberg 블록 마크업으로. 이미지는 올린 미디어 URL을 쓴다. 표는 서식(색·테두리)을 그대로 두려고 사용자 지정 HTML 블록에 넣는다. */
 export function postToBlocks(post: Pick<Post, "blocks">, imageOf: (file: string) => MediaRef | undefined, log: (m: string) => void): string {
   const out: string[] = [];
-  const plain = (s: string) => s.replace(/\*\*/g, "");
-  for (const b of post.blocks as PostBlock[]) {
+  for (const b of post.blocks) {
     switch (b.type) {
       case "heading":
         out.push(`<!-- wp:heading -->\n<h2 class="wp-block-heading">${esc(plain(b.text))}</h2>\n<!-- /wp:heading -->`);
@@ -229,7 +222,7 @@ export function postToBlocks(post: Pick<Post, "blocks">, imageOf: (file: string)
       case "image": {
         const m = b.file ? imageOf(b.file) : undefined;
         if (!m) {
-          log(`이미지 건너뜀 (생성되지 않음): ${b.alt || b.prompt.slice(0, 30)}`);
+          log(`이미지 건너뜀 (생성되지 않음): ${skippedImageLabel(b)}`);
           break;
         }
         out.push(

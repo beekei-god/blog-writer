@@ -1,6 +1,6 @@
 import path from "node:path";
 import { IMAGE_ERROR_INFO, type ImageErrorKind } from "../../shared/imageErrors";
-import { aiFor, bodyIndexOf, imageKey, methodFor, type ImageOptions, type ImageProvider, type ImageScope, type ImageSpec, type Post } from "../../shared/types";
+import { aiFor, bodyIndexOf, imageKey, imageSpecAt, methodFor, type ImageOptions, type ImageProvider, type ImageScope, type ImageSpec, type Post } from "../../shared/types";
 import { CancelledError, throwIfCancelled } from "../cancel";
 import { jobImageDir, removeImageFile, updateJob } from "../store";
 import { getImageApiKey } from "../secrets";
@@ -31,18 +31,11 @@ export function collectTargets(post: Post, options: ImageOptions, scope: ImageSc
 
 type Outcome = { file: string } | { error: string; errorKind: ImageErrorKind; errorProvider: ImageProvider };
 
-/** 생성 결과(파일명 또는 오류)를 job 파일에 바로 기록한다. */
-async function record(jobId: string, t: Target, patch: Outcome) {
+/** 생성 결과(파일명 또는 오류)를 job 파일에 바로 기록한다. key: "thumbnail" 또는 "body-<블록 번호>" */
+async function record(jobId: string, key: string, patch: Outcome) {
   let oldFile = undefined as string | undefined;
   const job = await updateJob(jobId, (j) => {
-    if (!j.post) return;
-    const spec =
-      t.kind === "thumbnail"
-        ? j.post.thumbnail
-        : (() => {
-            const b = j.post!.blocks[t.index];
-            return b?.type === "image" ? b : undefined;
-          })();
+    const spec = imageSpecAt(j.post, key);
     if (!spec) return;
     if ("file" in patch) {
       oldFile = spec.file;
@@ -60,9 +53,8 @@ async function record(jobId: string, t: Target, patch: Outcome) {
   return job;
 }
 
-export function countImages(post: Post, options: ImageOptions, scope: ImageScope = "all") {
-  return collectTargets(post, options, scope).length;
-}
+/** 직접 올린 이미지 파일을 기록한다 (오류 기록은 지우고, 예전 파일은 기록한 뒤에 지운다). */
+export const recordImageFile = (jobId: string, key: string, file: string) => record(jobId, key, { file });
 
 /** 실패한 이미지는 오류로 기록하고 계속 진행한다 (글 전체를 실패시키지 않는다). */
 export async function generateImages(
@@ -90,7 +82,7 @@ export async function generateImages(
       log(`이미지 생성 ${++done}/${targets.length}: ${label(t)}`);
       try {
         const file = await gen(t, path.join(dir, nameOf(t)));
-        await record(jobId, t, { file: path.basename(file) });
+        await record(jobId, imageKey(t), { file: path.basename(file) });
       } catch (e) {
         if (e instanceof CancelledError) throw e; // 중지는 실패로 기록하지 않는다 (만들어 둔 이미지는 그대로)
         await fail(t, e);
@@ -102,7 +94,7 @@ export async function generateImages(
     const msg = errorText(e);
     const errorKind = errorKindOf(e);
     log(`${label(t)} 생성 실패 — ${IMAGE_ERROR_INFO[errorKind].title}: ${msg.split("\n")[0].slice(0, 200)}`);
-    await record(jobId, t, { error: msg, errorKind, errorProvider: aiOf(t).provider });
+    await record(jobId, imageKey(t), { error: msg, errorKind, errorProvider: aiOf(t).provider });
   }
 
   // Claude(SVG)는 빠르고 로그인이 필요 없으니 먼저 만든다.

@@ -1,6 +1,5 @@
-import fs from "node:fs/promises";
 import path from "node:path";
-import { serialQueue, writeJsonAtomic } from "./fsutil";
+import { readJson, serialQueue, writeJsonAtomic } from "./fsutil";
 import type { WebAi } from "./images/webAi";
 import { DATA_DIR } from "./store";
 
@@ -25,13 +24,7 @@ type SecretsFile = {
   openaiApiKey?: string;
 };
 
-async function readAll(): Promise<SecretsFile> {
-  try {
-    return JSON.parse(await fs.readFile(FILE, "utf8")) as SecretsFile;
-  } catch {
-    return {};
-  }
-}
+const readAll = () => readJson<SecretsFile>(FILE, {});
 
 // 읽기-합치기-쓰기가 겹쳐 서로의 항목을 지우지 않도록 하나씩 처리한다.
 const serial = serialQueue();

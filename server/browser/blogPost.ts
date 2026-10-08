@@ -4,9 +4,10 @@ import path from "node:path";
 import { z } from "zod";
 import { MAX_TAGS, type Platform, type Post, type PostBlock, type PostSettings } from "../../shared/types";
 import { runClaude } from "../claude";
-import { jobImageDir } from "../store";
-import { altFileName } from "./postHtml";
+import { jobImageDir, jobImagePath } from "../store";
+import { altFileName, BLANK_LINE, esc, pasteBlockHtml, skippedImageLabel, TAG_GAP_LINES, tagLine, writeUrl } from "./postHtml";
 import { assertExtensionInstalled, BROWSER_RULES, SITE_BLOCKED_TEXT, SiteBlockedError } from "./claudeChrome";
+import { publishPrompt, PublishStepError, type PublishRequest } from "./publish";
 
 /**
  * Claude in Chrome으로 블로그 글쓰기 화면에 초안을 입력하고 임시저장한다 (발행은 하지 않는다).
@@ -14,16 +15,13 @@ import { assertExtensionInstalled, BROWSER_RULES, SITE_BLOCKED_TEXT, SiteBlocked
  * 세 에디터 모두 붙여넣은 HTML(소제목·목록·표·굵게)을 자기 서식으로 바꿔 주므로, 한 글자씩 치는 것보다 빠르고 정확하다.
  */
 
-import { BLANK_LINE, esc, pasteBlockHtml, TAG_GAP_LINES } from "./postHtml";
-
 // 소제목은 <h3>으로 붙인다. 앞의 빈 줄은 buildSegments가 넣는다.
 const blockHtml = (b: Exclude<PostBlock, { type: "image" }>) => pasteBlockHtml(b, "h3");
 
 type Segment = { kind: "html"; html: string } | { kind: "image"; path: string; alt: string; role: "thumbnail" | "body" };
 
 /** 본문을 붙여넣기 조각과 이미지로 나눈다. 연속된 텍스트 블록은 한 조각으로 합친다. */
-export function buildSegments(post: Post, jobId: string, platform: Platform): { segments: Segment[]; skipped: string[] } {
-  const dir = jobImageDir(jobId);
+function buildSegments(post: Post, jobId: string, platform: Platform): { segments: Segment[]; skipped: string[] } {
   const segments: Segment[] = [];
   const skipped: string[] = [];
   let html: string[] = [];
@@ -33,16 +31,16 @@ export function buildSegments(post: Post, jobId: string, platform: Platform): { 
   };
   // 네이버·티스토리는 본문 첫 이미지가 대표 이미지가 된다.
   if (post.thumbnail?.file) {
-    segments.push({ kind: "image", path: path.join(dir, path.basename(post.thumbnail.file)), alt: post.thumbnail.alt, role: "thumbnail" });
+    segments.push({ kind: "image", path: jobImagePath(jobId, post.thumbnail.file), alt: post.thumbnail.alt, role: "thumbnail" });
   }
   for (const b of post.blocks) {
     if (b.type === "image") {
       if (!b.file) {
-        skipped.push(b.alt || b.prompt.slice(0, 30));
+        skipped.push(skippedImageLabel(b));
         continue;
       }
       flush();
-      segments.push({ kind: "image", path: path.join(dir, path.basename(b.file)), alt: b.alt, role: "body" });
+      segments.push({ kind: "image", path: jobImagePath(jobId, b.file), alt: b.alt, role: "body" });
     } else {
       // 소제목마다 위에 한 줄을 띄운다 (글 맨 처음은 제외)
       if (b.type === "heading" && (html.length || segments.length)) html.push(BLANK_LINE);
@@ -52,17 +50,10 @@ export function buildSegments(post: Post, jobId: string, platform: Platform): { 
   // 네이버는 태그를 발행 창에서만 넣을 수 있어 본문 끝에 #태그 줄로 넣는다.
   if (platform === "naver" && post.tags.length) {
     for (let i = 0; i < TAG_GAP_LINES; i++) html.push("<p>&nbsp;</p>"); // 본문과 태그 사이 빈 줄
-    html.push(`<p>${esc(post.tags.slice(0, MAX_TAGS).map((t) => `#${t.replace(/\s+/g, "")}`).join(" "))}</p>`);
+    html.push(`<p>${esc(tagLine(post))}</p>`);
   }
   flush();
   return { segments, skipped };
-}
-
-function writeUrl(s: PostSettings): string {
-  if (s.platform === "naver") return `https://blog.naver.com/${s.blogId}/postwrite`;
-  if (s.platform === "tistory") return `https://${s.blogId}.tistory.com/manage/newpost`;
-  const site = (/^https?:\/\//.test(s.blogId) ? s.blogId : `https://${s.blogId}`).replace(/\/+$/, "");
-  return `${site}/wp-admin/post-new.php`;
 }
 
 /** 크롬으로 올리는 블로그의 에디터 안내. 워드프레스는 REST API로 올린다 (server/wordpress.ts). */
@@ -94,7 +85,7 @@ dt.setData("text/plain", TEXT);
 target.dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true }));`;
 
 const ResultSchema = z.object({
-  status: z.enum(["saved", "login_required", "failed"]),
+  status: z.enum(["saved", "published", "scheduled", "login_required", "failed"]),
   message: z.string(),
   imagesInserted: z.number(),
   problems: z.array(z.string()),
@@ -106,7 +97,7 @@ const RESULT_JSON_SCHEMA = {
   additionalProperties: false,
   required: ["status", "message", "imagesInserted", "problems"],
   properties: {
-    status: { type: "string", enum: ["saved", "login_required", "failed"] },
+    status: { type: "string", enum: ["saved", "published", "scheduled", "login_required", "failed"] },
     message: { type: "string" },
     imagesInserted: { type: "number" },
     problems: { type: "array", items: { type: "string" } },
@@ -115,12 +106,16 @@ const RESULT_JSON_SCHEMA = {
 
 export class BlogLoginRequired extends Error {}
 
-/** Claude in Chrome으로 블로그에 입력하고 임시저장한다. */
+/**
+ * Claude in Chrome으로 블로그에 입력하고 임시저장한다.
+ * publish가 예약발행·자동발행이면 임시저장 뒤 발행 창에서 발행까지 하게 한다 (못 하면 PublishStepError).
+ */
 export async function postWithClaudeInChrome(
   post: Post,
   jobId: string,
   settings: PostSettings,
   log: (m: string) => void,
+  publish: PublishRequest = { mode: "draft" },
 ): Promise<BlogPostResult> {
   if (settings.platform === "wordpress") throw new Error("워드프레스는 크롬이 아니라 REST API로 올립니다.");
   await assertExtensionInstalled();
@@ -146,10 +141,12 @@ export async function postWithClaudeInChrome(
   }
 
   const system = `당신은 사용자의 크롬에서 블로그 글을 대신 입력하는 도우미입니다. Claude in Chrome 브라우저 도구만 씁니다.
-목표: 주어진 제목·본문·이미지·태그를 블로그 글쓰기 화면에 넣고 "임시저장"까지 한 뒤 멈춥니다. 절대 발행(공개)하지 마세요.
+${publish.mode === "draft"
+    ? `목표: 주어진 제목·본문·이미지·태그를 블로그 글쓰기 화면에 넣고 "임시저장"까지 한 뒤 멈춥니다. 절대 발행(공개)하지 마세요.`
+    : `목표: 주어진 제목·본문·이미지·태그를 블로그 글쓰기 화면에 넣고 "임시저장"한 뒤, 아래 "발행" 절차대로 ${publish.mode === "schedule" ? "예약발행" : "발행"}합니다. 그 밖의 발행은 하지 마세요.`}
 
 ${BROWSER_RULES}
-- 작업이 끝나면(성공이든 실패든) 블로그 탭은 닫지 말고 그대로 두세요. 사용자가 크롬에서 결과를 확인하고 직접 발행합니다.
+- 작업이 끝나면(성공이든 실패든) 블로그 탭은 닫지 말고 그대로 두세요. 사용자가 크롬에서 결과를 확인합니다.
 
 ## 입력 방법
 - 본문은 아래 "본문 조각" 순서대로 넣습니다. html 조각은 javascript_tool로 에디터에 paste 이벤트를 보내 붙여넣으세요. 직접 타이핑하는 것보다 빠르고 서식(소제목·목록·표·굵게)이 유지됩니다.
@@ -163,12 +160,14 @@ ${PASTE_HELPER}
 ## 플랫폼 안내
 ${PLATFORM_GUIDE[settings.platform as Exclude<Platform, "wordpress">]}
 
+${publishPrompt(settings.platform, publish)}
+
 ## 결과
 - status: 임시저장까지 했으면 "saved", 로그인 화면이 나와 멈췄으면 "login_required", 그 밖에 끝내지 못했으면 "failed".
 - message: 한국어로 한두 문장. imagesInserted: 실제로 올린 이미지 수. problems: 제대로 안 된 부분 (없으면 빈 배열).`;
 
   const prompt = `## 글쓰기 화면
-${writeUrl(settings)}
+${writeUrl(settings.platform, settings.blogId)}
 
 ## 제목
 ${post.title}
@@ -208,5 +207,8 @@ ${post.tags.slice(0, MAX_TAGS).join(", ") || "(없음)"}`;
   const said = [result.message, ...result.problems].join(" ");
   if (result.status !== "saved" && SITE_BLOCKED_TEXT.test(said)) throw new SiteBlockedError(result.message);
   if (result.status === "failed") throw new Error(`블로그 입력을 끝내지 못했습니다: ${result.message}${result.problems.length ? ` / ${result.problems.join(" / ")}` : ""}`);
+  if (publish.mode !== "draft" && result.status !== (publish.mode === "schedule" ? "scheduled" : "published")) {
+    throw new PublishStepError(`임시저장은 했지만 ${publish.mode === "schedule" ? "예약발행" : "발행"}하지 못했습니다: ${result.message}${result.problems.length ? ` / ${result.problems.join(" / ")}` : ""}. 크롬에 열린 탭에서 직접 발행하세요.`);
+  }
   return result;
 }

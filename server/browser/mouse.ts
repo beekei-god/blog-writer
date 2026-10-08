@@ -1,7 +1,7 @@
 import type { Locator, Page } from "playwright-core";
+import { sleep } from "../fsutil";
 
 const rand = (min: number, max: number) => min + Math.random() * (max - min);
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 type Pt = { x: number; y: number };
 
