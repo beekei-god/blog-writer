@@ -1,4 +1,4 @@
-// 붙여넣기용 HTML은 화면의 "본문 복사"와 같이 쓰도록 shared/postHtml.ts에 있다.
+// 붙여넣기용 HTML은 워드프레스 등록과 같이 쓰도록 shared/postHtml.ts에 있다.
 import { esc, rich, tableHtml } from "../../shared/postHtml";
 import type { PostBlock } from "../../shared/types";
 export { BLANK_LINE, esc, skippedImageLabel, tableHtml, TAG_GAP_LINES, tagLine, urlsIn } from "../../shared/postHtml";

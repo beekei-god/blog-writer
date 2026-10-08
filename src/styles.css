@@ -157,6 +157,7 @@ details { margin: 10px 0; }
 details > summary { cursor: pointer; color: var(--muted); font-size: 13px; padding: 4px 0; }
 details > summary:hover { color: var(--text); }
 .logs ol { margin: 6px 0 0; padding: 10px 14px; list-style: none; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; max-height: 220px; overflow-y: auto; font-size: 13px; }
+.logs li { white-space: pre-wrap; overflow-wrap: anywhere; }
 .logs time { color: var(--muted); margin-right: 6px; font-variant-numeric: tabular-nums; }
 .notes { white-space: pre-wrap; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px; font-size: 13px; }
 .sources { padding-left: 4px; margin: 6px 0; list-style: none; display: flex; flex-direction: column; gap: 4px; font-size: 13px; }

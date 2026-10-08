@@ -183,7 +183,7 @@ export function SettingsPanel({ onSaved, defaultModel }: { onSaved: (s: Settings
               <span className="hint small">{info.help}</span>
             </label>
             <p className="hint small">
-              이 블로그에는 임시저장까지만 합니다. 평소 쓰는 크롬에서 {PLATFORM_LABEL[p]}에 로그인해 두세요 (아래 "Claude in Chrome" 참고).
+              글을 올릴 때 임시저장·예약발행·자동발행 중에서 고릅니다 (늘 임시저장을 먼저 합니다). 평소 쓰는 크롬에서 {PLATFORM_LABEL[p]}에 로그인해 두세요 (아래 "Claude in Chrome" 참고).
             </p>
             <div className="form-actions">
               <button className="primary" onClick={() => saveGroup(p)} disabled={!dirtyOf(p)}>
@@ -347,7 +347,7 @@ export function SettingsPanel({ onSaved, defaultModel }: { onSaved: (s: Settings
         <h3 className="card-title">Claude in Chrome</h3>
         <div className="explain">
           <p>
-            <b>왜 설정해야 하나요?</b> 네이버·티스토리는 글을 올릴 수 있는 공개 API가 없어서, 이 앱은 평소 쓰는 크롬에서 글쓰기 화면을 대신 조작해 임시저장합니다.
+            <b>왜 설정해야 하나요?</b> 네이버·티스토리는 글을 올릴 수 있는 공개 API가 없어서, 이 앱은 평소 쓰는 크롬에서 글쓰기 화면을 대신 조작해 임시저장하고, 고른 방식대로 발행합니다.
             Gemini·ChatGPT로 이미지를 만들 때도 같은 크롬(로그인된 상태 그대로)을 씁니다. 이 조작을 Claude가 하려면 크롬에 <b>Claude in Chrome 확장 프로그램</b>이
             연결되어 있어야 합니다.
           </p>

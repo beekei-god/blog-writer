@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { CancelledError, cancelJob, withCancel } from "../server/cancel";
-import { kstParts, kstText, naverPublishSteps, publishPrompt, runPublishSteps, PublishStepError, tistoryPublishSteps } from "../server/browser/publish";
+import { kstParts, kstText, naverPublishSteps, publishPrompt, PUBLISH_DUMP_JS, runPublishSteps, PublishStepError, tistoryPublishSteps } from "../server/browser/publish";
 
 describe("예약 시각은 한국 시간으로", () => {
   it("UTC를 한국 시간 연·월·일·시·분으로", () => {
@@ -65,6 +65,20 @@ describe("단계 실행", () => {
     );
     await expect(after).resolves.toBeUndefined();
   });
+  it("멈추면 그 순간의 화면 구조를 오류에 붙이고, 구조를 못 읽어도 원래 오류는 그대로 낸다", async () => {
+    const fail = (dump: () => Promise<unknown>) =>
+      runPublishSteps([{ name: "하나", js: "1" }], (js) => (js === PUBLISH_DUMP_JS ? dump() : Promise.resolve("ERR:버튼 없음")), () => {}, 1).catch((e) => e);
+    const withDump = await fail(async () => "blog.naver.com/nid/postwrite\nbutton \"발행\"");
+    expect(withDump).toBeInstanceOf(PublishStepError);
+    expect(withDump.dialog).toContain('button "발행"');
+    const noDump = await fail(() => Promise.reject(new Error("탭이 닫힘")));
+    expect(noDump.message).toContain("버튼 없음");
+    expect(noDump.dialog).toBeUndefined();
+  });
+  it("화면 구조를 읽는 스크립트는 문법이 맞고 글 본문(편집 영역)은 건너뛴다", () => {
+    expect(() => new Function(PUBLISH_DUMP_JS)).not.toThrow();
+    expect(PUBLISH_DUMP_JS).toContain('[contenteditable="true"]');
+  });
   it("발행 확인이 안 되면 블로그에서 직접 확인하라고 알린다", async () => {
     await expect(runPublishSteps([{ name: "발행 확인", js: "x", timeoutMs: 5 }], async () => false, () => {}, 1)).rejects.toThrow(/발행됐는지 확인하지 못했습니다/);
   });
@@ -77,5 +91,7 @@ describe("Claude in Chrome 발행 안내", () => {
     expect(p).toContain("2026년 10월 10일, 시각 09:30");
     expect(p).toContain('status를 "scheduled"');
     expect(p).toContain("발행 버튼을 누르지 말고");
+    // 입력에 확인할 점이 있어도 발행은 진행한다 (예약 시각이 다를 때만 멈춘다)
+    expect(p).toContain("문제가 있어도 발행은 진행하세요");
   });
 });

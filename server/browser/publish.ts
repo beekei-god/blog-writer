@@ -16,7 +16,32 @@ export interface PublishRequest {
 }
 
 /** 임시저장은 끝났지만 발행 창에서 멈춘 경우. 글은 블로그에 임시저장된 채로 남는다 */
-export class PublishStepError extends Error {}
+export class PublishStepError extends Error {
+  /** 멈춘 순간의 발행 창 구조 (버튼·입력 칸과 짧은 글자). 발행 창 단계를 실제 화면에 맞게 고칠 때 쓴다 */
+  dialog?: string;
+}
+
+/**
+ * 멈춘 순간의 화면 구조를 읽는 스크립트 (동기, 문자열을 돌려준다).
+ * 버튼·입력 칸·이름표와 "공개/발행/예약/현재/시간/날짜"가 들어간 짧은 글자만 모은다. 글 본문(편집 영역)은 읽지 않는다.
+ */
+export const PUBLISH_DUMP_JS = `
+const docs = [document, ...[...document.querySelectorAll('iframe')].map((f) => { try { return f.contentDocument; } catch (e) { return null; } }).filter(Boolean)];
+const desc = (e) => e.tagName.toLowerCase() + (e.id ? '#' + e.id : '') +
+  (typeof e.className === 'string' && e.className.trim() ? '.' + e.className.trim().split(/\\s+/).join('.') : '') +
+  (e.type ? ' type=' + e.type : '') + (e.name ? ' name=' + e.name : '') + (e.htmlFor ? ' for=' + e.htmlFor : '') +
+  (e.checked ? ' checked' : '') + (e.disabled ? ' disabled' : '') + (e.getAttribute('role') ? ' role=' + e.getAttribute('role') : '') +
+  (e.getAttribute('aria-checked') ? ' aria-checked=' + e.getAttribute('aria-checked') : '') +
+  (e.getAttribute('aria-label') ? ' aria-label="' + e.getAttribute('aria-label').slice(0, 30) + '"' : '');
+const out = [];
+for (const d of docs) for (const el of d.querySelectorAll('*')) {
+  if (el.offsetParent === null || el.closest('[contenteditable="true"], .se-content, .se-main-container')) continue;
+  const own = [...el.childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent.trim()).join(' ').slice(0, 30);
+  const control = /^(BUTTON|INPUT|SELECT|LABEL)$/.test(el.tagName) || el.getAttribute('role');
+  if (control || /공개|발행|예약|현재|시간|날짜/.test(own)) out.push(desc(el) + (own ? ' "' + own + '"' : ''));
+  if (out.length >= 200) break;
+}
+return location.host + location.pathname + '\\n' + out.join('\\n');`;
 
 /** 예약 시각을 한국 시간의 연·월·일·시·분으로 */
 export function kstParts(iso: string) {
@@ -60,9 +85,14 @@ const vis = (e) => !!e && e.offsetParent !== null;
 const text = (e) => (e.innerText || e.textContent || '').replace(/\\s+/g, ' ').trim();
 const byText = (sel, re, root) => [...(root || document).querySelectorAll(sel)].find((e) => vis(e) && re.test(text(e)));
 const nums = (s) => ((s || '').match(/\\d+/g) || []).map(Number);
-/* 발행 창: 마지막 발행 버튼과 "공개" 글자를 함께 가진 가장 작은 보이는 상자 */
+/* 발행 창을 여는 버튼 (화면 위쪽·아래쪽 막대). 누를 때 표시를 남긴다 */
+const OPENER = 'button[class*="publish_btn"], #publish-layer-btn, [data-bw-opener]';
+/* 발행 창: 여는 버튼은 들어 있지 않고, 마지막 발행 버튼과 공개·예약·발행 시간 글자를 함께 가진 가장 작은 보이는 상자.
+   여는 버튼이 든 상자(위쪽 막대 등)를 발행 창으로 잘못 고르지 않게 한다. */
 const layer = () => {
-  const boxes = [...document.querySelectorAll('div, section, form, [role=dialog]')].filter((e) => vis(e) && /공개/.test(text(e)) && [...e.querySelectorAll('button')].some((b) => vis(b) && /발행$/.test(text(b))));
+  const boxes = [...document.querySelectorAll('div, section, form, aside, [role=dialog]')].filter((e) =>
+    vis(e) && !e.matches(OPENER) && !e.querySelector(OPENER) && /공개|예약|발행\\s*시간|발행일/.test(text(e)) &&
+    [...e.querySelectorAll('button')].some((b) => vis(b) && /발행$/.test(text(b))));
   boxes.sort((a, b) => text(a).length - text(b).length);
   return boxes[0] || null;
 };
@@ -71,7 +101,9 @@ const pick = (root, re) => {
   const lab = byText('label', re, root);
   const input = lab && (lab.control || lab.querySelector('input') || (lab.htmlFor && root.ownerDocument.getElementById(lab.htmlFor)));
   if (input && input.checked) return true;
-  const target = lab || byText('button, [role=radio], [role=tab], span, a', re, root);
+  // 이름표가 없으면 같은 글자를 가진 요소 중 가장 안쪽 요소를 누른다 (바깥 상자를 누르면 선택되지 않을 수 있다)
+  const all = [...root.querySelectorAll('button, [role=radio], [role=tab], [role=option], span, a, li, p, div')].filter((e) => vis(e) && re.test(text(e)));
+  const target = lab || all.find((e) => !all.some((o) => o !== e && e.contains(o)));
   if (!target) return null;
   target.click();
   return input ? input.checked : true;
@@ -187,7 +219,10 @@ b.click(); return true;`,
   ];
 }
 
-/** 네이버 블로그 (SmartEditor ONE): 상단 "발행" → 발행 창에서 전체공개, 예약이면 "예약"과 날짜·시각 → 창 아래 "발행" */
+/**
+ * 네이버 블로그 (SmartEditor ONE): 상단 "발행" → 발행 창에서 예약이면 발행 시간 "예약"과 날짜·시각 → 창 아래 "발행".
+ * 공개 설정은 바꾸지 않고 블로그에 정해 둔 값을 그대로 쓴다 (실제 발행 창에서 "전체공개" 칸을 찾지 못해 멈춘 적이 있다).
+ */
 export function naverPublishSteps(req: PublishRequest): PublishStep[] {
   return [
     {
@@ -196,9 +231,8 @@ export function naverPublishSteps(req: PublishRequest): PublishStep[] {
 if (layer()) return true;
 const b = document.querySelector('button[class*="publish_btn"]') || byText('button', /^발행$/);
 if (!b) ${err("상단의 발행 버튼을 찾지 못했습니다")}
-b.click(); return false;`,
+b.setAttribute('data-bw-opener', '1'); b.click(); return false;`,
     },
-    { name: "전체공개 고르기", js: `const L = layer(); if (!L) return false; const r = pick(L, /^전체\\s*공개$/); if (r === null) ${err("공개 설정의 전체공개를 찾지 못했습니다")} return r;` },
     req.mode === "schedule"
       ? { name: "예약 고르기", js: `const L = layer(); if (!L) return false; const r = pick(L, /^예약$/); if (r === null) ${err("발행 시간의 예약을 찾지 못했습니다")} return r && !!dateField(L);` }
       : { name: "현재 시각 발행 고르기", js: `const L = layer(); if (!L) return false; const r = pick(L, /^현재$/); return r === null ? true : r;` },
@@ -216,7 +250,7 @@ export function tistoryPublishSteps(req: PublishRequest): PublishStep[] {
 if (layer()) return true;
 const b = document.querySelector('#publish-layer-btn') || byText('button', /^완료$/);
 if (!b) ${err("하단의 완료 버튼을 찾지 못했습니다")}
-b.click(); return false;`,
+b.setAttribute('data-bw-opener', '1'); b.click(); return false;`,
     },
     { name: "공개 고르기", js: `const L = layer(); if (!L) return false; const r = pick(L, /^공개$/); if (r === null) ${err("공개 설정의 공개를 찾지 못했습니다")} return r;` },
     ...(req.mode === "schedule"
@@ -249,12 +283,19 @@ export async function runPublishSteps(steps: PublishStep[], exec: (js: string) =
         if (step.publishes) clicked = true;
         break;
       }
-      if (typeof r === "string" && r.startsWith("ERR:")) throw new PublishStepError(stepError(step.name, r.slice(4)));
-      if (Date.now() > deadline) throw new PublishStepError(stepError(step.name, "시간 안에 끝나지 않았습니다"));
+      if (typeof r === "string" && r.startsWith("ERR:")) throw await withDialog(new PublishStepError(stepError(step.name, r.slice(4))), exec);
+      if (Date.now() > deadline) throw await withDialog(new PublishStepError(stepError(step.name, "시간 안에 끝나지 않았습니다")), exec);
       if (!clicked) throwIfCancelled();
       await sleep(intervalMs);
     }
   }
+}
+
+/** 멈춘 순간의 화면 구조를 오류에 붙인다 (읽지 못해도 원래 오류는 그대로 낸다) */
+async function withDialog(e: PublishStepError, exec: (js: string) => Promise<unknown>) {
+  const dump = await exec(PUBLISH_DUMP_JS).catch(() => null);
+  if (typeof dump === "string" && dump) e.dialog = dump;
+  return e;
 }
 
 const stepError = (name: string, why: string) =>
@@ -272,7 +313,7 @@ export function publishPrompt(platform: "naver" | "tistory", req: PublishRequest
   const how =
     platform === "naver"
       ? `- 상단 "발행" 버튼을 눌러 발행 창을 엽니다 (태그는 본문 끝에 이미 있으니 발행 창의 태그 칸은 비워 둡니다).
-- 공개 설정은 "전체공개"를 고릅니다.`
+- 공개 설정은 바꾸지 않습니다 (블로그에 정해 둔 값 그대로).`
       : `- 하단 "완료" 버튼을 눌러 발행 창을 엽니다.
 - 공개 설정은 "공개"를 고릅니다.`;
   const when =
@@ -287,7 +328,7 @@ export function publishPrompt(platform: "naver" | "tistory", req: PublishRequest
   return `## 발행 (사용자가 확인 창에서 직접 요청함)
 이번 글은 임시저장이 끝난 뒤 ${req.mode === "schedule" ? "예약발행" : "즉시 발행"}까지 합니다. 위 브라우저 규칙의 "글 발행 금지"는 이 절차에 한해 예외입니다. 이 절차 밖에서는 아무것도 발행하지 마세요.
 - 먼저 임시저장을 끝내고 저장 완료를 확인한 뒤 진행하세요.
-- 본문 입력에서 problems에 적을 문제가 하나라도 있으면 발행하지 말고 status를 "saved"로 두세요 (잘못 들어간 글을 공개하지 않습니다).
+- 본문 입력에서 problems에 적을 문제가 있어도 발행은 진행하세요. 그 문제는 problems에 적으면 사용자가 나중에 확인합니다.
 ${how}
 ${when}
 - 발행 창 아래의 마지막 발행 버튼을 한 번만 누르고, 글쓰기 화면을 벗어나는지(글 보기·글 목록으로 이동) 확인하세요.

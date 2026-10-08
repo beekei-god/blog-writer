@@ -84,10 +84,15 @@ async function runWithChrome<T>(fn: (s: ChromeSession) => Promise<T>, opts: { ke
   }
 }
 
+/** 앱 전용 크롬으로 입력하고 임시저장한다 (고른 방식이면 발행까지). 초안과 다르게 들어간 부분을 돌려준다 */
 export function postWithChrome(post: Post, jobId: string, settings: PostSettings, log: (m: string) => void, publish?: PublishRequest) {
   if (settings.platform === "wordpress") throw new Error("워드프레스는 크롬이 아니라 REST API로 올립니다.");
   const adapter = ADAPTERS[settings.platform];
-  return withChrome(({ page, mouse }) => adapter({ page, mouse, post, jobId, settings, log, publish }), {
+  return withChrome(async ({ page, mouse }) => {
+    const problems: string[] = [];
+    await adapter({ page, mouse, post, jobId, settings, log, publish, problems });
+    return [...new Set(problems)];
+  }, {
     keepOpen: true,
     log,
   });

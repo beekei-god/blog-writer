@@ -18,7 +18,7 @@ import { serialQueue } from "./fsutil";
 import { getJob, getSettings, log, updateJob } from "./store";
 import { writePost } from "./writer";
 import { publishToWordPress } from "./wordpress";
-import { errorText, PUBLISH_MODE_LABEL } from "../shared/labels";
+import { errorText, PLATFORM_LABEL, PUBLISH_MODE_LABEL } from "../shared/labels";
 
 const running = new Set<string>();
 // Claude in Chrome 작업(블로그 작성, Gemini·ChatGPT 이미지)은 같은 크롬을 쓰므로 하나씩 실행한다.
@@ -374,7 +374,7 @@ async function doPost(id: string, platform: Platform, publish: PublishRequest) {
       j.postingTo = platform;
       j.error = undefined;
     });
-    await log(id, `${settings.platform} 작성 시작 (${PUBLISH_MODE_LABEL[publish.mode]}${publish.mode === "schedule" ? `: ${kstText(publish.scheduledAt!)}` : ""})`);
+    await log(id, `${PLATFORM_LABEL[platform]} 작성 시작 (${PUBLISH_MODE_LABEL[publish.mode]}${publish.mode === "schedule" ? `: ${kstText(publish.scheduledAt!)}` : ""})`);
     const say = (m: string) => void log(id, m);
     // Claude in Chrome이 막는 블로그는 제한을 우회하지 않고 다른 방법으로 쓴다.
     // - 네이버 + macOS: 평소 크롬의 새 탭에서 (이미 로그인된 크롬, 새 창·로그인 불필요)
@@ -387,8 +387,9 @@ async function doPost(id: string, platform: Platform, publish: PublishRequest) {
         await log(id, `평소 크롬에서 임시저장 완료 (이미지 ${r.imagesInserted}개).${publish.mode === "draft" ? " 크롬에 열린 탭에서 확인한 뒤 직접 발행하세요." : ""}`);
         for (const p of r.problems) await log(id, `확인 필요: ${p}`);
       } else {
-        await postWithChrome(job.post, id, settings, say, publish);
+        const problems = await postWithChrome(job.post, id, settings, say, publish);
         await log(id, "자동 조작으로 임시저장 완료");
+        for (const p of problems) await log(id, `확인 필요: ${p}`);
       }
     };
     const how = useUserChrome ? "평소 크롬" : "자동 조작(앱 전용 크롬)";
@@ -408,7 +409,7 @@ async function doPost(id: string, platform: Platform, publish: PublishRequest) {
       }
     }
     const status = publish.mode === "publish" ? "published" : publish.mode === "schedule" ? "scheduled" : "posted";
-    if (publish.mode !== "draft") await log(id, `${settings.platform}에 ${publishedText(publish)}.`);
+    if (publish.mode !== "draft") await log(id, `${PLATFORM_LABEL[platform]}에 ${publishedText(publish)}.`);
     await updateJob(id, (j) => {
       j.status = status;
     });
@@ -416,6 +417,8 @@ async function doPost(id: string, platform: Platform, publish: PublishRequest) {
     if (e instanceof PublishStepError) {
       // 임시저장까지는 됐다.
       await log(id, e.message);
+      // 발행 창 단계를 실제 화면에 맞게 고칠 수 있도록 멈춘 순간의 화면 구조를 남긴다.
+      if (e.dialog) await log(id, `발행 창 구조 (문제 확인용, 글 본문은 빠짐):\n${e.dialog}`);
       await updateJob(id, (j) => {
         j.status = "posted";
         j.error = e.message;

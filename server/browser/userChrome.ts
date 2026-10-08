@@ -8,7 +8,7 @@ import { sleep } from "../fsutil";
 import { jobImageDir } from "../store";
 import { altFileName, BLANK_LINE, esc, pasteBlockHtml, skippedImageLabel, TAG_GAP_LINES, tagLine, urlsIn, writeUrl } from "./postHtml";
 import { errorText } from "../../shared/labels";
-import { naverPublishSteps, PUBLISH_HELPERS, PublishStepError, runPublishSteps, type PublishRequest } from "./publish";
+import { naverPublishSteps, PUBLISH_HELPERS, runPublishSteps, type PublishRequest } from "./publish";
 
 /**
  * 사용자가 평소 쓰는 크롬(macOS)에서 네이버 블로그 글을 쓴다.
@@ -484,10 +484,6 @@ export async function postNaverInUserChrome(
   );
   if (!saved) throw new Error("임시저장 완료를 확인하지 못했습니다. 크롬에 열린 탭에서 직접 저장 버튼을 눌러 주세요.");
   if (opts.publish && opts.publish.mode !== "draft") {
-    // 입력이 초안과 다르면 그대로 공개하지 않는다.
-    if (problems.length) {
-      throw new PublishStepError(`입력 결과에 확인할 점이 있어 발행하지 않고 임시저장만 했습니다: ${problems.join(" / ")}. 크롬에 열린 탭에서 확인한 뒤 직접 발행하세요.`);
-    }
     await runPublishSteps(naverPublishSteps(opts.publish), (js) => runJs(tab, PUBLISH_HELPERS + js), log);
   }
   return { imagesInserted, problems };

@@ -98,7 +98,7 @@ export const api = {
   cancel: (id: string) => req<void>(`/api/jobs/${id}/cancel`, { method: "POST" }),
   savePost: (id: string, post: Post) =>
     req<Job>(`/api/jobs/${id}/post`, { method: "PUT", body: JSON.stringify(post) }),
-  /** mode: 임시저장/예약발행/자동발행 (워드프레스만 draft 외 가능). scheduledAt: 예약 시각 (ISO, UTC) */
+  /** mode: 임시저장/예약발행/자동발행 (네이버 예약은 10분 단위). scheduledAt: 예약 시각 (ISO, UTC) */
   postToBlog: (id: string, opts: { mode?: PublishMode; scheduledAt?: string; platform?: Platform } = {}) =>
     req<void>(`/api/jobs/${id}/post-to-blog`, { method: "POST", body: JSON.stringify(opts) }),
   getWordPress: () => req<WordPressStatus>("/api/wordpress"),

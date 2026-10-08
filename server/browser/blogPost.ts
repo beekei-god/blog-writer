@@ -8,9 +8,10 @@ import { jobImageDir, jobImagePath } from "../store";
 import { altFileName, BLANK_LINE, esc, pasteBlockHtml, skippedImageLabel, TAG_GAP_LINES, tagLine, writeUrl } from "./postHtml";
 import { assertExtensionInstalled, BROWSER_RULES, SITE_BLOCKED_TEXT, SiteBlockedError } from "./claudeChrome";
 import { publishPrompt, PublishStepError, type PublishRequest } from "./publish";
+import { PLATFORM_LABEL } from "../../shared/labels";
 
 /**
- * Claude in Chrome으로 블로그 글쓰기 화면에 초안을 입력하고 임시저장한다 (발행은 하지 않는다).
+ * Claude in Chrome으로 블로그 글쓰기 화면에 초안을 입력하고 임시저장한다 (예약발행·자동발행이면 이어서 발행 창에서 발행한다).
  * 본문은 "HTML 붙여넣기 조각"과 "이미지 파일"을 순서대로 나눈 목록으로 넘긴다.
  * 세 에디터 모두 붙여넣은 HTML(소제목·목록·표·굵게)을 자기 서식으로 바꿔 주므로, 한 글자씩 치는 것보다 빠르고 정확하다.
  */
@@ -177,7 +178,7 @@ ${JSON.stringify(segments, null, 1)}
 ## 태그 (${settings.platform === "naver" ? "본문 끝에 이미 포함됨" : "태그 입력란에 입력"})
 ${post.tags.slice(0, MAX_TAGS).join(", ") || "(없음)"}`;
 
-  log(`Claude in Chrome으로 ${settings.platform} 글쓰기 화면을 엽니다. 작업이 끝날 때까지 그 탭은 건드리지 마세요.`);
+  log(`Claude in Chrome으로 ${PLATFORM_LABEL[settings.platform]} 글쓰기 화면을 엽니다. 작업이 끝날 때까지 그 탭은 건드리지 마세요.`);
   let raw: unknown;
   try {
     raw = await runClaude<unknown>({

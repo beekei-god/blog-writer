@@ -20,7 +20,7 @@ export const PLATFORM_LABEL: Record<Platform, string> = { naver: "네이버 블�
 /** 문장 안에서 쓰는 짧은 이름 ("네이버 블로그 ID", "네이버 로그인 창") */
 export const PLATFORM_SHORT_LABEL: Record<Platform, string> = { naver: "네이버", tistory: "티스토리", wordpress: "워드프레스" };
 
-/** 블로그에 올리는 방식 이름 (워드프레스만 임시저장 외 방식을 고를 수 있다) */
+/** 블로그에 올리는 방식 이름 (모든 블로그에서 고른다) */
 export const PUBLISH_MODE_LABEL: Record<PublishMode, string> = { draft: "임시저장", schedule: "예약발행", publish: "자동발행" };
 
 export const errorText = (e: unknown) => (e instanceof Error ? e.message : String(e));

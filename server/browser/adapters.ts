@@ -22,6 +22,8 @@ export interface AdapterContext {
   log: (msg: string) => void;
   /** 예약발행·자동발행이면 임시저장 뒤 발행 창에서 발행까지 한다 */
   publish?: PublishRequest;
+  /** 초안과 다르게 들어간 부분 (발행은 그대로 진행하고 진행 로그에 "확인 필요"로 남긴다) */
+  problems: string[];
 }
 
 /** 임시저장 뒤 발행 창 단계를 실행한다 (임시저장만이면 아무것도 하지 않는다) */
@@ -116,6 +118,7 @@ async function insertTableOrList(ctx: AdapterContext, b: TableBlock, pasteTarget
     return true;
   } catch {
     ctx.log("표 붙여넣기가 적용되지 않아 목록 형태로 입력합니다.");
+    ctx.problems.push("표를 목록 형태로 입력함");
     await typeLines(ctx.page, tableAsLines(b));
     return false;
   }
@@ -300,6 +303,7 @@ async function setNaverTextFormat(ctx: AdapterContext, editor: EditorRoot, name:
     await ctx.mouse.click(option);
     return true;
   } catch {
+    ctx.problems.push(`${name} 서식을 적용하지 못함`);
     if (!naverFormatWarned) {
       naverFormatWarned = true;
       ctx.log("네이버 소제목 서식 메뉴를 찾지 못해 소제목을 굵은 글씨로 입력합니다.");
@@ -356,7 +360,10 @@ async function tistory(ctx: AdapterContext) {
         return true;
       }, alt)
       .catch(() => false);
-    if (!altSet) log("이미지 대체 텍스트를 넣지 못했습니다 (계속 진행).");
+    if (!altSet) {
+      log("이미지 대체 텍스트를 넣지 못했습니다 (계속 진행).");
+      ctx.problems.push("이미지 대체 텍스트를 넣지 못함");
+    }
     await mouse.click(body); // 포커스를 본문으로 되돌린다
     await moveCaretToEnd(page);
     await page.keyboard.press("Enter");
