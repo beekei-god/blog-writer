@@ -1,5 +1,5 @@
 import { countBodyChars } from "../shared/length";
-import { aiFor, bodyImageKey, bodyIndexOf, imageKey, type ImageMethod, type ImageOptions, type ImageProvider, type ImageScope, type ImageStyle } from "../shared/types";
+import { aiFor, bodyImageKey, bodyIndexOf, imageKey, methodFor, type ImageMethod, type ImageOptions, type ImageProvider, type ImageScope, type ImageStyle } from "../shared/types";
 import { type Platform, type PublishMode, settingsFor } from "../shared/types";
 import { postWithClaudeInChrome } from "./browser/blogPost";
 import { isBlocked, markBlocked } from "./browser/blockedSites";
@@ -149,7 +149,7 @@ export function runImages(id: string, scope: ImageScope = "all") {
 /**
  * 이미지 한 장만 다시 생성. 다른 이미지와 동시에 만들 수 있다 (크롬으로 만드는 것은 크롬 큐에서 하나씩).
  * ai: 이번에만 쓸 AI·스타일 (글의 이미지 설정은 바꾸지 않는다)
- * method: Gemini/ChatGPT를 API로(키가 있을 때) 만들지, 크롬에서 만들지
+ * method: Gemini/ChatGPT를 API로(키가 있을 때) 만들지, 크롬에서 만들지 (이번에만 쓴다)
  */
 export function runImage(id: string, target: "thumbnail" | `body-${number}`, ai: { provider: ImageProvider; style: ImageStyle }, method: ImageMethod = "api") {
   if (isImageBusy(id, target)) return Promise.resolve();
@@ -172,7 +172,7 @@ export function runImage(id: string, target: "thumbnail" | `body-${number}`, ai:
   });
 }
 
-async function imagesStep(id: string, scope: ImageScope, ai?: { provider: ImageProvider; style: ImageStyle }, method: ImageMethod = "api") {
+async function imagesStep(id: string, scope: ImageScope, ai?: { provider: ImageProvider; style: ImageStyle }, method?: ImageMethod) {
   try {
     const job = await getJob(id);
     if (!job?.post) throw new Error("작성된 초안이 없습니다.");
@@ -180,13 +180,14 @@ async function imagesStep(id: string, scope: ImageScope, ai?: { provider: ImageP
       j.error = undefined;
     });
     const options = optionsOf(job);
-    // 한 장만 만드는 경우라 그 종류의 AI·스타일만 이번 실행에서 바꿔 쓴다 (저장하지 않음)
+    // 한 장만 만드는 경우라 그 종류의 AI·스타일·방법만 이번 실행에서 바꿔 쓴다 (저장하지 않음).
+    // 그 밖에는 글을 만들 때 고른 방법을 그대로 쓴다.
     const runOptions: ImageOptions = !ai
       ? options
       : scope === "thumbnail"
-        ? { ...options, thumbnailProvider: ai.provider, thumbnailStyle: ai.style }
-        : { ...options, provider: ai.provider, style: ai.style };
-    await makeImages(id, job.topic, runOptions, scope, method);
+        ? { ...options, thumbnailProvider: ai.provider, thumbnailStyle: ai.style, thumbnailMethod: method }
+        : { ...options, provider: ai.provider, style: ai.style, method };
+    await makeImages(id, job.topic, runOptions, scope);
   } catch (e) {
     const cancelled = e instanceof CancelledError;
     await log(id, cancelled ? "이미지 생성을 중지했습니다." : `이미지 생성 실패: ${errorText(e)}`);
@@ -196,7 +197,7 @@ async function imagesStep(id: string, scope: ImageScope, ai?: { provider: ImageP
   }
 }
 
-async function makeImages(id: string, topic: string, options: ImageOptions, scope: ImageScope = "all", method: ImageMethod = "api") {
+async function makeImages(id: string, topic: string, options: ImageOptions, scope: ImageScope = "all") {
   const job = await getJob(id);
   if (!job?.post) return;
   const count = countImages(job.post, options, scope);
@@ -216,7 +217,7 @@ async function makeImages(id: string, topic: string, options: ImageOptions, scop
     j.regeneratingImages = [...new Set([...(j.regeneratingImages ?? []), ...targets.filter((t) => t.spec.file).map(imageKey)])];
   });
   try {
-    await makeImagesInner(id, topic, options, scope, count, method);
+    await makeImagesInner(id, topic, options, scope, count);
   } finally {
     await updateJob(id, (j) => {
       j.generatingImages = j.generatingImages?.filter((k) => !keys.includes(k));
@@ -227,7 +228,7 @@ async function makeImages(id: string, topic: string, options: ImageOptions, scop
   }
 }
 
-async function makeImagesInner(id: string, topic: string, options: ImageOptions, scope: ImageScope, count: number, method: ImageMethod) {
+async function makeImagesInner(id: string, topic: string, options: ImageOptions, scope: ImageScope, count: number) {
   const job = (await getJob(id))!;
   if (!job.post) return;
   const say = (m: string) => void log(id, m);
@@ -289,12 +290,12 @@ async function makeImagesInner(id: string, topic: string, options: ImageOptions,
   let usesChrome = false;
   for (const t of collectTargets(post, options, scope)) {
     const { provider } = aiFor(options, t.kind);
-    if (provider !== "claude" && (method === "chrome" || !(await getImageApiKey(provider)))) usesChrome = true;
+    if (provider !== "claude" && (methodFor(options, t.kind) === "chrome" || !(await getImageApiKey(provider)))) usesChrome = true;
   }
   if (usesChrome) {
-    await enqueueBrowser(() => generateImages(id, topic, post, options, say, scope, method));
+    await enqueueBrowser(() => generateImages(id, topic, post, options, say, scope));
   } else {
-    await generateImages(id, topic, post, options, say, scope, method);
+    await generateImages(id, topic, post, options, say, scope);
   }
   const after = await getJob(id);
   const failed = [after?.post?.thumbnail, ...(after?.post?.blocks ?? [])].filter(

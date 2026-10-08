@@ -18,13 +18,13 @@ const reply = (status: number, body: unknown) => new Response(JSON.stringify(bod
 const fetchMock = vi.fn<typeof fetch>();
 
 async function run(provider: "gemini" | "chatgpt", method: ImageMethod = "api") {
-  const options: ImageOptions = { thumbnail: false, bodyImages: 1, provider, style: "flat" };
+  const options: ImageOptions = { thumbnail: false, bodyImages: 1, provider, style: "flat", method };
   const job = await createJob("주제", options);
   await updateJob(job.id, (j) => {
     j.post = { title: "제목", summary: "요약", tags: [], blocks: [{ type: "image", prompt: "p", alt: "a", headline: "문구" }] };
   });
   const logs: string[] = [];
-  await generateImages(job.id, "주제", (await getJob(job.id))!.post!, options, (m) => logs.push(m), "all", method);
+  await generateImages(job.id, "주제", (await getJob(job.id))!.post!, options, (m) => logs.push(m), "all");
   const spec = (await getJob(job.id))!.post!.blocks[0] as { file?: string; error?: string; errorKind?: string };
   return { spec, logs };
 }
@@ -63,6 +63,25 @@ describe("Gemini·ChatGPT 이미지: 키가 있으면 API, 없거나 크롬을 �
     expect(fetchMock).not.toHaveBeenCalled();
     expect(web.generateWithWebAi).toHaveBeenCalledOnce();
     expect(spec.file).toMatch(/\.web\.png$/);
+  });
+
+  it("썸네일과 본문 이미지는 만드는 방법을 따로 정할 수 있다 (썸네일 크롬, 본문 API)", async () => {
+    fetchMock.mockResolvedValueOnce(reply(200, { data: [{ b64_json: PNG }] }));
+    const options: ImageOptions = { thumbnail: true, bodyImages: 1, provider: "chatgpt", style: "flat", method: "api", thumbnailMethod: "chrome" };
+    const job = await createJob("주제", options);
+    await updateJob(job.id, (j) => {
+      j.post = {
+        title: "제목", summary: "요약", tags: [],
+        thumbnail: { prompt: "t", alt: "t" },
+        blocks: [{ type: "image", prompt: "p", alt: "a" }],
+      };
+    });
+    await generateImages(job.id, "주제", (await getJob(job.id))!.post!, options, () => {}, "all");
+    const post = (await getJob(job.id))!.post!;
+    expect(post.thumbnail!.file).toMatch(/\.web\.png$/);
+    expect((post.blocks[0] as { file?: string }).file).toMatch(/^body-0-\d+\.png$/);
+    expect(web.generateWithWebAi).toHaveBeenCalledOnce();
+    expect(fetchMock).toHaveBeenCalledOnce();
   });
 
   it("한도·잔액 부족(429)이면 크롬으로 넘기지 않고 limit으로 실패한다", async () => {

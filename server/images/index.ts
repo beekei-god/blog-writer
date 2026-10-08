@@ -1,6 +1,6 @@
 import path from "node:path";
 import { IMAGE_ERROR_INFO, type ImageErrorKind } from "../../shared/imageErrors";
-import { aiFor, bodyIndexOf, imageKey, type ImageMethod, type ImageOptions, type ImageProvider, type ImageScope, type ImageSpec, type Post } from "../../shared/types";
+import { aiFor, bodyIndexOf, imageKey, methodFor, type ImageOptions, type ImageProvider, type ImageScope, type ImageSpec, type Post } from "../../shared/types";
 import { CancelledError, throwIfCancelled } from "../cancel";
 import { jobImageDir, removeImageFile, updateJob } from "../store";
 import { getImageApiKey } from "../secrets";
@@ -72,7 +72,6 @@ export async function generateImages(
   options: ImageOptions,
   log: (m: string) => void,
   scope: ImageScope = "all",
-  method: ImageMethod = "api",
 ) {
   const targets = collectTargets(post, options, scope);
   if (!targets.length) return;
@@ -116,14 +115,14 @@ export async function generateImages(
     },
   );
 
-  // Gemini / ChatGPT: API 키가 있으면 API로 만든다. 키가 없거나 사용자가 크롬을 고르면 Claude in Chrome으로 한 장씩 (사용자의 크롬과 로그인을 그대로 쓴다).
+  // Gemini / ChatGPT: API 키가 있으면 API로 만든다. 키가 없거나 사용자가 크롬을 고르면(썸네일·본문 따로) Claude in Chrome으로 한 장씩 (사용자의 크롬과 로그인을 그대로 쓴다).
   // API가 실패해도 크롬으로 저절로 넘기지 않는다. 실패로 기록하고, 화면에서 다시 하거나 크롬에서 만들기를 고른다.
   await runAll(
     targets.filter((t) => aiOf(t).provider !== "claude"),
     async (t, base) => {
       const { provider, style } = aiOf(t);
       const ai = provider as WebAi;
-      if (method === "api" && (await getImageApiKey(ai))) {
+      if (methodFor(options, t.kind) === "api" && (await getImageApiKey(ai))) {
         log(`${ai === "gemini" ? "Gemini" : "OpenAI"} API로 이미지를 만듭니다.`);
         return generateWithApi(ai, imageRequest(t.spec.prompt, style, t.spec.headline, t.kind), base);
       }

@@ -40,6 +40,10 @@ export interface ImageOptions {
   thumbnailProvider?: ImageProvider;
   /** 썸네일 스타일. 없거나 그 AI가 지원하지 않으면 본문 이미지 스타일(또는 그 AI의 첫 스타일) */
   thumbnailStyle?: ImageStyle;
+  /** 본문 이미지(Gemini/ChatGPT)를 만드는 방법. 없으면 api */
+  method?: ImageMethod;
+  /** 썸네일(Gemini/ChatGPT)을 만드는 방법. 없으면 본문 이미지와 같다 */
+  thumbnailMethod?: ImageMethod;
 }
 
 /** 고른 AI에서 쓸 수 있는 스타일로 맞춘다 (Claude는 플랫만 가능). */
@@ -52,6 +56,10 @@ export function aiFor(o: ImageOptions, kind: "thumbnail" | "body"): { provider: 
   const wanted = kind === "thumbnail" ? (o.thumbnailStyle ?? o.style) : o.style;
   return { provider, style: fitStyle(provider, wanted) };
 }
+
+/** 썸네일/본문 이미지를 만들 방법 (Claude는 방법과 관계없다) */
+export const methodFor = (o: ImageOptions, kind: "thumbnail" | "body"): ImageMethod =>
+  (kind === "thumbnail" ? (o.thumbnailMethod ?? o.method) : o.method) ?? "api";
 
 // ───────────── Claude 모델 · 사용량 ─────────────
 

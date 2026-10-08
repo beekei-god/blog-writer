@@ -35,7 +35,7 @@ export function FailedPlaceholder({ spec, generating }: { spec: ImageSpec; gener
 }
 
 /** 이미지 API 키 연결 상태 (Gemini/ChatGPT를 API로 만들 수 있는지) */
-function useImageApi() {
+export function useImageApi() {
   const [status, setStatus] = useState<ImageApiStatus | null>(null);
   useEffect(() => {
     api.getImageApi().then(setStatus).catch(() => {});

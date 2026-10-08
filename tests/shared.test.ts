@@ -10,6 +10,7 @@ import {
   bodyIndexOf,
   fitStyle,
   imageKey,
+  methodFor,
   settingsFor,
   type Post,
   type Settings,
@@ -71,6 +72,13 @@ describe("이미지 AI·스타일", () => {
     expect(aiFor(o, "thumbnail")).toEqual({ provider: "gemini", style: "ghibli" });
     expect(aiFor({ ...o, thumbnailProvider: "claude" }, "thumbnail")).toEqual({ provider: "claude", style: "flat" });
     expect(aiFor({ ...o, thumbnailStyle: "realistic" }, "body")).toEqual({ provider: "gemini", style: "ghibli" });
+  });
+  it("썸네일 만드는 방법이 없으면 본문 이미지 방법을, 둘 다 없으면 api를 쓴다", () => {
+    const o = { thumbnail: true, bodyImages: 2, provider: "gemini" as const, style: "flat" as const };
+    expect(methodFor(o, "body")).toBe("api");
+    expect(methodFor(o, "thumbnail")).toBe("api");
+    expect(methodFor({ ...o, method: "chrome" }, "thumbnail")).toBe("chrome");
+    expect(methodFor({ ...o, thumbnailMethod: "chrome" }, "body")).toBe("api");
   });
   it("이미지 키", () => {
     expect(bodyImageKey(3)).toBe("body-3");

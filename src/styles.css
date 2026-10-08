@@ -366,5 +366,7 @@ details > summary:hover { color: var(--text); }
 .preview a { color: var(--accent); word-break: break-all; }
 
 /* ───── 썸네일/본문 이미지 AI 선택 ───── */
-.ai-rows { display: flex; flex-direction: column; gap: 8px; padding-top: 10px; border-top: 1px solid var(--line); }
+.image-group { display: flex; flex-direction: column; gap: 10px; }
+.image-group + .image-group { padding-top: 14px; border-top: 1px solid var(--line); }
+.ai-rows { display: flex; flex-direction: column; gap: 8px; padding-left: 12px; border-left: 2px solid var(--line); }
 .pv-image .image-actions.open, .image-editor .image-actions.open { margin-top: 6px; }

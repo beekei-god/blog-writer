@@ -48,6 +48,8 @@ export const ImageOptionsSchema = z
     style: z.enum(["flat", "ghibli", "realistic", "anime"]).default("flat"),
     thumbnailProvider: z.enum(["claude", "gemini", "chatgpt"]).optional(),
     thumbnailStyle: z.enum(["flat", "ghibli", "realistic", "anime"]).optional(),
+    method: z.enum(["api", "chrome"]).optional(),
+    thumbnailMethod: z.enum(["api", "chrome"]).optional(),
   })
   .refine((o) => STYLES_BY_PROVIDER[o.provider].includes(o.style), {
     path: ["style"],
