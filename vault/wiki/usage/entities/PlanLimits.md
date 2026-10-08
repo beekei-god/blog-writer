@@ -6,7 +6,7 @@ aliases: [플랜 한도, 한도 사용률]
 status: active
 confidence: high
 source:
-  - blog-writer:shared/types.ts:74-88
+  - blog-writer:shared/types.ts:77-91
   - blog-writer:server/claude.ts:49-52
   - blog-writer:server/claude.ts:139-146
   - blog-writer:server/usage.ts:45-55

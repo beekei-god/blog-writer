@@ -6,7 +6,7 @@ aliases: [주제 추천, 추천 결과]
 status: active
 confidence: high
 source:
-  - blog-writer:shared/types.ts:304-320
+  - blog-writer:shared/types.ts:309-325
   - blog-writer:server/recommend.ts:15-66
   - blog-writer:server/recommend.ts:141-255
 updated: 2026-10-07

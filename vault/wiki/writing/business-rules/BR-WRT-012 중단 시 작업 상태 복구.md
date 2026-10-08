@@ -7,15 +7,15 @@ status: active
 confidence: high
 consistency: consistent
 source:
-  - blog-writer:server/pipeline.ts:109-118
-  - blog-writer:server/pipeline.ts:150-159
-  - blog-writer:server/pipeline.ts:300-309
-  - blog-writer:server/pipeline.ts:360-369
-  - blog-writer:server/store.ts:134-146
-  - blog-writer:server/cancel.ts:1-36
-  - blog-writer:src/job/JobDetail.tsx:143-146
+  - blog-writer:server/pipeline.ts:119-128
+  - blog-writer:server/pipeline.ts:131-197
+  - blog-writer:server/pipeline.ts:345-354
+  - blog-writer:server/pipeline.ts:405-414
+  - blog-writer:server/store.ts:135-147
+  - blog-writer:server/cancel.ts:1-39
+  - blog-writer:src/job/JobDetail.tsx:144-148
 entities: [Job]
-updated: 2026-10-07
+updated: 2026-10-08
 ---
 # BR-WRT-012 중단 시 작업 상태 복구
 
@@ -27,22 +27,22 @@ updated: 2026-10-07
 |---|---|---|---|
 | 초안 단계 실패 | 초안 있으면 draft_ready, 없으면 failed | 오류 메시지 | "실패: …" |
 | 초안 단계 중지 | 같음 | 초안 있으면 없음, 없으면 "사용자가 작업을 중지했습니다." | "작업을 중지했습니다." |
-| 이미지 단계 실패/중지 | draft_ready | 실패면 메시지, 중지면 없음 | "이미지 생성 실패/중지" |
+| 이미지 단계 실패/중지 | draft_ready (한 장씩 동시에 만드는 중이면 마지막 이미지가 끝날 때) | 실패면 메시지, 중지면 없음 | "이미지 생성 실패/중지" |
 | 블로그 입력(크롬) 실패/중지 | 초안 있으면 draft_ready | 실패면 메시지 | 중지: "크롬에 열린 탭에 일부만 들어갔을 수 있으니 확인하세요." |
 | 워드프레스 API 등록 실패/중지 | 초안 있으면 draft_ready | 실패면 메시지 | "워드프레스 등록 실패: …" / "워드프레스 등록을 중지했습니다." 중지 신호는 진행 중인 요청도 끊는다 |
-| 서버 재시작 시 진행 중 상태로 남은 작업 | 초안 있으면 draft_ready, 없으면 failed | "서버가 재시작되어 작업이 중단되었습니다." | |
+| 서버 재시작 시 진행 중 상태로 남은 작업 | 초안 있으면 draft_ready, 없으면 failed. 진행 표시(`generatingImages`·`regeneratingImages`)와 `imageRunsOnly`도 지움 | "서버가 재시작되어 작업이 중단되었습니다." | |
 | 중지 요청했는데 진행 중 작업 없음 | 409 "중지할 작업이 없습니다." | | |
 
-중지는 AbortController 신호로 진행 중인 Claude 호출을 SIGTERM하고, 단계 사이 `throwIfCancelled`에서 멈춘다. 이미 만든 이미지는 실패로 기록하지 않는다 (`blog-writer:server/images/index.ts:92`).
+중지는 AbortController 신호로 진행 중인 Claude 호출을 SIGTERM하고(이미지 API 요청도 같은 신호로 끊김), 단계 사이 `throwIfCancelled`에서 멈춘다. 한 작업에 신호가 여러 개일 수 있어(이미지 한 장씩 동시 실행) "작업 중지"는 그 작업의 신호를 모두 보낸다. 이미 만든 이미지는 실패로 기록하지 않는다 (`blog-writer:server/images/index.ts:96`).
 
 ## 구현 현황
 | 레이어 | 구현 | 근거 |
 |---|---|---|
-| 서버 | 파이프라인 catch 블록 4곳(초안·이미지·워드프레스·크롬 입력), 재시작 복구 | 위 source |
-| 화면 | 중지 확인 창 "지금까지 만든 초안과 이미지는 그대로 남습니다." | `blog-writer:src/job/JobDetail.tsx:143-146` |
+| 서버 | 파이프라인 catch 블록 4곳(초안·이미지 `imagesStep`·워드프레스·크롬 입력), 이미지 실행 마무리(`runImages`·`runImage`의 finally), 재시작 복구 | 위 source |
+| 화면 | 중지 확인 창 "지금까지 만든 초안과 이미지는 그대로 남습니다." | `blog-writer:src/job/JobDetail.tsx:144-148` |
 
 ## 예외 / 경계값
-- Playwright·AppleScript 경로는 Claude 호출이 아니어서, 중지 신호는 다음 `throwIfCancelled` 지점까지 반영되지 않는다 (대체 경로 시작 전 한 번만 확인, `blog-writer:server/pipeline.ts:331`).
+- Playwright·AppleScript 경로는 Claude 호출이 아니어서, 중지 신호는 다음 `throwIfCancelled` 지점까지 반영되지 않는다 (대체 경로 시작 전 한 번만 확인, `blog-writer:server/pipeline.ts:376`).
 - 추천도 재시작 시 failed로 바꾼다 → [[topic/business-rules/BR-TOP-005 추천 동시 실행과 입력 제한]].
 
 ## 영향받는 플로우
@@ -52,3 +52,4 @@ updated: 2026-10-07
 | 날짜 | 변경 | 근거 |
 |---|---|---|
 | 2026-10-05 | 최초 기록 | |
+| 2026-10-08 | 이미지 한 장씩 동시 실행: 중지는 작업의 모든 신호를 보냄(`cancel.ts`가 작업마다 여러 AbortController), 이미지 상태 복귀는 마지막 진행이 끝날 때, 재시작 복구가 `imageRunsOnly`도 지움 | 커밋 38ae96c |

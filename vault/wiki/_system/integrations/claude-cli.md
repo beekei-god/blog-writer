@@ -9,7 +9,7 @@ source:
   - blog-writer:server/writer.ts:6-215
   - blog-writer:server/images/plan.ts:67-113
   - blog-writer:server/images/svg.ts:8-63
-  - blog-writer:server/images/webAi.ts:195-254
+  - blog-writer:server/images/webAi.ts:194-238
   - blog-writer:server/browser/blogPost.ts:180-212
   - blog-writer:server/recommend.ts:69-196
   - blog-writer:server/routes/browser.ts:33-47

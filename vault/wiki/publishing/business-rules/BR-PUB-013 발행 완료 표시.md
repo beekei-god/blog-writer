@@ -7,10 +7,10 @@ status: active
 confidence: high
 consistency: consistent
 source:
-  - blog-writer:shared/types.ts:218-229
+  - blog-writer:shared/types.ts:221-232
   - blog-writer:server/routes/jobs.ts:145-177
   - blog-writer:shared/labels.ts:4-14
-  - blog-writer:src/api.ts:94-96
+  - blog-writer:src/api.ts:106-108
   - blog-writer:src/job/NextStep.tsx:6-153
   - blog-writer:src/job/NextStep.tsx:254-263
   - blog-writer:src/job/Progress.tsx:5-44
@@ -58,9 +58,9 @@ updated: 2026-10-07
 ## 구현 현황
 | 레이어 | 구현 | 근거 |
 |---|---|---|
-| 공용 | `JobStatus`에 `scheduled`·`published`, 상태 이름 `STATUS_LABEL` | `blog-writer:shared/types.ts:218-229`, `blog-writer:shared/labels.ts:4-14` |
+| 공용 | `JobStatus`에 `scheduled`·`published`, 상태 이름 `STATUS_LABEL` | `blog-writer:shared/types.ts:221-232`, `blog-writer:shared/labels.ts:4-14` |
 | 서버 | `MANUAL_TRANSITIONS`, `MANUAL_LOG`, `PUT /api/jobs/:id/status` | `blog-writer:server/routes/jobs.ts:145-177` |
-| 화면 | `api.setStatus`, `NextStep`, `WordPressNext`, `confirmRevert`, `Progress` | `blog-writer:src/api.ts:94-96`, `blog-writer:src/job/NextStep.tsx:6-153`, `:254-263`, `blog-writer:src/job/Progress.tsx:5-44` |
+| 화면 | `api.setStatus`, `NextStep`, `WordPressNext`, `confirmRevert`, `Progress` | `blog-writer:src/api.ts:106-108`, `blog-writer:src/job/NextStep.tsx:6-153`, `:254-263`, `blog-writer:src/job/Progress.tsx:5-44` |
 | 화면(목록) | 필터 칩 | `blog-writer:src/App.tsx:24-36` |
 | 스타일 | `--pub`, `--sch`, `.badge.published`, `.badge.scheduled` | `blog-writer:src/styles.css:6-7`, `:17-18`, `:95-96` |
 

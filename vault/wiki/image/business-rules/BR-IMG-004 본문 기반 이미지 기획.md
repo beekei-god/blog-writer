@@ -7,7 +7,7 @@ status: active
 confidence: medium
 consistency: consistent
 source:
-  - blog-writer:server/pipeline.ts:202-243
+  - blog-writer:server/pipeline.ts:243-284
   - blog-writer:server/images/plan.ts:1-113
   - blog-writer:server/writer.ts:53-63
 updated: 2026-10-07
@@ -34,7 +34,7 @@ entities: [ImageSpec]
 |---|---|---|
 | 프롬프트(작성) | 처음 쓸 때 basis 먼저, 범용 이미지 금지, 일관성 | `blog-writer:server/writer.ts:53-63` |
 | 프롬프트(기획) | 위 규칙 | `blog-writer:server/images/plan.ts:86-100` |
-| 서버 | 그룹별 기획 호출과 반영 | `blog-writer:server/pipeline.ts:202-243` |
+| 서버 | 그룹별 기획 호출과 반영 | `blog-writer:server/pipeline.ts:243-284` |
 | 스키마 | basis를 prompt보다 먼저 쓰게 순서 배치 | `blog-writer:server/schema.ts:137-141` |
 
 범용 이미지 금지·섹션 연관성은 프롬프트 지시라 `confidence: medium`.

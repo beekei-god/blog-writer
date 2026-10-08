@@ -4,15 +4,15 @@ project: blog-writer
 confidence: high
 source:
   - blog-writer:server/app.ts:10-40
-  - blog-writer:server/routes/settings.ts:1-125
+  - blog-writer:server/routes/settings.ts:1-162
   - blog-writer:server/routes/browser.ts:1-121
   - blog-writer:server/routes/usage.ts:1-35
   - blog-writer:server/routes/recommendations.ts:1-42
   - blog-writer:server/routes/jobs.ts:1-207
-  - blog-writer:server/routes/images.ts:1-146
+  - blog-writer:server/routes/images.ts:1-155
   - blog-writer:server/routes/util.ts:1-28
-  - blog-writer:src/api.ts:38-111
-updated: 2026-10-07
+  - blog-writer:src/api.ts:46-123
+updated: 2026-10-08
 ---
 # API
 
@@ -21,18 +21,21 @@ updated: 2026-10-07
 ## 설정·규칙·키 (`server/routes/settings.ts`)
 | 메서드 | 경로 | 하는 일 | 입력/검증 | 응답 | 호출하는 화면 | 근거 |
 |---|---|---|---|---|---|---|
-| GET | `/api/settings` | 설정 읽기 (기본값 병합, 예전 `platform`/`blogId` 값은 블로그별 칸으로 옮김) | | `Settings` | `NewJob`, `SettingsPanel`, `App` | `blog-writer:server/routes/settings.ts:36` |
-| PUT | `/api/settings` | 설정 저장 | `SettingsSchema`: `naverBlogId`·`tistoryBlogId`(≤200자, 영문/숫자/_/-), `wordpressUrl`(≤200자, https 주소 형식), `wordpressCategoryId`(양의 정수), images=`ImageOptionsSchema`, models=단계별 enum | 200 `Settings` / 400 | `SettingsPanel`(카드마다 자기 칸만 바꿔 저장) | `blog-writer:server/routes/settings.ts:16-46` |
-| GET | `/api/rules` | 글쓰기 규칙 (수정본 없으면 기본) | | `{content,isDefault,updatedAt}` | `RulesEditor` | `blog-writer:server/routes/settings.ts:49` |
-| PUT | `/api/rules` | 규칙 저장 | content 1~50,000자(trim), 끝에 줄바꿈 추가 | `Rules` / 400 | `RulesEditor` | `blog-writer:server/routes/settings.ts:50-57` |
-| POST | `/api/rules/reset` | 수정본 삭제 → 기본 규칙 | | `Rules` | `RulesEditor` | `blog-writer:server/routes/settings.ts:58` |
-| GET | `/api/datalab` | 데이터랩 키 설정 여부 (값은 안 줌, Client ID 앞 4자만) | | `{configured, clientIdHint}` | `SettingsPanel`, `Recommend` | `blog-writer:server/routes/settings.ts:61-67` |
-| PUT | `/api/datalab` | 키 확인 호출 후 저장 | clientId·clientSecret 필수 | 200 / 400(검증·확인 실패 메시지) | `SettingsPanel` | `blog-writer:server/routes/settings.ts:68-81` |
-| DELETE | `/api/datalab` | 파일의 키 삭제 (환경변수 키는 남음) | | `{configured}` | `SettingsPanel` | `blog-writer:server/routes/settings.ts:82-88` |
-| GET | `/api/wordpress` | 워드프레스 연결 여부 (Application Password는 돌려주지 않음) | | `{configured, username}` | `SettingsPanel`, `NextStep` | `blog-writer:server/routes/settings.ts:91-94`, `blog-writer:server/routes/util.ts:25-28` |
-| PUT | `/api/wordpress` | 사이트에 연결 확인(`users/me`) 후 사용자명·Application Password 저장 | 둘 다 1~200자 필수, 확인 실패면 400(원인별 메시지) | `{configured, username}` | `SettingsPanel` | `blog-writer:server/routes/settings.ts:95-108` |
-| DELETE | `/api/wordpress` | 연결 정보 삭제 (예전 WordPress.com 값도 함께 지움) | | `{configured:false}` | `SettingsPanel` | `blog-writer:server/routes/settings.ts:109-115` |
-| GET | `/api/wordpress/categories` | 사이트 카테고리 목록 (최대 100개) | 연결·주소 문제는 400 | `{id,name}[]` | `SettingsPanel` | `blog-writer:server/routes/settings.ts:116-125` |
+| GET | `/api/settings` | 설정 읽기 (기본값 병합, 예전 `platform`/`blogId` 값은 블로그별 칸으로 옮김) | | `Settings` | `NewJob`, `SettingsPanel`, `App` | `blog-writer:server/routes/settings.ts:37` |
+| PUT | `/api/settings` | 설정 저장 | `SettingsSchema`: `naverBlogId`·`tistoryBlogId`(≤200자, 영문/숫자/_/-), `wordpressUrl`(≤200자, https 주소 형식), `wordpressCategoryId`(양의 정수), images=`ImageOptionsSchema`, models=단계별 enum | 200 `Settings` / 400 | `SettingsPanel`(카드마다 자기 칸만 바꿔 저장) | `blog-writer:server/routes/settings.ts:17-47` |
+| GET | `/api/rules` | 글쓰기 규칙 (수정본 없으면 기본) | | `{content,isDefault,updatedAt}` | `RulesEditor` | `blog-writer:server/routes/settings.ts:50` |
+| PUT | `/api/rules` | 규칙 저장 | content 1~50,000자(trim), 끝에 줄바꿈 추가 | `Rules` / 400 | `RulesEditor` | `blog-writer:server/routes/settings.ts:51-58` |
+| POST | `/api/rules/reset` | 수정본 삭제 → 기본 규칙 | | `Rules` | `RulesEditor` | `blog-writer:server/routes/settings.ts:59` |
+| GET | `/api/datalab` | 데이터랩 키 설정 여부 (값은 안 줌, Client ID 앞 4자만) | | `{configured, clientIdHint}` | `SettingsPanel`, `Recommend` | `blog-writer:server/routes/settings.ts:62-68` |
+| PUT | `/api/datalab` | 키 확인 호출 후 저장 | clientId·clientSecret 필수 | 200 / 400(검증·확인 실패 메시지) | `SettingsPanel` | `blog-writer:server/routes/settings.ts:69-82` |
+| DELETE | `/api/datalab` | 파일의 키 삭제 (환경변수 키는 남음) | | `{configured}` | `SettingsPanel` | `blog-writer:server/routes/settings.ts:83-89` |
+| GET | `/api/image-api` | 이미지 API 키 연결 상태 (값은 안 줌) | | `{gemini, chatgpt}` 각각 `{configured, hint(앞 6자), fromEnv}` | `ImageApiSettings`, `src/job/images.tsx` | `blog-writer:server/routes/settings.ts:100` |
+| PUT | `/api/image-api/:ai` | 키 확인(모델 목록 조회) 후 저장. 한도 부족 응답이어도 키는 맞는 것으로 봄 | ai=`gemini`/`chatgpt`(아니면 404), key 1~500자 | 상태 / 400(확인 실패 메시지) | `ImageApiSettings` | `blog-writer:server/routes/settings.ts:101-116` |
+| DELETE | `/api/image-api/:ai` | 파일의 키 삭제 (환경변수 키는 남음) | ai=`gemini`/`chatgpt` | 상태 | `ImageApiSettings` | `blog-writer:server/routes/settings.ts:117-125` |
+| GET | `/api/wordpress` | 워드프레스 연결 여부 (Application Password는 돌려주지 않음) | | `{configured, username}` | `SettingsPanel`, `NextStep` | `blog-writer:server/routes/settings.ts:128-131`, `blog-writer:server/routes/util.ts:25-28` |
+| PUT | `/api/wordpress` | 사이트에 연결 확인(`users/me`) 후 사용자명·Application Password 저장 | 둘 다 1~200자 필수, 확인 실패면 400(원인별 메시지) | `{configured, username}` | `SettingsPanel` | `blog-writer:server/routes/settings.ts:132-145` |
+| DELETE | `/api/wordpress` | 연결 정보 삭제 (예전 WordPress.com 값도 함께 지움) | | `{configured:false}` | `SettingsPanel` | `blog-writer:server/routes/settings.ts:146-152` |
+| GET | `/api/wordpress/categories` | 사이트 카테고리 목록 (최대 100개) | 연결·주소 문제는 400 | `{id,name}[]` | `SettingsPanel` | `blog-writer:server/routes/settings.ts:153-162` |
 
 ## 크롬·확장·로그인 창 (`server/routes/browser.ts`)
 | 메서드 | 경로 | 하는 일 | 입력/검증 | 응답 | 호출하는 화면 | 근거 |
@@ -76,15 +79,15 @@ updated: 2026-10-07
 ## 이미지 (`server/routes/images.ts`)
 | 메서드 | 경로 | 하는 일 | 입력/검증 | 응답 | 호출하는 화면 | 근거 |
 |---|---|---|---|---|---|---|
-| POST | `/api/jobs/:id/regenerate-images` | 이미지 여러 장 다시 만들기 (전부/실패만/썸네일 추가) | style·provider·thumbnail*·onlyFailed·addThumbnail, 바꾼 옵션은 job에 저장 | 202 | `src/job/JobDetail.tsx`, `src/job/images.tsx` | `blog-writer:server/routes/images.ts:14-67` |
-| POST | `/api/jobs/:id/images/:target/regenerate` | 이미지 한 장 다시 만들기 | provider+style 필수, AI가 지원하는 스타일만, target=`thumbnail`/`body-<n>`(`bodyIndexOf`) | 202 / 404 | `src/job/images.tsx` `ImageTools` | `blog-writer:server/routes/images.ts:69-99` |
-| POST | `/api/jobs/:id/images/:target` | 이미지 직접 올리기 | 본문은 바이너리, png/jpeg/webp/gif, ≤20MB | `{file}` | `src/job/images.tsx` `ImageTools` | `blog-writer:server/routes/images.ts:101-138` |
-| GET | `/api/images/:id/:file` | 생성된 이미지 파일 | 파일명은 `basename`으로 제한 | 파일 / 404 | 미리보기 `<img>` | `blog-writer:server/routes/images.ts:140-146` |
+| POST | `/api/jobs/:id/regenerate-images` | 이미지 여러 장 다시 만들기 (전부/실패만/썸네일 추가). 작업 전체를 잠금 (진행 중이면 409) | style·provider·thumbnail*·onlyFailed·addThumbnail, 바꾼 옵션은 job에 저장 | 202 | `src/job/JobDetail.tsx`(썸네일 만들기) | `blog-writer:server/routes/images.ts:14-67` |
+| POST | `/api/jobs/:id/images/:target/regenerate` | 이미지 한 장 다시 만들기. 다른 이미지를 한 장씩 만드는 중이면 함께 진행, 그 이미지·다른 단계가 진행 중이면 409 | provider+style 필수, AI가 지원하는 스타일만, `method`(`api`/`chrome`, 선택), target=`thumbnail`/`body-<n>`(`bodyIndexOf`) | 202 / 404 / 409 | `src/job/images.tsx` `ImageTools` | `blog-writer:server/routes/images.ts:69-107` |
+| POST | `/api/jobs/:id/images/:target` | 이미지 직접 올리기. 다른 이미지를 한 장씩 만드는 중이어도 가능, 그 이미지·다른 단계가 진행 중이면 409 | 본문은 바이너리, png/jpeg/webp/gif, ≤20MB | `{file}` | `src/job/images.tsx` `ImageTools` | `blog-writer:server/routes/images.ts:109-147` |
+| GET | `/api/images/:id/:file` | 생성된 이미지 파일 | 파일명은 `basename`으로 제한 | 파일 / 404 | 미리보기 `<img>` | `blog-writer:server/routes/images.ts:149-155` |
 
 ## 공통 처리
 - **로컬 전용**: `Host`가 localhost/127.0.0.1/[::1]이고, `Origin`이 있으면 그것도 로컬이어야 한다. 아니면 403 `forbidden`. 다른 사이트의 CSRF와 DNS 리바인딩을 막는다 (`blog-writer:server/app.ts:13-28`). 서버는 `127.0.0.1`에만 바인딩한다 (`blog-writer:server/index.ts:11`).
 - **인증 없음**: 로컬 단일 사용자 전제.
-- **본문 크기**: JSON 2MB, 이미지 업로드 20MB (`blog-writer:server/app.ts:29`, `blog-writer:server/routes/images.ts:105`).
-- **에러 형식**: `{ error: string }`. 4xx(본문 파싱 오류 등)는 "요청 형식이 올바르지 않습니다.", 500은 메시지를 그대로 (`blog-writer:server/app.ts:33-38`). 화면 `req()`는 이 메시지를 그대로 예외로 던진다 (`blog-writer:src/api.ts:38-47`).
+- **본문 크기**: JSON 2MB, 이미지 업로드 20MB (`blog-writer:server/app.ts:29`, `blog-writer:server/routes/images.ts:113`).
+- **에러 형식**: `{ error: string }`. 4xx(본문 파싱 오류 등)는 "요청 형식이 올바르지 않습니다.", 500은 메시지를 그대로 (`blog-writer:server/app.ts:33-38`). 화면 `req()`는 이 메시지를 그대로 예외로 던진다 (`blog-writer:src/api.ts:46-55`).
 - **장시간 작업 패턴**: 상태를 먼저 `markBusy`로 진행 중으로 바꾸고 202를 준 뒤 `void run…()` (`blog-writer:server/routes/util.ts:12-23`). 화면이 응답 직후 목록을 읽어도 진행 중으로 보이게 하려는 것.
 - **테스트**: 입력 검증·거절 경로는 `tests/api.test.ts`가 임시 데이터 폴더에서 `createApp()`으로 확인한다 → [[_system/modules/tests]].

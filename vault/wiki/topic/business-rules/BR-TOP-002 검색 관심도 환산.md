@@ -10,7 +10,7 @@ source:
   - blog-writer:server/datalab.ts:4-28
   - blog-writer:server/datalab.ts:57-73
   - blog-writer:server/datalab.ts:84-116
-  - blog-writer:shared/types.ts:284-291
+  - blog-writer:shared/types.ts:289-296
   - blog-writer:src/Recommend.tsx:109-112
   - blog-writer:tests/writer.test.ts:70-83
 entities: [TopicCandidate]
@@ -36,7 +36,7 @@ updated: 2026-10-07
 | 레이어 | 구현 | 근거 |
 |---|---|---|
 | 서버 | `dateRange`(기간), `compareInterest`(묶음 요청·0 채우기·기준 0 건너뜀), `interestStat`(환산·level·series 계산, 순수 함수) | `blog-writer:server/datalab.ts:20-28`, `:84-116`, `:59-73` |
-| 공용 | `InterestStat` 주석 | `blog-writer:shared/types.ts:284-291` |
+| 공용 | `InterestStat` 주석 | `blog-writer:shared/types.ts:289-296` |
 | 테스트 | 기준 평균 20 → 원값 10은 50, 20은 100으로 환산, level 62.5 | `blog-writer:tests/writer.test.ts:71-78` |
 | 화면 | 설명 문구 "기준 키워드의 최근 4주 평균을 100으로 놓은 상대값" | `blog-writer:src/Recommend.tsx:111` |
 

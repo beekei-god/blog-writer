@@ -3,15 +3,17 @@ type: business-rule
 domain: image
 id: BR-IMG-012
 name: 실패 후 다른 AI 추천
-status: active
+status: deprecated
 confidence: high
 consistency: single-source
 source:
   - blog-writer:src/job/images.tsx:80-154
 entities: [ImageSpec]
-updated: 2026-10-07
+updated: 2026-10-08
 ---
 # BR-IMG-012 실패 후 다른 AI 추천
+
+> **폐기 (2026-10-08, 커밋 38ae96c)**: 위쪽 실패 안내(`ImageFailures`)를 없애고, 실패하면 이미지마다 "이미지 다시 생성"으로 한 장씩 다시 만들도록 바뀌었다. 원인에 따라 다른 AI를 권하는 동작과 AI 버튼의 "· 실패" 표시가 함께 사라졌다. 한 장 도구는 글의 이미지 설정 AI로 시작한다. → [[image/business-rules/BR-IMG-009 다시 만들기 범위]], [[image/business-rules/BR-IMG-013 이미지 API 우선과 만드는 방법 선택]]
 
 ## 규칙
 이미지가 실패하면 실패한 것만 다른 AI로 다시 만들도록 권한다. 기본 선택은 이번에 실패하지 않은 AI이고, 원인에 따라 순서를 달리한다.
@@ -39,3 +41,4 @@ updated: 2026-10-07
 | 날짜 | 변경 | 근거 |
 |---|---|---|
 | 2026-10-05 | 최초 기록 | |
+| 2026-10-08 | 폐기: 실패 안내 영역과 추천 로직 삭제 | 커밋 38ae96c |

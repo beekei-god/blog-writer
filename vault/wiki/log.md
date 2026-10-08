@@ -100,3 +100,13 @@ updated: 2026-10-05
 - README 근거 보정: README가 단계별 안내로 다시 쓰여(033e462) 줄 번호가 달라짐 → _system 4쪽과 [[usage/business-rules/BR-USG-001 단계별 추천 모델]], [[usage/business-rules/BR-USG-003 사용 기록 보관 기간]], [[writing/business-rules/BR-WRT-006 스마트블록 주제 태그 금지]]의 README 근거를 새 줄로 맞춤. 새 README는 스마트블록 태그를 직접 언급하지 않음
 - `CLAUDE.md` 변경(사용량 한도 대응 절)은 wiki가 다루지 않는 작업 지침이라 반영 없음
 - 분석 시점: 스냅샷 (`_snapshot.json`, git d84d474)
+
+## [2026-10-08] update | image · writing · publishing (이미지 API, 한 장씩 다시 생성, 동시 실행)
+- 읽은 범위: 커밋 d84d474..38ae96c에서 바뀐 22개 파일 (추가 `server/images/api.ts`, `src/ImageApiSettings.tsx`, `tests/imageApi.test.ts`, `tests/imageParallel.test.ts`; 수정 `server/pipeline.ts`, `server/cancel.ts`, `server/images/index.ts`·`styles.ts`·`webAi.ts`, `server/routes/images.ts`·`settings.ts`, `server/secrets.ts`, `server/store.ts`, `shared/imageErrors.ts`·`types.ts`, `src/job/images.tsx`·`JobDetail.tsx`·`PostEditor.tsx`, `src/SettingsPanel.tsx`, `src/api.ts`, `src/styles.css`, `.env.example`)
+- 변경 내용: Gemini·ChatGPT 이미지를 API 키가 있으면 이미지 API로 만들고(키는 설정 화면 또는 `.env`), API가 실패해도 크롬으로 저절로 넘기지 않음. 위쪽 실패 안내를 없애고 이미지 자리에 실제 실패 이유를 보여 주며 이미지마다 "이미지 다시 생성"에서 "API로"(키 없으면 비활성+툴팁)·"크롬에서"를 고름. 이미지 한 장씩 다시 만들기는 서로 동시에 진행(크롬은 큐에서 하나씩), 중지는 모두 멈춤. 실패 원인에 `api_error` 추가(14종)
+- 생성: [[image/business-rules/BR-IMG-013 이미지 API 우선과 만드는 방법 선택]], [[image/business-rules/BR-IMG-014 한 장씩 다시 만들기 동시 실행]], [[_system/integrations/image-api]]
+- 폐기: [[image/business-rules/BR-IMG-012 실패 후 다른 AI 추천]] (실패 안내 영역과 추천 로직 삭제)
+- 갱신(내용): image — BR-IMG-007, BR-IMG-009, 두 플로우, ImageSpec, overview, index, 구현 지도 / writing — BR-WRT-011(예외 추가, confidence high, 사용자 확인 후 변경), BR-WRT-012, Job, 작업 중지와 재시도 플로우, 초안 작성 플로우, 구현 지도, index / publishing — BR-PUB-004(이미지는 실제로 크롬을 쓸 때만 큐), 구현 지도, index / _system — modules(server-images·server-core·server-pipeline·server-routes·web-job·web-screens·shared·web-app·project-root·tests), api, configuration, data-storage, known-issues(#20~23), integrations/gemini-chatgpt-web / index, glossary, _registry
+- 줄 번호 보정: 손으로 고치지 않은 페이지의 바뀐 파일 참조 214곳을 d84d474 → 38ae96c 줄 대응(difflib)으로 옮김
+- 불일치: 없음. 새 open question 없음 (작업 오류 문구가 동시 실행에서 지워질 수 있는 점·미사용 `onlyFailed` 화면 경로는 known-issues #21, #22)
+- 분석 시점: git 38ae96c (스냅샷 `_snapshot.json`)

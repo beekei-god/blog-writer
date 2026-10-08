@@ -1,6 +1,6 @@
 ---
 type: index
-updated: 2026-10-05
+updated: 2026-10-08
 ---
 # blog-writer Wiki
 
@@ -32,14 +32,15 @@ updated: 2026-10-05
 - [[_system/integrations/claude-in-chrome]] — 평소 크롬 조작 확장
 - [[_system/integrations/naver-search]] — 자동완성·함께 많이 찾는
 - [[_system/integrations/naver-datalab]] — NAVER API HUB 검색어 트렌드
-- [[_system/integrations/gemini-chatgpt-web]] — 웹 화면으로 이미지 생성
+- [[_system/integrations/gemini-chatgpt-web]] — 웹 화면으로 이미지 생성 (API 키가 없거나 "크롬에서"를 고를 때)
+- [[_system/integrations/image-api]] — Gemini·OpenAI 이미지 API (키가 있을 때 기본)
 - [[_system/integrations/chrome-applescript]] — macOS 평소 크롬 (네이버)
 - [[_system/integrations/playwright-chrome]] — SVG 렌더링, 앱 전용 크롬, 로그인 창
 - [[_system/integrations/blog-editors]] — 네이버·티스토리·워드프레스 에디터
 
 ## 도메인
 - [[writing/overview|writing (글 작성)]] — 작업·리서치·초안·규칙·태그. 엔티티 3, 규칙 15, 플로우 4 → [[writing/index]]
-- [[image/overview|image (이미지 생성)]] — 썸네일·본문 이미지. 엔티티 2, 규칙 12, 플로우 2 → [[image/index]]
+- [[image/overview|image (이미지 생성)]] — 썸네일·본문 이미지. 엔티티 2, 규칙 14(폐기 1), 플로우 2 → [[image/index]]
 - [[publishing/overview|publishing (블로그 임시저장)]] — 입력 경로·에디터 서식. 엔티티 2, 규칙 13, 플로우 2 → [[publishing/index]]
 - [[topic/overview|topic (주제 추천)]] — 뉴스·통계·데이터랩. 엔티티 2, 규칙 6, 플로우 1 → [[topic/index]]
 - [[usage/overview|usage (Claude 모델·사용량)]] — 모델 선택, 토큰·한도. 엔티티 2, 규칙 6, 플로우 1 → [[usage/index]]

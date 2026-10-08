@@ -6,7 +6,7 @@ aliases: [초안, 글, 본문]
 status: active
 confidence: high
 source:
-  - blog-writer:shared/types.ts:169-208
+  - blog-writer:shared/types.ts:172-211
   - blog-writer:server/schema.ts:19-41
   - blog-writer:server/schema.ts:79-155
   - blog-writer:server/writer.ts:149-175

@@ -4,12 +4,12 @@ project: blog-writer
 module: server-pipeline
 paths: [server/pipeline.ts, server/research.ts, server/writer.ts, server/schema.ts, server/naver.ts]
 source:
-  - blog-writer:server/pipeline.ts:1-370
+  - blog-writer:server/pipeline.ts:1-415
   - blog-writer:server/research.ts:1-88
   - blog-writer:server/writer.ts:1-275
   - blog-writer:server/schema.ts:1-155
   - blog-writer:server/naver.ts:1-88
-updated: 2026-10-07
+updated: 2026-10-08
 ---
 # server-pipeline 모듈
 
@@ -19,7 +19,7 @@ updated: 2026-10-07
 ## 파일
 | 파일 | 줄 | 역할 | 주요 export | 관련 페이지 |
 |---|---|---|---|---|
-| `server/pipeline.ts` | 370 | 작업 실행: `runDraft`(리서치→작성→이미지), `runImages`(이미지만), `runPost`(블로그 등록: 워드프레스는 API로 바로 `doWordPressPost`, 네이버·티스토리는 크롬 큐에서 `doPost`). 중복 실행 방지, 크롬 작업 큐(`serialQueue`), 실패·중지 시 상태 결정 | `isRunning`, `runDraft`, `runImages`, `runPost` | [[writing/flows/초안 작성 플로우]], [[image/flows/이미지 생성 플로우]], [[publishing/flows/블로그 임시저장 플로우]], [[publishing/flows/워드프레스 API 등록 플로우]] |
+| `server/pipeline.ts` | 415 | 작업 실행: `runDraft`(리서치→작성→이미지), `runImages`(이미지 여러 장, 작업 잠금), `runImage`(이미지 한 장, 다른 이미지와 동시에), `runPost`(블로그 등록: 워드프레스는 API로 바로 `doWordPressPost`, 네이버·티스토리는 크롬 큐에서 `doPost`). 중복 실행 방지(`running` + 이미지별 `imageRuns`), 크롬 작업 큐(`serialQueue`, 이미지는 실제로 크롬을 쓸 때만), 실패·중지 시 상태 결정 | `isRunning`, `isImageBusy`, `runDraft`, `runImages`, `runImage`, `runPost` | [[writing/flows/초안 작성 플로우]], [[image/flows/이미지 생성 플로우]], [[image/business-rules/BR-IMG-014 한 장씩 다시 만들기 동시 실행]], [[publishing/flows/블로그 임시저장 플로우]], [[publishing/flows/워드프레스 API 등록 플로우]] |
 | `server/research.ts` | 88 | 딥서칭: Claude + WebSearch/WebFetch로 리서치 노트·출처·검색 질문·키워드 | `deepResearch`, `ResearchResult` | [[writing/business-rules/BR-WRT-014 리서치 출처 등급과 열람 제한]] |
 | `server/writer.ts` | 274 | 글 작성 프롬프트·이미지 지시문, 분량 줄이기, 태그 검증·중복 제거, 표·날짜줄 정리, 이미지 개수 맞추기 | `writePost`, `enforceLength`, `verifyTagSources`, `stripUpdateLines`, `enforceImageOptions`, `STYLE_GUIDE` | [[writing/business-rules/BR-WRT-001 본문 분량 상한]], [[writing/business-rules/BR-WRT-005 태그 출처 검증]] |
 | `server/schema.ts` | 155 | zod `PostSchema`, `ImageOptionsSchema`와 claude CLI용 JSON 스키마 `POST_JSON_SCHEMA` | `PostSchema`, `ImageOptionsSchema`, `POST_JSON_SCHEMA` | [[writing/entities/Post]], [[image/entities/ImageOptions]] |

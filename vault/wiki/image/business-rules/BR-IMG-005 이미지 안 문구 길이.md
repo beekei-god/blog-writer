@@ -13,7 +13,7 @@ source:
   - blog-writer:server/schema.ts:7-8
   - blog-writer:src/job/PostEditor.tsx:83-98
   - blog-writer:server/images/svg.ts:51-57
-  - blog-writer:server/images/webAi.ts:195-210
+  - blog-writer:server/images/webAi.ts:194-194
 entities: [ImageSpec]
 updated: 2026-10-07
 ---
@@ -38,7 +38,7 @@ updated: 2026-10-07
 | 프롬프트(기획) | 같은 값 | | `blog-writer:server/images/plan.ts:95-97` |
 | 서버 | 60자 자르기 | 60 | `blog-writer:server/schema.ts:8`, `blog-writer:server/images/plan.ts:111` |
 | 화면 | 안내 문구, `maxLength=60` | "8~16자 권장", "4~20자" | `blog-writer:src/job/PostEditor.tsx:84-91` |
-| 생성 요청 | 크기·위치 지시 | | `blog-writer:server/images/svg.ts:51-57`, `blog-writer:server/images/webAi.ts:195-210` |
+| 생성 요청 | 크기·위치 지시 | | `blog-writer:server/images/svg.ts:51-57`, `blog-writer:server/images/webAi.ts:194-194` |
 
 8~16 / 4~20은 프롬프트와 화면 안내가 같은 값이고 코드로 강제하지 않는다. 강제 상한은 60자로 모든 레이어가 같다.
 

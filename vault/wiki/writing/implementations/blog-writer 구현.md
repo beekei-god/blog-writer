@@ -4,7 +4,7 @@ domain: writing
 project: blog-writer
 paths: [server/pipeline.ts, server/research.ts, server/writer.ts, server/schema.ts, server/naver.ts, server/rules.ts, server/store.ts, server/fsutil.ts, server/cancel.ts, server/routes/jobs.ts, server/routes/settings.ts, server/routes/util.ts, shared/length.ts, shared/types.ts, shared/labels.ts, rules/default-writing-rules.md, src/NewJob.tsx, src/App.tsx, src/job/JobDetail.tsx, src/job/Progress.tsx, src/job/Preview.tsx, src/job/Report.tsx, src/job/PostEditor.tsx, src/job/NextStep.tsx, src/RulesEditor.tsx, tests/writer.test.ts, tests/shared.test.ts, tests/api.test.ts, tests/store.test.ts]
 last_ingested_commit: 스냅샷 2026-10-07 (git 없음)
-updated: 2026-10-07
+updated: 2026-10-08
 ---
 # blog-writer의 writing 구현
 
@@ -17,19 +17,19 @@ updated: 2026-10-07
 | `server/routes/jobs.ts` | `keepImageResults`(24-39), `GET/POST /api/jobs`(41-72), `GET /:id`(74-82), `PUT /post`(84-98), `MANUAL_TRANSITIONS`·`PUT /status`(147-177), `/cancel`(179-186), `/retry`(188-198), `DELETE`(200-207) | [[writing/business-rules/BR-WRT-010 주제와 참고 링크 입력 검증]], [[writing/business-rules/BR-WRT-011 작업 중복 실행과 진행 중 변경 금지]], [[writing/entities/Job]] |
 | `server/routes/settings.ts` | 글쓰기 규칙 `GET/PUT /api/rules`, `POST /api/rules/reset`(48-58) | [[writing/business-rules/BR-WRT-009 글쓰기 규칙 적용 시점]] |
 | `server/routes/util.ts` | `wrap`(6-9), `markBusy`(15-20) | [[writing/entities/Job]] |
-| `server/pipeline.ts` | `running`(21), `isRunning`(28-30), `runDraft`·`doDraft`(32-119), `runImages`·`doImages`(125-160), `runPost`(261-271), `doWordPressPost`(276-309), `doPost`(311-368) | [[writing/flows/초안 작성 플로우]], [[writing/business-rules/BR-WRT-012 중단 시 작업 상태 복구]] |
+| `server/pipeline.ts` | `running`(22), `imageRuns`·`isRunning`·`isImageBusy`(29-40), `runDraft`·`doDraft`(42-129), `runImages`·`runImage`·`imagesStep`(131-197), `runPost`(306-317), `doWordPressPost`(321-355), `doPost`(357-415) | [[writing/flows/초안 작성 플로우]], [[writing/business-rules/BR-WRT-012 중단 시 작업 상태 복구]] |
 | `server/research.ts` | `SYSTEM`(5-23), `deepResearch`(62-88) | [[writing/business-rules/BR-WRT-014 리서치 출처 등급과 열람 제한]], [[writing/business-rules/BR-WRT-003 확인된 사실만 사용]] |
 | `server/writer.ts` | `BASE_SYSTEM`(6-42), `writePost`(108-173), `stripUpdateLines`(178-181), `enforceLength`(184-213), `verifyTagSources`(221-250), `dedupeTags`(252-257), `isCompleteTable`(260-264), `enforceImageOptions`(267-274) | BR-WRT-001, 003, 004, 005, 006, 007, 008, 013 |
 | `server/schema.ts` | `PostSchema`(19-41), `POST_JSON_SCHEMA`(79-155) | [[writing/entities/Post]] |
 | `server/naver.ts` | `expandQueries`(23-28), `collectAutocomplete`(31-35), `naverRelated`(45-68), `collectNaverSuggestions`(79-88) | [[writing/business-rules/BR-WRT-015 네이버 검색어 제안 수집 범위]] |
 | `server/rules.ts` | `RULES_FILE`·`DEFAULT_FILE`(11-12), `getRules`(20-27), `saveRules`(29-32), `resetRules`(34-37), `todayKST`(40-) | [[writing/business-rules/BR-WRT-009 글쓰기 규칙 적용 시점]] |
-| `server/store.ts` | `PROJECT_ROOT`·`DATA_DIR`(10-12), `createJob`(89-108), `updateJob`(111-120), `log`(122-127), `deleteJob`(129-132), `recoverStuckJobs`(135-146) | [[writing/entities/Job]], [[writing/business-rules/BR-WRT-012 중단 시 작업 상태 복구]] |
+| `server/store.ts` | `PROJECT_ROOT`·`DATA_DIR`(10-12), `createJob`(89-108), `updateJob`(111-120), `log`(122-127), `deleteJob`(129-133), `recoverStuckJobs`(135-147) | [[writing/entities/Job]], [[writing/business-rules/BR-WRT-012 중단 시 작업 상태 복구]] |
 | `server/fsutil.ts` | `writeFileAtomic`(9-15), `writeJsonAtomic`(17-18), `serialQueue`(21-28), `keyedQueue`(31-38) — 작업 파일·규칙 파일의 원자적 쓰기와 id별 직렬화 | [[writing/entities/Job]], [[writing/entities/글쓰기 규칙]] |
-| `server/cancel.ts` | `withCancel`, `cancelJob`, `throwIfCancelled`, `CancelledError` (1-36) | [[writing/flows/작업 중지와 재시도 플로우]] |
+| `server/cancel.ts` | `withCancel`(작업마다 여러 신호), `cancelJob`(모두 중지), `throwIfCancelled`, `CancelledError` (1-39) | [[writing/flows/작업 중지와 재시도 플로우]] |
 | `rules/default-writing-rules.md` | 1~6장 (1-77) | [[writing/entities/글쓰기 규칙]] |
 | `src/NewJob.tsx` | `MAX_LINKS`·`isHttpUrl`·`linkProblem`(22-40), `NewJob`(42-200) | [[writing/business-rules/BR-WRT-010 주제와 참고 링크 입력 검증]] |
 | `src/App.tsx` | 상태 필터 `FILTERS`·`matchesFilter`(23-36), 목록·배지(129-167), 1.5초 폴링(88) | [[writing/flows/내 글 목록 상태 필터 플로우]] |
-| `src/job/JobDetail.tsx` | 자동 저장(35-90), 중지·재시도·삭제(143-162), 글자수 칩(168, 270-273), 출처·리서치 노트·규칙 사본(323-353), `SOURCE_KIND`(367) | [[writing/flows/초안 편집과 자동 저장 플로우]], [[writing/flows/작업 중지와 재시도 플로우]] |
+| `src/job/JobDetail.tsx` | 자동 저장(35-90), 중지·재시도·삭제(144-165), 글자수 칩(168, 270-273), 출처·리서치 노트·규칙 사본(315-350), `SOURCE_KIND`(358) | [[writing/flows/초안 편집과 자동 저장 플로우]], [[writing/flows/작업 중지와 재시도 플로우]] |
 | `src/job/Progress.tsx` | `Progress`(5-44) 진행 단계 표시 | [[writing/flows/초안 작성 플로우]] |
 | `src/job/NextStep.tsx` | `confirmRevert`(6-8), `NextStep`(10-153) 다음 할 일·수기 상태 버튼 | [[writing/entities/Job]], [[publishing/business-rules/BR-PUB-013 발행 완료 표시]] |
 | `src/job/Preview.tsx` | `copyToClipboard`, `CopyBar`(24-59), `Preview`(102-185) | [[writing/flows/초안 편집과 자동 저장 플로우]] |

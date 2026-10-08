@@ -9,11 +9,11 @@ consistency: consistent
 source:
   - blog-writer:shared/types.ts:8-13
   - blog-writer:server/schema.ts:52-59
-  - blog-writer:server/routes/images.ts:82-84
+  - blog-writer:server/routes/images.ts:87-89
   - blog-writer:src/NewJob.tsx:202-251
-  - blog-writer:shared/types.ts:42-44
+  - blog-writer:shared/types.ts:45-47
   - blog-writer:tests/shared.test.ts:65-68
-  - blog-writer:src/job/images.tsx:41-78
+  - blog-writer:src/job/images.tsx:47-81
 entities: [ImageOptions]
 updated: 2026-10-07
 ---
@@ -41,9 +41,9 @@ Claude(SVG)는 플랫 일러스트만 그릴 수 있다. 지브리풍·실사·�
 | 레이어 | 구현 | 근거 |
 |---|---|---|
 | 공용 | `STYLES_BY_PROVIDER` | `blog-writer:shared/types.ts:9-13` |
-| 서버 검증 | `ImageOptionsSchema.refine` 2개, 한 장 다시 만들기 검사 | `blog-writer:server/schema.ts:52-59`, `blog-writer:server/routes/images.ts:82-84` |
-| 공용 | `fitStyle`: AI를 바꿀 때 못 그리는 화풍이면 그 AI의 첫 화풍으로 (새 글 폼·초안 화면·`aiFor`가 같이 씀) | `blog-writer:shared/types.ts:42-44` |
-| 화면 | AI 버튼에서 `fitStyle` 적용, 불가 스타일 버튼·선택 비활성 | `blog-writer:src/NewJob.tsx:175-179`, `:229-240`, `blog-writer:src/job/images.tsx:56`, `:65` |
+| 서버 검증 | `ImageOptionsSchema.refine` 2개, 한 장 다시 만들기 검사 | `blog-writer:server/schema.ts:52-59`, `blog-writer:server/routes/images.ts:87-89` |
+| 공용 | `fitStyle`: AI를 바꿀 때 못 그리는 화풍이면 그 AI의 첫 화풍으로 (새 글 폼·초안 화면·`aiFor`가 같이 씀) | `blog-writer:shared/types.ts:45-47` |
+| 화면 | AI 버튼에서 `fitStyle` 적용, 불가 스타일 버튼·선택 비활성 | `blog-writer:src/NewJob.tsx:175-179`, `:229-240`, `blog-writer:src/job/images.tsx:60`, `:68` |
 | 테스트 | `fitStyle`, 한 장 다시 만들기 불가 조합 400 | `blog-writer:tests/shared.test.ts:65-68`, `blog-writer:tests/api.test.ts:114-118` |
 | 프롬프트 | 화풍 지시문(작성 `STYLE_GUIDE`, 웹 AI `STYLE_PROMPT`) | `blog-writer:server/writer.ts:35-43`, `blog-writer:server/images/styles.ts:7-15` |
 
@@ -58,4 +58,4 @@ Claude(SVG)는 플랫 일러스트만 그릴 수 있다. 지브리풍·실사·�
 | 날짜 | 변경 | 근거 |
 |---|---|---|
 | 2026-10-05 | 최초 기록 | |
-| 2026-10-07 | 리팩터링: 스타일 맞추기를 공용 `fitStyle` 하나로 합침 (예전에는 `aiFor`·새 글 폼·초안 화면에 같은 식이 따로 있었음). 동작 변화 없음 | `blog-writer:shared/types.ts:42-51` |
+| 2026-10-07 | 리팩터링: 스타일 맞추기를 공용 `fitStyle` 하나로 합침 (예전에는 `aiFor`·새 글 폼·초안 화면에 같은 식이 따로 있었음). 동작 변화 없음 | `blog-writer:shared/types.ts:45-54` |

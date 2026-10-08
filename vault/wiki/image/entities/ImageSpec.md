@@ -6,10 +6,10 @@ aliases: [이미지, 썸네일, 본문 이미지]
 status: active
 confidence: high
 source:
-  - blog-writer:shared/types.ts:149-167
+  - blog-writer:shared/types.ts:152-170
   - blog-writer:server/schema.ts:5-17
-  - blog-writer:server/images/index.ts:31-58
-updated: 2026-10-07
+  - blog-writer:server/images/index.ts:34-61
+updated: 2026-10-08
 ---
 # ImageSpec (이미지)
 
@@ -25,8 +25,8 @@ updated: 2026-10-07
 | `userEdited` | boolean? | 사용자가 설명·문구를 직접 고침 → 자동 기획에서 제외 | "직접 고친 설명과 문구라서…" |
 | `alt` | string | 대체 텍스트 | "대체 텍스트" |
 | `file` | string? | `data/images/<jobId>/` 아래 파일명 (`^(?!\.)[\w.-]+$`) | 미리보기 이미지 |
-| `error` | string? | 실패 원문 메시지 | "자세한 오류" |
-| `errorKind` | ImageErrorKind? | 실패 원인 13종 | 원인 제목·안내 |
+| `error` | string? | 실패 원문 메시지 | 첫 줄을 이미지 자리에 실패 이유로 |
+| `errorKind` | ImageErrorKind? | 실패 원인 14종 | 원인별 안내 (메시지가 없으면 원인 제목) |
 | `errorProvider` | ImageProvider? | 실패한 AI | "(Gemini)" 등 |
 
 ## 상태와 전이
@@ -43,13 +43,13 @@ stateDiagram-v2
 ```
 | 전이 | 조건 | 일어나는 곳 |
 |---|---|---|
-| → 생성됨 | 생성 성공 또는 업로드 | `blog-writer:server/images/index.ts:44-49`, `blog-writer:server/routes/images.ts:123-134` |
-| → 실패 | 생성 중 오류 (중지는 제외) | `blog-writer:server/images/index.ts:50-53`, `:91-93` |
+| → 생성됨 | 생성 성공 또는 업로드 | `blog-writer:server/images/index.ts:47-52`, `blog-writer:server/routes/images.ts:132-143` |
+| → 실패 | 생성 중 오류 (중지는 제외) | `blog-writer:server/images/index.ts:53-56`, `:95-97` |
 
-화면의 "만드는 중"은 `Job.generatingImages`(키 목록)로 표시한다.
+화면의 "만드는 중"은 `Job.generatingImages`(키 목록)로 표시한다. 한 장씩 동시에 다시 만들 수 있어 키를 더하고 빼며 관리한다 → [[image/business-rules/BR-IMG-014 한 장씩 다시 만들기 동시 실행]].
 
 ## 저장 위치
 `Job.post.thumbnail`, `Job.post.blocks[n]`, 파일은 `data/images/<jobId>/` → [[_system/data-storage]]
 
 ## 적용되는 규칙
-[[image/business-rules/BR-IMG-004 본문 기반 이미지 기획]], [[image/business-rules/BR-IMG-005 이미지 안 문구 길이]], [[image/business-rules/BR-IMG-006 직접 고친 이미지 보호]], [[image/business-rules/BR-IMG-007 이미지 실패 격리와 원인 분류]], [[image/business-rules/BR-IMG-008 이미지 결과는 서버 기록 우선]]
+[[image/business-rules/BR-IMG-004 본문 기반 이미지 기획]], [[image/business-rules/BR-IMG-005 이미지 안 문구 길이]], [[image/business-rules/BR-IMG-006 직접 고친 이미지 보호]], [[image/business-rules/BR-IMG-007 이미지 실패 격리와 원인 분류]], [[image/business-rules/BR-IMG-008 이미지 결과는 서버 기록 우선]], [[image/business-rules/BR-IMG-013 이미지 API 우선과 만드는 방법 선택]], [[image/business-rules/BR-IMG-014 한 장씩 다시 만들기 동시 실행]]

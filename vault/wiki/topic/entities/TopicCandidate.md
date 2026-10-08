@@ -6,7 +6,7 @@ aliases: [주제 후보, 추천 주제]
 status: active
 confidence: high
 source:
-  - blog-writer:shared/types.ts:274-302
+  - blog-writer:shared/types.ts:279-307
   - blog-writer:server/recommend.ts:189-204
   - blog-writer:src/Recommend.tsx:20-61
 updated: 2026-10-07

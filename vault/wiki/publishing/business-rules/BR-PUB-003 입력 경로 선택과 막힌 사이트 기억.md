@@ -7,8 +7,8 @@ status: active
 confidence: high
 consistency: consistent
 source:
-  - blog-writer:server/pipeline.ts:261-271
-  - blog-writer:server/pipeline.ts:312-359
+  - blog-writer:server/pipeline.ts:306-316
+  - blog-writer:server/pipeline.ts:357-404
   - blog-writer:server/browser/blockedSites.ts:6-37
   - blog-writer:server/browser/claudeChrome.ts:27-35
   - blog-writer:server/claude.ts:128-132
@@ -38,8 +38,8 @@ updated: 2026-10-07
 ## 구현 현황
 | 레이어 | 구현 | 근거 |
 |---|---|---|
-| 서버 | 워드프레스 분기 | `blog-writer:server/pipeline.ts:265-269` |
-| 서버 | 경로 선택·기억 | `blog-writer:server/pipeline.ts:329-356` |
+| 서버 | 워드프레스 분기 | `blog-writer:server/pipeline.ts:310-314` |
+| 서버 | 경로 선택·기억 | `blog-writer:server/pipeline.ts:374-401` |
 | 서버 | 차단 감지 2곳 | `blog-writer:server/claude.ts:128-132`, `blog-writer:server/browser/blogPost.ts:207-209` |
 | 저장 | `data/blocked-sites.json` | `blog-writer:server/browser/blockedSites.ts:10-37` |
 | 서버(API) | 막힌 목록에 실제 대체 경로 `fallback`을 붙여 돌려줌, 초기화 | `blog-writer:server/routes/browser.ts:60-77` |
@@ -59,4 +59,4 @@ updated: 2026-10-07
 |---|---|---|
 | 2026-10-05 | 최초 기록 | |
 | 2026-10-05 | 막힌 목록에 실제 대체 경로(`fallback`) 표시 | `blog-writer:server/routes/browser.ts:60-70`, `blog-writer:src/BlockedSites.tsx:30` |
-| 2026-10-07 | 워드프레스는 크롬 경로에서 빠지고 REST API로만 올림 (워드프레스 크롬 어댑터·Claude in Chrome 안내 삭제) | `blog-writer:server/pipeline.ts:265-269`, `blog-writer:server/browser/adapters.ts:382-386` |
+| 2026-10-07 | 워드프레스는 크롬 경로에서 빠지고 REST API로만 올림 (워드프레스 크롬 어댑터·Claude in Chrome 안내 삭제) | `blog-writer:server/pipeline.ts:310-314`, `blog-writer:server/browser/adapters.ts:382-386` |

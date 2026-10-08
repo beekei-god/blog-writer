@@ -8,7 +8,7 @@ source:
   - blog-writer:src/ExtensionStatus.tsx:1-70
   - blog-writer:server/routes/browser.ts:17-57
   - blog-writer:server/browser/claudeChrome.ts:40-95
-  - blog-writer:src/SettingsPanel.tsx:347-377
+  - blog-writer:src/SettingsPanel.tsx:350-380
 updated: 2026-10-07
 ---
 # Claude in Chrome 연결 확인 플로우

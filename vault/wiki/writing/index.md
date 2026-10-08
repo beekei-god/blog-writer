@@ -1,7 +1,7 @@
 ---
 type: index
 domain: writing
-updated: 2026-10-07
+updated: 2026-10-08
 ---
 # writing Index
 
@@ -21,7 +21,7 @@ updated: 2026-10-07
 - [[writing/business-rules/BR-WRT-008 날짜 표시줄 제거]] — 40자 이하 "업데이트: 날짜" 문단 삭제
 - [[writing/business-rules/BR-WRT-009 글쓰기 규칙 적용 시점]] — 다음 작업부터, 작업마다 사본
 - [[writing/business-rules/BR-WRT-010 주제와 참고 링크 입력 검증]] — 주제 2~300자, 링크 http(s) ≤20개 (화면·서버 일치)
-- [[writing/business-rules/BR-WRT-011 작업 중복 실행과 진행 중 변경 금지]] — 실행 중 수정·삭제·재실행 409
+- [[writing/business-rules/BR-WRT-011 작업 중복 실행과 진행 중 변경 금지]] — 실행 중 수정·삭제·재실행 409 (예외: 이미지 한 장씩 다시 만들기는 동시 진행)
 - [[writing/business-rules/BR-WRT-012 중단 시 작업 상태 복구]] — 초안 있으면 draft_ready, 없으면 failed
 - [[writing/business-rules/BR-WRT-013 제목 후보와 키워드]] — 검색 질문 1, 메인 1·서브 2~3, 제목 후보 3
 - [[writing/business-rules/BR-WRT-014 리서치 출처 등급과 열람 제한]] — 공식→언론→블로그, WebFetch 최대 6개

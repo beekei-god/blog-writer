@@ -7,14 +7,14 @@ status: active
 confidence: high
 consistency: consistent
 source:
-  - blog-writer:shared/types.ts:118-147
+  - blog-writer:shared/types.ts:121-150
   - blog-writer:server/routes/jobs.ts:106-120
-  - blog-writer:server/pipeline.ts:261-271
+  - blog-writer:server/pipeline.ts:306-316
   - blog-writer:src/job/JobDetail.tsx:102-111
   - blog-writer:src/job/JobDetail.tsx:214-246
   - blog-writer:src/job/NextStep.tsx:53-83
   - blog-writer:src/App.tsx:100-105
-  - blog-writer:src/SettingsPanel.tsx:171-197
+  - blog-writer:src/SettingsPanel.tsx:172-198
 entities: [블로그 설정, Job]
 updated: 2026-10-07
 ---
@@ -39,13 +39,13 @@ updated: 2026-10-07
 ## 구현 현황
 | 레이어 | 구현 | 근거 |
 |---|---|---|
-| 공용 | 블로그별 필드, `blogIdOf`, `settingsFor` | `blog-writer:shared/types.ts:118-147` |
+| 공용 | 블로그별 필드, `blogIdOf`, `settingsFor` | `blog-writer:shared/types.ts:121-150` |
 | 서버 | `platform` 필수, 블로그별 값 확인 | `blog-writer:server/routes/jobs.ts:106-120` |
-| 서버 | 고른 블로그로 경로 분기, 고른 블로그의 설정으로 입력 | `blog-writer:server/pipeline.ts:261-271`, `:318` |
+| 서버 | 고른 블로그로 경로 분기, 고른 블로그의 설정으로 입력 | `blog-writer:server/pipeline.ts:306-316`, `:363` |
 | 화면 | `destPick`, 올릴 곳 선택(`destPicker`) | `blog-writer:src/job/JobDetail.tsx:102-111`, `:214-246` |
 | 화면 | 고르기 전 안내 | `blog-writer:src/job/NextStep.tsx:53-83` |
 | 화면 | 블로그별 연결 여부 `ready` | `blog-writer:src/App.tsx:100-105` |
-| 화면(설정) | 블로그별 카드, 카드마다 자기 값만 저장 | `blog-writer:src/SettingsPanel.tsx:29-35`, `:87-104`, `:171-261` |
+| 화면(설정) | 블로그별 카드, 카드마다 자기 값만 저장 | `blog-writer:src/SettingsPanel.tsx:30-36`, `:88-105`, `:172-262` |
 
 ## 예외 / 경계값
 - 예전 설정의 `platform`·`blogId`는 불러올 때 블로그별 칸으로 옮긴다 → [[publishing/entities/블로그 설정]].

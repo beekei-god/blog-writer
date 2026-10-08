@@ -7,8 +7,8 @@ status: active
 confidence: high
 consistency: consistent
 source:
-  - blog-writer:server/routes/images.ts:101-138
-  - blog-writer:src/job/images.tsx:205-222
+  - blog-writer:server/routes/images.ts:109-147
+  - blog-writer:src/job/images.tsx:177-194
 entities: [ImageSpec]
 updated: 2026-10-07
 ---
@@ -29,8 +29,8 @@ updated: 2026-10-07
 ## 구현 현황
 | 레이어 | 구현 | 근거 |
 |---|---|---|
-| 서버 | 형식·크기·대상 검사 | `blog-writer:server/routes/images.ts:101-138` |
-| 화면 | 파일 선택 `accept` 같은 4형식 | `blog-writer:src/job/images.tsx:214` |
+| 서버 | 형식·크기·대상 검사 | `blog-writer:server/routes/images.ts:109-147` |
+| 화면 | 파일 선택 `accept` 같은 4형식 | `blog-writer:src/job/images.tsx:186` |
 | 테스트 | 형식 아님 400, 자리 없음 404 | `blog-writer:tests/api.test.ts:120-126` |
 
 ## 예외 / 경계값
@@ -44,5 +44,5 @@ updated: 2026-10-07
 | 날짜 | 변경 | 근거 |
 |---|---|---|
 | 2026-10-05 | 최초 기록 | |
-| 2026-10-05 | 교체 시 예전 이미지 파일 삭제 | `blog-writer:server/routes/images.ts:134` |
+| 2026-10-05 | 교체 시 예전 이미지 파일 삭제 | `blog-writer:server/routes/images.ts:143` |
 | 2026-10-07 | 리팩터링: 코드 위치 이동 (`server/index.ts` → `server/routes/images.ts`). 동작 변화 없음 | |

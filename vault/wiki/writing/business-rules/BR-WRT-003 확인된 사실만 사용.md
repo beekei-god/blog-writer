@@ -35,7 +35,7 @@ updated: 2026-10-07
 | 프롬프트(리서치) | 사실마다 [출처 URL], 못 찾으면 목록에 | | `blog-writer:server/research.ts:19-22` |
 | 프롬프트(작성) | 노트에 출처와 함께 있는 것만, 출처 목록 URL만 | | `blog-writer:server/writer.ts:20`, `:24` |
 | 서버 | 출처 정리만 (사실 검증은 없음) | http(s) 필터·중복 제거 | `blog-writer:server/research.ts:85-87` |
-| 화면 | "본문에서 뺀 항목", 출처 목록, 리서치 노트 표시 | | `blog-writer:src/job/Report.tsx:44-55`, `blog-writer:src/job/JobDetail.tsx:323-345` |
+| 화면 | "본문에서 뺀 항목", 출처 목록, 리서치 노트 표시 | | `blog-writer:src/job/Report.tsx:44-55`, `blog-writer:src/job/JobDetail.tsx:314-336` |
 
 본문 사실이 노트와 맞는지 코드로 검사하지는 않는다. 프롬프트 지시와 사용자 검토에 기대므로 `confidence: medium`.
 

@@ -10,7 +10,7 @@ source:
   - blog-writer:server/writer.ts:31
   - blog-writer:rules/default-writing-rules.md:33-36
   - blog-writer:server/writer.ts:227-241
-  - blog-writer:shared/types.ts:179
+  - blog-writer:shared/types.ts:182
   - blog-writer:tests/writer.test.ts:50-68
   - blog-writer:README.md:206
 entities: [Post]
@@ -33,7 +33,7 @@ updated: 2026-10-07
 | 프롬프트(작성) | 금지 | 만들지 말 것 | `blog-writer:server/writer.ts:31` |
 | 기본 글쓰기 규칙 | 금지와 일치 (2026-10-05 수정) | 태그 순서·구성에서 스마트블록 언급 삭제 (자동완성·함께 많이 찾는만) | `blog-writer:rules/default-writing-rules.md:31-36` |
 | 서버 검증 | 제거 (2026-10-05 추가) | 이 출처 태그는 무조건 제외 | `blog-writer:server/writer.ts:234-237` |
-| 공용 타입 | 출처 값으로 아직 허용 | `TAG_SOURCES`에 포함 (모델 출력 스키마 enum 때문에 남겨 둠) | `blog-writer:shared/types.ts:179` |
+| 공용 타입 | 출처 값으로 아직 허용 | `TAG_SOURCES`에 포함 (모델 출력 스키마 enum 때문에 남겨 둠) | `blog-writer:shared/types.ts:182` |
 | 테스트 | 스마트블록 출처 태그 제외 확인 | | `blog-writer:tests/writer.test.ts:50-68` |
 | README | 자동완성·"함께 많이 찾는"만 수집, 목록 밖 출처 태그는 서버가 제외 (스마트블록 직접 언급은 없음) | | `blog-writer:README.md:206` |
 

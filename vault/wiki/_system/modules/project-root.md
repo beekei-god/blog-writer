@@ -7,7 +7,7 @@ source:
   - blog-writer:README.md:1-274
   - blog-writer:package.json:1-33
   - blog-writer:rules/default-writing-rules.md:1-79
-updated: 2026-10-07
+updated: 2026-10-08
 ---
 # project-root 모듈
 
@@ -23,7 +23,7 @@ updated: 2026-10-07
 | `vite.config.ts` | 10 | 단순 파일: React 플러그인, 포트 5173, `/api` → `http://127.0.0.1:5172` 프록시 (`localhost`는 IPv6로 풀려 다른 프로그램에 붙을 수 있어 IPv4로 고정) | [[_system/architecture]] |
 | `index.html` | 13 | 단순 파일: SPA 진입 HTML (`/src/main.tsx`), 파비콘 링크 | |
 | `public/favicon.svg` | 8 | 단순 파일: 브라우저 탭 아이콘 | |
-| `.env.example` | 4 | `PORT`, `CLAUDE_MODEL` 예시 | [[_system/configuration]] |
+| `.env.example` | 11 | `PORT`, `CLAUDE_MODEL`, 이미지 API 키 `GEMINI_API_KEY`·`OPENAI_API_KEY`, 이미지 모델 `GEMINI_IMAGE_MODEL`·`OPENAI_IMAGE_MODEL` 예시 (값은 비어 있음) | [[_system/configuration]] |
 | `.gitignore` | 4 | 단순 파일: `node_modules`, `dist`, `.env`, `data/` 제외 | |
 | `rules/default-writing-rules.md` | 79 | 기본 글쓰기 규칙 6개 장: 쉬운 문장, 존댓말, SEO, 태그, 확인된 내용만, 소제목·섹션 구성 | [[writing/entities/글쓰기 규칙]] |
 

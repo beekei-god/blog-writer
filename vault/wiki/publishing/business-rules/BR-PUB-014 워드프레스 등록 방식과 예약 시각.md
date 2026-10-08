@@ -7,11 +7,11 @@ status: active
 confidence: high
 consistency: consistent
 source:
-  - blog-writer:shared/types.ts:231-232
+  - blog-writer:shared/types.ts:234-235
   - blog-writer:server/wordpress.ts:252-260
   - blog-writer:server/wordpress.ts:271
   - blog-writer:server/routes/jobs.ts:106-138
-  - blog-writer:server/pipeline.ts:276-310
+  - blog-writer:server/pipeline.ts:321-355
   - blog-writer:src/job/NextStep.tsx:155-267
 entities: [블로그 설정, Job]
 updated: 2026-10-07
@@ -43,10 +43,10 @@ updated: 2026-10-07
 ## 구현 현황
 | 레이어 | 구현 | 근거 |
 |---|---|---|
-| 공용 | `PublishMode` | `blog-writer:shared/types.ts:231-232` |
+| 공용 | `PublishMode` | `blog-writer:shared/types.ts:234-235` |
 | 서버(요청 검사) | `mode` 기본 `draft`, `scheduledAt` ISO, 예약이면 `checkSchedule` | `blog-writer:server/routes/jobs.ts:106-128` |
 | 서버(등록) | `WP_STATUS`, `checkSchedule`, 업로드 전 재확인, 자동발행 때 공개 시각 지금으로 | `blog-writer:server/wordpress.ts:252-260`, `:271`, `:306-310` |
-| 서버(상태) | `doWordPressPost` 상태 결정·경고·실패 처리 | `blog-writer:server/pipeline.ts:276-310` |
+| 서버(상태) | `doWordPressPost` 상태 결정·경고·실패 처리 | `blog-writer:server/pipeline.ts:321-355` |
 | 화면 | `WordPressNext` 등록 방식 버튼·예약 시각·확인 창 | `blog-writer:src/job/NextStep.tsx:155-267` |
 | 테스트 | 예약 시각 경계, 과거 시각이면 업로드 전 거절, 크롬 블로그는 임시저장만 | `blog-writer:tests/wordpress.test.ts:18-26`, `:144-149`, `:123-136`, `blog-writer:tests/api.test.ts:72-89` |
 

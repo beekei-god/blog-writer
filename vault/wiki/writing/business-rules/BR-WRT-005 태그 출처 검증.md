@@ -10,7 +10,7 @@ source:
   - blog-writer:server/writer.ts:28-33
   - blog-writer:server/writer.ts:156-165
   - blog-writer:server/writer.ts:216-258
-  - blog-writer:shared/types.ts:178-187
+  - blog-writer:shared/types.ts:181-190
   - blog-writer:tests/writer.test.ts:50-68
 entities: [Post]
 updated: 2026-10-07

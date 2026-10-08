@@ -6,7 +6,7 @@ aliases: [이미지 옵션, 이미지 설정]
 status: active
 confidence: high
 source:
-  - blog-writer:shared/types.ts:3-51
+  - blog-writer:shared/types.ts:3-54
   - blog-writer:server/schema.ts:43-59
   - blog-writer:server/store.ts:20
   - blog-writer:src/NewJob.tsx:42-76

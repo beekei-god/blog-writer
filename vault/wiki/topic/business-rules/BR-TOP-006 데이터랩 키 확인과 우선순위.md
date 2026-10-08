@@ -7,11 +7,11 @@ status: active
 confidence: high
 consistency: consistent
 source:
-  - blog-writer:server/secrets.ts:6-55
-  - blog-writer:server/routes/settings.ts:60-88
+  - blog-writer:server/secrets.ts:7-59
+  - blog-writer:server/routes/settings.ts:61-89
   - blog-writer:server/datalab.ts:51-55
-  - blog-writer:src/SettingsPanel.tsx:106-161
-  - blog-writer:src/SettingsPanel.tsx:263-289
+  - blog-writer:src/SettingsPanel.tsx:107-162
+  - blog-writer:src/SettingsPanel.tsx:264-290
 updated: 2026-10-07
 ---
 # BR-TOP-006 데이터랩 키 확인과 우선순위
@@ -31,10 +31,10 @@ updated: 2026-10-07
 ## 구현 현황
 | 레이어 | 구현 | 근거 |
 |---|---|---|
-| 서버 | `getNaverKeys`(환경변수 우선), `saveNaverKeys`(자기 항목만 바꿔 합침, `serialQueue` + `writeJsonAtomic` 0600) | `blog-writer:server/secrets.ts:32-55` |
-| 서버 API | 확인 후 저장, 힌트만 반환 | `blog-writer:server/routes/settings.ts:60-88` |
+| 서버 | `getNaverKeys`(환경변수 우선), `saveNaverKeys`(자기 항목만 바꿔 합침, `serialQueue` + `writeJsonAtomic` 0600) | `blog-writer:server/secrets.ts:36-59` |
+| 서버 API | 확인 후 저장, 힌트만 반환 | `blog-writer:server/routes/settings.ts:61-89` |
 | 서버 | `testDatalab`: 최근 7일 "날씨" | `blog-writer:server/datalab.ts:52-55` |
-| 화면 | "네이버 데이터랩 설정" 카드: 입력·비밀번호 칸·삭제 안내 | `blog-writer:src/SettingsPanel.tsx:263-289`, `:106-119`, `:148-161` |
+| 화면 | "네이버 데이터랩 설정" 카드: 입력·비밀번호 칸·삭제 안내 | `blog-writer:src/SettingsPanel.tsx:264-290`, `:107-120`, `:149-162` |
 
 ## 영향받는 플로우
 [[topic/flows/주제 추천 플로우]]
@@ -43,4 +43,4 @@ updated: 2026-10-07
 | 날짜 | 변경 | 근거 |
 |---|---|---|
 | 2026-10-05 | 최초 기록 | |
-| 2026-10-07 | 비밀 파일에 워드프레스 연결 정보도 함께 저장하게 되어, 키 저장·삭제가 다른 항목을 보존하도록 바뀜. API는 `server/routes/settings.ts`로 이동 | `blog-writer:server/secrets.ts:6-35` |
+| 2026-10-07 | 비밀 파일에 워드프레스 연결 정보도 함께 저장하게 되어, 키 저장·삭제가 다른 항목을 보존하도록 바뀜. API는 `server/routes/settings.ts`로 이동 | `blog-writer:server/secrets.ts:7-39` |

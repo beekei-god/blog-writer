@@ -1,7 +1,7 @@
 ---
 type: index
 domain: publishing
-updated: 2026-10-07
+updated: 2026-10-08
 ---
 # publishing Index
 
@@ -13,7 +13,7 @@ updated: 2026-10-07
 - [[publishing/business-rules/BR-PUB-001 발행하지 않고 임시저장까지만]] — 크롬 블로그는 임시저장만, 워드프레스 API는 예약·자동발행 가능(확인 창)
 - [[publishing/business-rules/BR-PUB-002 블로그 ID 형식]] — 네이버·티스토리 `[\w-]+`, 워드프레스 https 주소
 - [[publishing/business-rules/BR-PUB-003 입력 경로 선택과 막힌 사이트 기억]] — 워드프레스는 API, 나머지는 Claude in Chrome → 막히면 대체 경로
-- [[publishing/business-rules/BR-PUB-004 크롬 작업 직렬화]] — 크롬 블로그 입력·웹 AI 이미지는 전역 한 줄 (워드프레스 제외)
+- [[publishing/business-rules/BR-PUB-004 크롬 작업 직렬화]] — 크롬 블로그 입력·크롬에서 만드는 웹 AI 이미지는 전역 한 줄 (워드프레스·이미지 API 제외)
 - [[publishing/business-rules/BR-PUB-005 썸네일 위치]] — 네이버·티스토리 첫 이미지, 워드프레스 `featured_media`
 - [[publishing/business-rules/BR-PUB-006 태그 입력 위치]] — 네이버 본문 끝 `#태그`, 티스토리 입력란, 워드프레스 태그 ID
 - [[publishing/business-rules/BR-PUB-007 소제목 위 빈 줄]] — 소제목 위 한 줄 (워드프레스는 블록 간격)

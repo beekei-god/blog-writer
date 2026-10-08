@@ -6,7 +6,7 @@ source:
   - blog-writer:package.json:6-13
   - blog-writer:server/index.ts:1-11
   - blog-writer:server/app.ts:10-40
-  - blog-writer:server/pipeline.ts:21-36
+  - blog-writer:server/pipeline.ts:22-46
   - blog-writer:server/claude.ts:58-198
   - blog-writer:vite.config.ts:1-10
 updated: 2026-10-07
@@ -72,7 +72,7 @@ flowchart TD
 ## 대표 요청의 경로: "딥서칭 시작"
 1. 화면 `NewJob.submit` → `POST /api/jobs` (`blog-writer:src/NewJob.tsx:81-96`).
 2. 서버가 주제(2~300자)·링크(http(s), 최대 20개)·이미지 옵션을 검증하고, 이미지 옵션을 설정에 기억한 뒤 `createJob` → `void runDraft(id)` → 201 응답 (`blog-writer:server/routes/jobs.ts:43-72`).
-3. `doDraft`: 규칙 읽기 → `deepResearch`(Claude + WebSearch/WebFetch) → 네이버 자동완성·함께 많이 찾는 수집 → `writePost`(Claude) → 분량 줄이기 → 태그 검증 → `makeImages` → `draft_ready` (`blog-writer:server/pipeline.ts:38-119`).
+3. `doDraft`: 규칙 읽기 → `deepResearch`(Claude + WebSearch/WebFetch) → 네이버 자동완성·함께 많이 찾는 수집 → `writePost`(Claude) → 분량 줄이기 → 태그 검증 → `makeImages` → `draft_ready` (`blog-writer:server/pipeline.ts:48-129`).
 4. 각 단계는 `updateJob`/`log`로 `data/jobs/<id>.json`에 바로 기록한다.
 5. 화면은 진행 중 작업이 있으면 1.5초마다 `GET /api/jobs`로 폴링한다 (`blog-writer:src/App.tsx:84-90`).
 자세한 흐름은 [[writing/flows/초안 작성 플로우]].
@@ -81,7 +81,7 @@ flowchart TD
 - 장시간 작업(초안·이미지·블로그 입력·추천)은 HTTP 응답 후 `void` 프로미스로 돈다. 진행 상황은 job 파일의 `status`·`logs`에 쓰고 화면이 폴링한다(작업 1.5초, 추천 2초, 로그인 창 3초, 사용량 15초/60초).
 - 같은 작업은 동시에 한 번만 (`running` Set) → [[writing/business-rules/BR-WRT-011 작업 중복 실행과 진행 중 변경 금지]].
 - 크롬을 쓰는 작업(네이버·티스토리 입력, Gemini/ChatGPT 이미지)은 전역 줄 `enqueueBrowser`(`serialQueue`)로 하나씩. 워드프레스 API 등록은 크롬을 쓰지 않아 이 줄을 거치지 않는다 → [[publishing/business-rules/BR-PUB-004 크롬 작업 직렬화]].
-- 중지: 작업마다 AbortController를 두고 AsyncLocalStorage로 신호를 전달, `runClaude`가 자식 프로세스를 SIGTERM (`blog-writer:server/cancel.ts:1-36`, `blog-writer:server/claude.ts:91-96`).
+- 중지: 작업마다 AbortController를 두고 AsyncLocalStorage로 신호를 전달, `runClaude`가 자식 프로세스를 SIGTERM (`blog-writer:server/cancel.ts:1-39`, `blog-writer:server/claude.ts:91-96`).
 - 서버 시작 시 진행 중으로 남은 작업·추천을 정리하고 90일 지난 사용량 기록을 지운다 (`blog-writer:server/index.ts:7-11`).
 
 ## 오류 처리 방식

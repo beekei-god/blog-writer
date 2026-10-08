@@ -8,8 +8,8 @@ confidence: high
 source:
   - blog-writer:server/usage.ts:15-27
   - blog-writer:server/claude.ts:166-181
-  - blog-writer:shared/types.ts:55-63
-  - blog-writer:shared/types.ts:90-116
+  - blog-writer:shared/types.ts:58-66
+  - blog-writer:shared/types.ts:93-119
 updated: 2026-10-07
 ---
 # UsageRecord (Claude 호출 기록)

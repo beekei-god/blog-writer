@@ -7,10 +7,10 @@ status: active
 confidence: high
 consistency: consistent
 source:
-  - blog-writer:shared/types.ts:234-243
+  - blog-writer:shared/types.ts:237-246
   - blog-writer:server/wordpress.ts:149-171
   - blog-writer:server/wordpress.ts:262-327
-  - blog-writer:server/pipeline.ts:289-294
+  - blog-writer:server/pipeline.ts:334-339
   - blog-writer:src/job/NextStep.tsx:205-263
   - blog-writer:tests/wordpress.test.ts:114-143
 entities: [Job]
@@ -36,10 +36,10 @@ updated: 2026-10-07
 ## 구현 현황
 | 레이어 | 구현 | 근거 |
 |---|---|---|
-| 공용 | `WordPressRecord`, `Job.wordpress` | `blog-writer:shared/types.ts:234-243`, `:271` |
+| 공용 | `WordPressRecord`, `Job.wordpress` | `blog-writer:shared/types.ts:237-246`, `:276` |
 | 서버 | `ensureMedia` (재사용·업로드·alt) | `blog-writer:server/wordpress.ts:149-171` |
 | 서버 | `publishToWordPress` 갱신/새 글 | `blog-writer:server/wordpress.ts:311-326` |
-| 서버 | 결과 기록 | `blog-writer:server/pipeline.ts:289-294` |
+| 서버 | 결과 기록 | `blog-writer:server/pipeline.ts:334-339` |
 | 화면 | `WordPressNext`의 `registered` | `blog-writer:src/job/NextStep.tsx:205-263` |
 | 테스트 | 갱신·미디어 재사용, 지워진 글이면 새 글 | `blog-writer:tests/wordpress.test.ts:114-143` |
 

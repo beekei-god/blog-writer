@@ -46,7 +46,7 @@ updated: 2026-10-07
 | 서버(AppleScript) | 저장 버튼만 | `blog-writer:server/browser/userChrome.ts:469-482` |
 | 서버(Playwright) | 임시저장 버튼만 | `blog-writer:server/browser/adapters.ts:167-178`, `:268-272`, `:378` |
 | 서버(API 검사) | 크롬 블로그는 `draft`만 허용 | `blog-writer:server/routes/jobs.ts:132-134` |
-| 서버(워드프레스) | 모드별 상태 → [[_system/integrations/wordpress-rest]] | `blog-writer:server/wordpress.ts:252`, `blog-writer:server/pipeline.ts:276-310` |
+| 서버(워드프레스) | 모드별 상태 → [[_system/integrations/wordpress-rest]] | `blog-writer:server/wordpress.ts:252`, `blog-writer:server/pipeline.ts:321-355` |
 | 화면 | 크롬 블로그는 "임시저장" 버튼만, 워드프레스는 등록 방식 선택 + 예약·자동발행 확인 창 | `blog-writer:src/job/NextStep.tsx:116-152`, `:194-198` |
 
 ## 예외 / 경계값
@@ -63,4 +63,4 @@ updated: 2026-10-07
 |---|---|---|
 | 2026-10-05 | 최초 기록 | |
 | 2026-10-05 | 다시 임시저장은 새 글이 생기는 동작을 유지하고 화면에 안내 추가 | |
-| 2026-10-07 | 워드프레스는 REST API로 올리고 임시저장·예약발행·자동발행을 고를 수 있게 됨 (예약·자동은 확인 창). 크롬 블로그는 계속 임시저장만, 서버가 `draft` 외 요청을 400으로 거절. 워드프레스 크롬 경로 삭제 | `blog-writer:server/routes/jobs.ts:121-138`, `blog-writer:server/pipeline.ts:261-310` |
+| 2026-10-07 | 워드프레스는 REST API로 올리고 임시저장·예약발행·자동발행을 고를 수 있게 됨 (예약·자동은 확인 창). 크롬 블로그는 계속 임시저장만, 서버가 `draft` 외 요청을 400으로 거절. 워드프레스 크롬 경로 삭제 | `blog-writer:server/routes/jobs.ts:121-138`, `blog-writer:server/pipeline.ts:306-355` |

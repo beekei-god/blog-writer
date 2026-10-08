@@ -5,10 +5,10 @@ module: web-app
 paths: [src/App.tsx, src/main.tsx, src/api.ts, src/labels.ts, src/leaveGuard.ts, src/vite-env.d.ts, src/styles.css]
 source:
   - blog-writer:src/App.tsx:1-237
-  - blog-writer:src/api.ts:1-111
+  - blog-writer:src/api.ts:1-123
   - blog-writer:src/labels.ts:1-87
   - blog-writer:src/leaveGuard.ts:1-11
-updated: 2026-10-07
+updated: 2026-10-08
 ---
 # web-app 모듈
 
@@ -20,7 +20,7 @@ updated: 2026-10-07
 |---|---|---|---|---|
 | `src/App.tsx` | 237 | 상단 탭(새 글/주제 추천/글쓰기 규칙/사용량/설정), 내 글 목록(상태 필터 칩: 전체/진행 중/초안 완료/임시저장 완료/예약됨/발행 완료/실패, 상태별 개수), 진행 중일 때 1.5초 폴링, 사용량 60초 폴링, 플랜 한도 칩, 블로그별 연결 여부(`ready`)와 하나도 없을 때 설정 안내 | `App` | [[writing/flows/초안 작성 플로우]] |
 | `src/main.tsx` | 10 | React 루트 마운트 (StrictMode) | | 단순 파일 |
-| `src/api.ts` | 111 | 모든 `/api` 호출 함수와 응답 타입. 오류 응답의 `error`를 예외 메시지로 | `api`, `DatalabStatus`, `WordPressStatus`, `LoginWindowStatus`, `BlockedSites`, `ExtensionStatusInfo`, `Rules` | [[_system/api]] |
+| `src/api.ts` | 111 | 모든 `/api` 호출 함수와 응답 타입. 오류 응답의 `error`를 예외 메시지로 | `api`, `DatalabStatus`, `ImageApiStatus`, `ImageApiKeyStatus`, `WordPressStatus`, `LoginWindowStatus`, `BlockedSites`, `ExtensionStatusInfo`, `Rules` | [[_system/api]] |
 | `src/labels.ts` | 87 | AI·스타일·단계·모델 라벨과 설명, 추천 모델 이유, 토큰·금액·시간 표시 함수. 상태 이름과 `errorText`는 `shared/labels.ts`에서 다시 내보낸다 | `STATUS_LABEL`(재수출), `errorText`(재수출), `PROVIDER_LABEL`, `PROVIDER_HINT`, `STYLE_LABEL`, `STAGE_LABEL`, `STAGE_HINT`, `MODEL_REASON`, `MODEL_CHOICE_LABEL`, `prettyModel`, `fmtTokens`, `fmtUSD`, `timeAgo`, `resetText` | [[glossary]], [[usage/business-rules/BR-USG-001 단계별 추천 모델]] |
 | `src/leaveGuard.ts` | 11 | 저장 안 한 화면이 등록하는 이탈 확인 (`confirm`) | `setLeaveGuard`, `canLeave` | [[writing/entities/글쓰기 규칙]] |
 | `src/vite-env.d.ts` | 1 | 단순 파일: Vite 타입 참조 | | |

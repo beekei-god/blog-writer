@@ -20,7 +20,7 @@ updated: 2026-10-07
 | `server/routes/browser.ts` | `/chrome-extension`(17-57), `/blocked-sites`(60-77), `blogLoginUrl`(79-82), `/browser/login`(84-121) | BR-PUB-003, 004, 017 |
 | `server/routes/jobs.ts` | `/post-to-blog`(100-143), `MANUAL_TRANSITIONS`·`/status`(145-177) | BR-PUB-001, 013, 014, 015 |
 | `server/routes/util.ts` | `markBusy`(15-20), `wordpressStatus`(23-26) | |
-| `server/pipeline.ts` | `enqueueBrowser`(23), `runPost`(261-271), `doWordPressPost`(276-309), `doPost`(311-368) | BR-PUB-003, 004, 014, [[publishing/flows/블로그 임시저장 플로우]] |
+| `server/pipeline.ts` | `enqueueBrowser`(24), `runPost`(306-317), `doWordPressPost`(321-355), `doPost`(357-415) | BR-PUB-003, 004, 014, [[publishing/flows/블로그 임시저장 플로우]] |
 | `server/wordpress.ts` | `normalizeSite`(26-31), `wp`(53-116), `testWordPress`(124-130), `listCategories`(133-137), `ensureMedia`(149-171), `resolveTagIds`(175-194), `postToBlocks`(199-234), `checkSchedule`(245-250), `publishToWordPress`(252-314) | BR-PUB-005, 006, 008, 009, 012, 014, 016 → [[_system/integrations/wordpress-rest]] |
 | `server/browser/blogPost.ts` | `buildSegments`(25-59), `writeUrl`(61-66), `PLATFORM_GUIDE`(69-88, 네이버·티스토리), `postWithClaudeInChrome`(119-212) | BR-PUB-001, 005, 006, 007, 008, 009 |
 | `server/browser/userChrome.ts` | `segmentsOf`(137-185), `shrinkImage`(191-207), `verifyEditor`(286-339), `postNaverInUserChrome`(349-483) | BR-PUB-009, 010, 011, 012 |

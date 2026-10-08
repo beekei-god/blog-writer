@@ -9,10 +9,10 @@ source:
   - blog-writer:src/job/NextStep.tsx:155-267
   - blog-writer:src/job/JobDetail.tsx:102-111
   - blog-writer:server/routes/jobs.ts:100-143
-  - blog-writer:server/pipeline.ts:261-310
+  - blog-writer:server/pipeline.ts:306-355
   - blog-writer:server/wordpress.ts:36-116
   - blog-writer:server/wordpress.ts:149-327
-  - blog-writer:server/routes/settings.ts:90-125
+  - blog-writer:server/routes/settings.ts:127-162
 updated: 2026-10-07
 ---
 # 워드프레스 API 등록 플로우

@@ -7,7 +7,7 @@ source:
   - blog-writer:server/browser/claudeChrome.ts:1-105
   - blog-writer:server/claude.ts:115-136
   - blog-writer:server/browser/blogPost.ts:119-212
-  - blog-writer:server/images/webAi.ts:180-281
+  - blog-writer:server/images/webAi.ts:180-265
 updated: 2026-10-07
 ---
 # Claude in Chrome 연동

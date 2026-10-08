@@ -4,11 +4,11 @@ project: blog-writer
 source:
   - blog-writer:.env.example:1-4
   - blog-writer:server/store.ts:9-50
-  - blog-writer:server/routes/settings.ts:16-34
+  - blog-writer:server/routes/settings.ts:17-35
   - blog-writer:server/claude.ts:32-37
-  - blog-writer:server/secrets.ts:1-71
-  - blog-writer:shared/types.ts:122-147
-updated: 2026-10-07
+  - blog-writer:server/secrets.ts:1-75
+  - blog-writer:shared/types.ts:125-150
+updated: 2026-10-08
 ---
 # 설정
 
@@ -21,8 +21,10 @@ updated: 2026-10-07
 | `BLOG_WRITER_DATA_DIR` | 데이터 폴더 위치 (테스트·따로 띄운 앱용) | `<프로젝트>/data` | 아니오 (`.env.example`에 없음) | `blog-writer:server/store.ts:11-12` |
 | `CLAUDE_MODEL` | 단계 모델이 "Claude Code 설정"(`default`)일 때 쓸 모델 별칭 | 비면 CLI 기본 모델 | 아니오 | `blog-writer:server/claude.ts:36` |
 | `CLAUDE_BIN` | 실행할 claude CLI 경로 | `claude` | 아니오 (`.env.example`에 없음) | `blog-writer:server/claude.ts:79` |
-| `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` | 데이터랩(NAVER API HUB) 키. 둘 다 있으면 파일 키보다 우선 | | 아니오 (`.env.example`에 없음) | `blog-writer:server/secrets.ts:44-45` |
+| `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` | 데이터랩(NAVER API HUB) 키. 둘 다 있으면 파일 키보다 우선 | | 아니오 (`.env.example`에 없음) | `blog-writer:server/secrets.ts:48-49` |
 | `DOWNLOADS_DIR` | Gemini/ChatGPT 이미지 다운로드를 찾을 폴더 | `~/Downloads` | 아니오 (README에만 언급, `blog-writer:README.md:63`) | `blog-writer:server/images/webAi.ts:121` |
+| `GEMINI_API_KEY`, `OPENAI_API_KEY` | 이미지 API 키. 있으면 설정 화면에 저장한 키보다 우선(화면에서 지워도 남음). 키가 있으면 Gemini/ChatGPT 이미지를 API로 만든다 | 없음 (크롬에서 만듦) | 아니오 | `blog-writer:server/secrets.ts:77-88` |
+| `GEMINI_IMAGE_MODEL`, `OPENAI_IMAGE_MODEL` | 이미지 API 모델 | `gemini-2.5-flash-image`, `gpt-image-2.5-flare` | 아니오 | `blog-writer:server/images/api.ts:15-16` |
 | `CHROME_PATH` | 로그인 창에 쓸 크롬 실행 파일 | OS별 기본 경로 후보 | 아니오 | `blog-writer:server/browser/loginWindow.ts:29` |
 | `BW_HEADLESS` | `1`이면 앱 전용 크롬 자동 조작을 창 없이 (테스트용) | 꺼짐 | 아니오 | `blog-writer:server/browser/runner.ts:55` |
 
@@ -44,28 +46,29 @@ updated: 2026-10-07
 
 `getSettings`는 저장값을 기본값 위에 얹고 `images`, `models`는 키 단위로 병합한다. 예전 설정의 `mouseSpeed`는 버리고, `platform`+`blogId`는 그 블로그 칸이 비어 있을 때만 옮긴 뒤 버린다 (`blog-writer:server/store.ts:27-50`). 파일이 없거나 깨지면 기본값을 쓴다.
 
-설정 화면은 카드마다 자기 칸만 저장한다. 다른 카드에서 고치다 만 값은 함께 저장되지 않는다 (`blog-writer:src/SettingsPanel.tsx:28-35`, `:86-104`).
+설정 화면은 카드마다 자기 칸만 저장한다. 다른 카드에서 고치다 만 값은 함께 저장되지 않는다 (`blog-writer:src/SettingsPanel.tsx:29-36`, `:87-105`).
 
 ## 비밀 정보
 | 무엇 | 저장 위치 | 읽는 곳 |
 |---|---|---|
-| 데이터랩 Client ID/Secret | `data/secrets.json` (권한 0600, 원자적 교체) 또는 환경변수 | `blog-writer:server/secrets.ts:42-55` |
-| 워드프레스 사용자명·Application Password | `data/secrets.json` (같은 파일, 저장할 때 다른 항목을 지우지 않게 읽어서 합침) | `blog-writer:server/secrets.ts:57-71` |
+| 데이터랩 Client ID/Secret | `data/secrets.json` (권한 0600, 원자적 교체) 또는 환경변수 | `blog-writer:server/secrets.ts:46-59` |
+| 워드프레스 사용자명·Application Password | `data/secrets.json` (같은 파일, 저장할 때 다른 항목을 지우지 않게 읽어서 합침) | `blog-writer:server/secrets.ts:61-75` |
+| 이미지 API 키 Gemini·OpenAI | `data/secrets.json` (같은 파일) 또는 환경변수 `GEMINI_API_KEY`·`OPENAI_API_KEY` (우선). 설정 → 이미지 API 설정에서 연결 확인 후 저장 | `blog-writer:server/secrets.ts:77-93` |
 | 블로그·Gemini·ChatGPT 로그인 | 사용자의 평소 크롬 프로필 (앱이 읽지 않음) | Claude in Chrome / AppleScript가 그 크롬을 그대로 씀 |
 | 앱 전용 크롬 로그인 쿠키 | `data/chrome-profile/` (시스템 키체인으로 암호화되게 Playwright 기본 인자 일부 제거) | `blog-writer:server/browser/runner.ts:53-65` |
 | Claude 계정 | Claude Code CLI 로그인 상태 (앱이 읽지 않음) | `claude -p` |
 
-값은 적지 않는다. 화면에는 데이터랩 Client ID 앞 4자(`blog-writer:server/routes/settings.ts:65`)와 워드프레스 사용자명만 돌려준다 (`blog-writer:server/routes/util.ts:25-28`). 예전 WordPress.com 연결 값(`wpcomToken`·`wpcomUsername`)은 더 쓰지 않고 워드프레스 연결을 저장·삭제할 때 지운다.
+값은 적지 않는다. 화면에는 데이터랩 Client ID 앞 4자, 이미지 API 키 앞 6자(`blog-writer:server/routes/settings.ts:93-96`)(`blog-writer:server/routes/settings.ts:66`)와 워드프레스 사용자명만 돌려준다 (`blog-writer:server/routes/util.ts:25-28`). 예전 WordPress.com 연결 값(`wpcomToken`·`wpcomUsername`)은 더 쓰지 않고 워드프레스 연결을 저장·삭제할 때 지운다.
 
 ## 코드 상수 (사실상 설정)
 | 상수 | 값 | 위치 | 관련 규칙 |
 |---|---|---|---|
 | `MAX_BODY_CHARS` | 3000 | `blog-writer:shared/length.ts:4` | [[writing/business-rules/BR-WRT-001 본문 분량 상한]] |
-| `MAX_TAGS` | 30 | `blog-writer:shared/types.ts:189` | [[writing/business-rules/BR-WRT-004 태그 최대 30개]] |
+| `MAX_TAGS` | 30 | `blog-writer:shared/types.ts:192` | [[writing/business-rules/BR-WRT-004 태그 최대 30개]] |
 | `MAX_BODY_IMAGES` | 6 | `blog-writer:shared/types.ts:15` | [[image/business-rules/BR-IMG-001 본문 이미지 개수]] |
 | `TAG_GAP_LINES` | 3 | `blog-writer:shared/postHtml.ts:48` | [[publishing/business-rules/BR-PUB-006 태그 입력 위치]] |
 | `KEEP_DAYS` | 90 | `blog-writer:server/usage.ts:13` | [[usage/business-rules/BR-USG-003 사용 기록 보관 기간]] |
-| `RECOMMENDED_MODELS` | research·writing=opus, images·browser·recommend=sonnet | `blog-writer:shared/types.ts:66-72` | [[usage/business-rules/BR-USG-001 단계별 추천 모델]] |
+| `RECOMMENDED_MODELS` | research·writing=opus, images·browser·recommend=sonnet | `blog-writer:shared/types.ts:69-75` | [[usage/business-rules/BR-USG-001 단계별 추천 모델]] |
 | 기본 Claude 타임아웃 | 15분 (호출별로 다름) | `blog-writer:server/claude.ts:90` | [[_system/integrations/claude-cli]] |
 | 워드프레스 요청 타임아웃 | 30초 (이미지 업로드 120초) | `blog-writer:server/wordpress.ts:62` | [[_system/integrations/wordpress-rest]] |
 | 예약 시각 최소 여유 | 지금 + 1분 | `blog-writer:server/wordpress.ts:255-260` | [[publishing/business-rules/BR-PUB-014 워드프레스 등록 방식과 예약 시각]] |

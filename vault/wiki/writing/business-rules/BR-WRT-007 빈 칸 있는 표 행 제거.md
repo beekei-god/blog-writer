@@ -11,7 +11,7 @@ source:
   - blog-writer:server/writer.ts:166
   - blog-writer:server/writer.ts:261-265
   - blog-writer:rules/default-writing-rules.md:45
-  - blog-writer:shared/types.ts:174-175
+  - blog-writer:shared/types.ts:177-178
   - blog-writer:src/job/PostEditor.tsx:49-55
   - blog-writer:server/routes/jobs.ts:84-98
   - blog-writer:tests/writer.test.ts:18-27

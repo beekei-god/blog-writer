@@ -1,6 +1,6 @@
 ---
 type: glossary
-updated: 2026-10-07
+updated: 2026-10-08
 ---
 # 용어집
 
@@ -33,9 +33,12 @@ updated: 2026-10-07
 | 근거 본문 | "이 이미지가 그리는 본문" | `basis` | | 이미지가 그리는 본문 문장 | [[image/business-rules/BR-IMG-004 본문 기반 이미지 기획]] |
 | 직접 고친 이미지 | "직접 고친 설명과 문구라서…", "본문을 보고 자동으로 다시 정하게 하기" | `userEdited` | | 자동 기획 제외 표시 | [[image/business-rules/BR-IMG-006 직접 고친 이미지 보호]] |
 | 이미지 기획 | "본문을 참고해 이미지 N개의 설명과 문구를 정하는 중" | `planImages` | | 만들기 직전 본문 기반 설명·문구 결정 | [[image/business-rules/BR-IMG-004 본문 기반 이미지 기획]] |
-| 이미지 실패 원인 | "⚠ 이미지 N개를 만들지 못했습니다", 원인 제목 | `errorKind`, `IMAGE_ERROR_KINDS`, `classifyImageError` | | 13종 | [[image/business-rules/BR-IMG-007 이미지 실패 격리와 원인 분류]] |
-| 다시 만들기 | "다시 만들기…", "실패한 N개를 ○○로 다시 만들기" | `runImages`, `ImageScope` | `all`/`failed`/`thumbnail`/`body-n` | | [[image/business-rules/BR-IMG-009 다시 만들기 범위]] |
+| 이미지 실패 원인 / 실패 이유 | 이미지 자리의 "⚠ <실패 이유> (Gemini)"와 안내 | `errorKind`, `IMAGE_ERROR_KINDS`, `classifyImageError`, `reasonOf` | | 14종 (실패 이유는 `error` 첫 줄) | [[image/business-rules/BR-IMG-007 이미지 실패 격리와 원인 분류]] |
+| 다시 만들기 / 이미지 다시 생성 | "이미지 다시 생성"(실패했거나 있는 이미지), "이미지 생성"(아직 없는 이미지), "○○ API로 다시 만들기", "크롬에서 ○○로 다시 만들기" | `runImage`(한 장), `runImages`(여러 장), `ImageScope` | `all`/`failed`/`thumbnail`/`body-n` | 한 장씩, 여러 장 동시에 | [[image/business-rules/BR-IMG-009 다시 만들기 범위]] |
 | 직접 올리기 | "직접 올리기" | `POST /images/:target` | `<target>-upload-<ts>.<ext>` | 내 이미지로 교체 | [[image/business-rules/BR-IMG-010 직접 올리기 형식과 크기]] |
+| 만드는 방법 (API / 크롬) | "○○ API로 …", "크롬에서 ○○로 …" | `ImageMethod`: `api`/`chrome`, `generateWithApi`, `generateWithWebAi` | 요청 본문 `method` | Gemini·ChatGPT 이미지를 이미지 API로 만들지 크롬(Claude in Chrome)에서 만들지 | [[image/business-rules/BR-IMG-013 이미지 API 우선과 만드는 방법 선택]] |
+| 이미지 API 키 | "이미지 API 설정", "연결 확인 후 저장" | `getImageApiKey`, `saveImageApiKey`, `GEMINI_API_KEY`, `OPENAI_API_KEY` | `secrets.json`의 `geminiApiKey`·`openaiApiKey` | 있으면 API로 이미지 생성 | [[_system/integrations/image-api]] |
+| 한 장씩 동시 실행 | "이미지를 만드는 중입니다" (그 이미지 자리) | `imageRuns`, `isImageBusy`, `Job.imageRunsOnly` | | 이미지 여러 장을 각각 다시 만들 때 함께 진행 | [[image/business-rules/BR-IMG-014 한 장씩 다시 만들기 동시 실행]] |
 | 올리는 중 | "크롬 작성 중"(네이버·티스토리), "워드프레스 등록 중" | `statusLabel`, `Job.postingTo` | `status: "posting"` + `postingTo` | 같은 올리는 중 상태의 라벨이 올리는 블로그에 따라 갈림 | [[writing/entities/Job]] |
 | 임시저장 | "<블로그>에 임시저장", "다시 임시저장", "임시저장 완료" | `runPost`, `doPost`, 워드프레스는 `doWordPressPost` mode `draft` | `status: "posting"/"posted"` | 블로그에 글을 넣고 저장만 함 (발행 안 함). 네이버·티스토리는 이것만 가능 | [[publishing/business-rules/BR-PUB-001 발행하지 않고 임시저장까지만]] |
 | 발행 완료 | "발행 완료", "발행 완료로 표시", "발행 완료 취소", "초안 완료로 되돌리기" | `setStatus`, `PUT /api/jobs/:id/status`, `STATUS_LABEL` (`shared/labels.ts`) | `status: "published"` | 사용자가 블로그에서 직접 발행한 뒤 앱에서 표시했거나, 워드프레스 자동발행 결과로 공개된 상태 | [[publishing/business-rules/BR-PUB-013 발행 완료 표시]] |
