@@ -1,12 +1,14 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { serialQueue, writeJsonAtomic } from "./fsutil";
+import type { WebAi } from "./images/webAi";
 import { DATA_DIR } from "./store";
 
 /**
  * 비밀 정보. 로컬 파일(data/secrets.json, git 제외, 권한 0600)에만 저장하고 화면으로는 돌려주지 않는다.
  * - 네이버 클라우드 플랫폼 API HUB 키 (데이터랩)
  * - 워드프레스 사용자명과 Application Password
+ * - 이미지 API 키 (Gemini, OpenAI)
  * 한 파일에 같이 두므로, 저장할 때는 항상 기존 내용을 읽어 합친 뒤 자기 항목만 바꾼다.
  */
 const FILE = path.join(DATA_DIR, "secrets.json");
@@ -19,6 +21,8 @@ type SecretsFile = {
   /** 예전에 WordPress.com 계정 연결을 지원했을 때 남은 값. 더 쓰지 않으며, 워드프레스 연결을 저장하거나 지울 때 같이 지운다. */
   wpcomToken?: string;
   wpcomUsername?: string;
+  geminiApiKey?: string;
+  openaiApiKey?: string;
 };
 
 async function readAll(): Promise<SecretsFile> {
@@ -68,4 +72,22 @@ export function saveWordPressAuth(auth: WordPressAuth | null) {
   return update(({ wpUsername: _a, wpAppPassword: _b, wpcomToken: _c, wpcomUsername: _d, ...rest }) =>
     auth ? { ...rest, wpUsername: auth.username, wpAppPassword: auth.appPassword } : rest,
   );
+}
+
+const IMAGE_API_KEY = {
+  gemini: { env: "GEMINI_API_KEY", field: "geminiApiKey" },
+  chatgpt: { env: "OPENAI_API_KEY", field: "openaiApiKey" },
+} as const;
+
+/** 이미지 API 키. 환경변수가 있으면 우선 */
+export async function getImageApiKey(ai: WebAi): Promise<{ key: string; fromEnv: boolean } | null> {
+  const { env, field } = IMAGE_API_KEY[ai];
+  if (process.env[env]) return { key: process.env[env]!, fromEnv: true };
+  const key = (await readAll())[field];
+  return key ? { key, fromEnv: false } : null;
+}
+
+export function saveImageApiKey(ai: WebAi, key: string | null) {
+  const { field } = IMAGE_API_KEY[ai];
+  return update(({ [field]: _, ...rest }) => (key ? { ...rest, [field]: key } : rest));
 }

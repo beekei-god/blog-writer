@@ -1,5 +1,5 @@
 import { countBodyChars } from "../shared/length";
-import { aiFor, bodyImageKey, bodyIndexOf, imageKey, type ImageOptions, type ImageProvider, type ImageScope, type ImageStyle } from "../shared/types";
+import { aiFor, bodyImageKey, bodyIndexOf, imageKey, type ImageMethod, type ImageOptions, type ImageProvider, type ImageScope, type ImageStyle } from "../shared/types";
 import { type Platform, type PublishMode, settingsFor } from "../shared/types";
 import { postWithClaudeInChrome } from "./browser/blogPost";
 import { isBlocked, markBlocked } from "./browser/blockedSites";
@@ -7,6 +7,7 @@ import { SiteBlockedError } from "./browser/claudeChrome";
 import { postWithChrome } from "./browser/runner";
 import { postNaverInUserChrome, userChromeSupported } from "./browser/userChrome";
 import { CancelledError, throwIfCancelled, withCancel } from "./cancel";
+import { getImageApiKey } from "./secrets";
 import { collectTargets, countImages, generateImages } from "./images";
 import { collectNaverSuggestions } from "./naver";
 import { planImages, type PlanTarget } from "./images/plan";
@@ -25,8 +26,17 @@ const enqueueBrowser = serialQueue();
 const NO_IMAGES: ImageOptions = { thumbnail: false, bodyImages: 0, provider: "claude", style: "flat" };
 const optionsOf = (job: { imageOptions?: Partial<ImageOptions> }): ImageOptions => ({ ...NO_IMAGES, ...job.imageOptions });
 
+/** 한 장씩 다시 만드는 중인 이미지 (작업 id → 이미지 키). 이것만 돌고 있으면 다른 이미지는 동시에 더 만들 수 있다 */
+const imageRuns = new Map<string, Set<string>>();
+
+/** 작업에서 무엇이든 진행 중인지 (초안 수정·블로그 등록·삭제 등을 막는 기준) */
 export function isRunning(id: string) {
-  return running.has(id);
+  return running.has(id) || !!imageRuns.get(id)?.size;
+}
+
+/** 이미지 한 장을 다시 만들거나 올리지 못하는 상태인지: 다른 단계가 돌고 있거나 바로 그 이미지를 만드는 중 */
+export function isImageBusy(id: string, target: string) {
+  return running.has(id) || !!imageRuns.get(id)?.has(target);
 }
 
 /** 리서치 → 글 작성 → 이미지 생성까지. 블로그 입력은 사용자가 초안을 검토한 뒤 직접 시작한다. */
@@ -119,17 +129,50 @@ async function doDraft(id: string) {
 }
 
 /**
- * 이미지만 다시 생성 (초안 수정 후 / 일부 실패 시 / 썸네일만 / 한 장만).
- * ai: 한 장만 만들 때 이번에만 쓸 AI·스타일 (글의 이미지 설정은 바꾸지 않는다)
+ * 이미지만 다시 생성 (초안 수정 후 / 일부 실패 시 / 썸네일 추가). 작업 전체를 잡으므로 다른 단계와 함께 돌지 않는다.
  */
-export function runImages(id: string, scope: ImageScope = "all", ai?: { provider: ImageProvider; style: ImageStyle }) {
-  if (running.has(id)) return Promise.resolve();
-  return withCancel(id, () => doImages(id, scope, ai));
+export function runImages(id: string, scope: ImageScope = "all") {
+  if (isRunning(id)) return Promise.resolve();
+  running.add(id);
+  return withCancel(id, async () => {
+    try {
+      await imagesStep(id, scope);
+    } finally {
+      running.delete(id);
+      await updateJob(id, (j) => {
+        j.status = "draft_ready";
+      });
+    }
+  });
 }
 
-async function doImages(id: string, scope: ImageScope, ai?: { provider: ImageProvider; style: ImageStyle }) {
-  if (running.has(id)) return;
-  running.add(id);
+/**
+ * 이미지 한 장만 다시 생성. 다른 이미지와 동시에 만들 수 있다 (크롬으로 만드는 것은 크롬 큐에서 하나씩).
+ * ai: 이번에만 쓸 AI·스타일 (글의 이미지 설정은 바꾸지 않는다)
+ * method: Gemini/ChatGPT를 API로(키가 있을 때) 만들지, 크롬에서 만들지
+ */
+export function runImage(id: string, target: "thumbnail" | `body-${number}`, ai: { provider: ImageProvider; style: ImageStyle }, method: ImageMethod = "api") {
+  if (isImageBusy(id, target)) return Promise.resolve();
+  const set = imageRuns.get(id) ?? new Set<string>();
+  set.add(target);
+  imageRuns.set(id, set);
+  return withCancel(id, async () => {
+    try {
+      await imagesStep(id, target, ai, method);
+    } finally {
+      set.delete(target);
+      if (!set.size && imageRuns.get(id) === set) imageRuns.delete(id);
+      // 다른 이미지가 아직 만들어지는 중이면 상태는 그대로 둔다.
+      await updateJob(id, (j) => {
+        if (isRunning(id)) return;
+        j.status = "draft_ready";
+        delete j.imageRunsOnly;
+      });
+    }
+  });
+}
+
+async function imagesStep(id: string, scope: ImageScope, ai?: { provider: ImageProvider; style: ImageStyle }, method: ImageMethod = "api") {
   try {
     const job = await getJob(id);
     if (!job?.post) throw new Error("작성된 초안이 없습니다.");
@@ -143,23 +186,17 @@ async function doImages(id: string, scope: ImageScope, ai?: { provider: ImagePro
       : scope === "thumbnail"
         ? { ...options, thumbnailProvider: ai.provider, thumbnailStyle: ai.style }
         : { ...options, provider: ai.provider, style: ai.style };
-    await makeImages(id, job.topic, runOptions, scope);
-    await updateJob(id, (j) => {
-      j.status = "draft_ready";
-    });
+    await makeImages(id, job.topic, runOptions, scope, method);
   } catch (e) {
     const cancelled = e instanceof CancelledError;
     await log(id, cancelled ? "이미지 생성을 중지했습니다." : `이미지 생성 실패: ${errorText(e)}`);
     await updateJob(id, (j) => {
-      j.status = "draft_ready";
       j.error = cancelled ? undefined : errorText(e);
     });
-  } finally {
-    running.delete(id);
   }
 }
 
-async function makeImages(id: string, topic: string, options: ImageOptions, scope: ImageScope = "all") {
+async function makeImages(id: string, topic: string, options: ImageOptions, scope: ImageScope = "all", method: ImageMethod = "api") {
   const job = await getJob(id);
   if (!job?.post) return;
   const count = countImages(job.post, options, scope);
@@ -170,23 +207,27 @@ async function makeImages(id: string, topic: string, options: ImageOptions, scop
     return;
   }
 
+  // 다른 이미지가 동시에 만들어지고 있을 수 있어 목록을 덮어쓰지 않고 이번 대상만 더하고 뺀다.
+  const targets = collectTargets(job.post!, options, scope);
+  const keys: string[] = targets.map(imageKey);
   await updateJob(id, (j) => {
     j.status = "generating_images";
-    const targets = collectTargets(job.post!, options, scope);
-    j.generatingImages = targets.map(imageKey);
-    j.regeneratingImages = targets.filter((t) => t.spec.file).map(imageKey);
+    j.generatingImages = [...new Set([...(j.generatingImages ?? []), ...keys])];
+    j.regeneratingImages = [...new Set([...(j.regeneratingImages ?? []), ...targets.filter((t) => t.spec.file).map(imageKey)])];
   });
   try {
-    await makeImagesInner(id, topic, options, scope, count);
+    await makeImagesInner(id, topic, options, scope, count, method);
   } finally {
     await updateJob(id, (j) => {
-      delete j.generatingImages;
-      delete j.regeneratingImages;
+      j.generatingImages = j.generatingImages?.filter((k) => !keys.includes(k));
+      j.regeneratingImages = j.regeneratingImages?.filter((k) => !keys.includes(k));
+      if (!j.generatingImages?.length) delete j.generatingImages;
+      if (!j.regeneratingImages?.length) delete j.regeneratingImages;
     });
   }
 }
 
-async function makeImagesInner(id: string, topic: string, options: ImageOptions, scope: ImageScope, count: number) {
+async function makeImagesInner(id: string, topic: string, options: ImageOptions, scope: ImageScope, count: number, method: ImageMethod) {
   const job = (await getJob(id))!;
   if (!job.post) return;
   const say = (m: string) => void log(id, m);
@@ -242,20 +283,24 @@ async function makeImagesInner(id: string, topic: string, options: ImageOptions,
     }
   }
 
-  // Claude(SVG)는 별도 헤드리스 크롬으로 PNG만 만들어 큐 없이 돌려도 된다.
-  // Gemini/ChatGPT는 Claude in Chrome으로 사용자의 크롬을 조작하므로 직렬화한다.
+  // Claude(SVG)와 이미지 API는 크롬을 쓰지 않아 큐 없이 (다른 이미지와 동시에) 돌려도 된다.
+  // 크롬(Claude in Chrome)으로 만드는 Gemini/ChatGPT는 사용자의 크롬을 조작하므로 직렬화한다.
   const post = (await getJob(id))?.post ?? job.post;
-  const usesWebAi = collectTargets(post, options, scope).some((t) => aiFor(options, t.kind).provider !== "claude");
-  if (usesWebAi) {
-    await enqueueBrowser(() => generateImages(id, topic, post, options, say, scope));
+  let usesChrome = false;
+  for (const t of collectTargets(post, options, scope)) {
+    const { provider } = aiFor(options, t.kind);
+    if (provider !== "claude" && (method === "chrome" || !(await getImageApiKey(provider)))) usesChrome = true;
+  }
+  if (usesChrome) {
+    await enqueueBrowser(() => generateImages(id, topic, post, options, say, scope, method));
   } else {
-    await generateImages(id, topic, post, options, say, scope);
+    await generateImages(id, topic, post, options, say, scope, method);
   }
   const after = await getJob(id);
   const failed = [after?.post?.thumbnail, ...(after?.post?.blocks ?? [])].filter(
     (s) => s && "error" in s && s.error,
   ).length;
-  if (failed) say(`이미지 ${failed}개 생성 실패 — 초안 화면에서 이유를 확인하고 다른 AI로 다시 만들 수 있습니다.`);
+  if (failed) say(`이미지 ${failed}개 생성 실패 — 초안 화면의 각 이미지에서 이유를 확인하고 "이미지 다시 생성"으로 한 장씩 다시 만들 수 있습니다.`);
 }
 
 export function runPost(id: string, opts: { platform: Platform; mode?: PublishMode; scheduledAt?: string }) {

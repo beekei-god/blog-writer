@@ -12,7 +12,7 @@ import { PostEditor } from "./PostEditor";
 import { CopyBar, Preview } from "./Preview";
 import { Progress } from "./Progress";
 import { Report } from "./Report";
-import { AiPicker, ImageFailures, type ImageToolsProps, imageSpecs } from "./images";
+import { AiPicker, type ImageToolsProps } from "./images";
 
 interface Props {
   job: Job;
@@ -127,7 +127,8 @@ export function JobDetail({ job, ready, onChange, onDeleted, onOpenSettings }: P
   const thumbAi = aiFor(job.imageOptions, "thumbnail");
   const bodyAi = aiFor(job.imageOptions, "body");
   const imageTools: ImageToolsProps = {
-    disabled: busy,
+    // 이미지를 한 장씩 다시 만드는 중이면 다른 이미지는 더 만들거나 올릴 수 있다 (만드는 중인 이미지는 그 자리에서 숨긴다).
+    disabled: busy && !job.imageRunsOnly,
     defaults: { thumbnail: thumbAi, body: bodyAi },
     onRegenerate: (target, ai) =>
       run(async () => {
@@ -145,7 +146,6 @@ export function JobDetail({ job, ready, onChange, onDeleted, onOpenSettings }: P
     void run(() => api.cancel(job.id));
   };
   const [missingThumb, setMissingThumb] = useState<{ provider: ImageProvider; style: ImageStyle }>(thumbAi);
-  const failedImages = draft ? imageSpecs(draft).filter((s) => !s.file && s.error) : [];
 
   const retry = () => {
     if (job.post && !confirm("자료 조사부터 다시 해서 새 초안을 만듭니다.\n지금 초안(직접 고친 내용 포함)은 새 초안으로 바뀝니다. 계속할까요?")) return;
@@ -294,15 +294,6 @@ export function JobDetail({ job, ready, onChange, onDeleted, onOpenSettings }: P
                 썸네일 만들기
               </button>
             </div>
-          )}
-
-          {failedImages.length > 0 && !busy && (
-            <ImageFailures
-              key={failedImages.map((s) => s.error).join("|")}
-              failed={failedImages}
-              current={job.imageOptions}
-              onRun={(o) => regenerate({ ...o, onlyFailed: true })}
-            />
           )}
 
           {mode === "preview" || busy ? (

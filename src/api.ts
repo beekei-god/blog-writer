@@ -1,9 +1,17 @@
-import type { ImageOptions, ImageProvider, ImageStyle, Job, Platform, Post, PublishMode, Recommendation, Settings, TokenTotals, UsageSummary } from "../shared/types";
+import type { ImageMethod, ImageOptions, ImageProvider, ImageStyle, Job, Platform, Post, PublishMode, Recommendation, Settings, TokenTotals, UsageSummary } from "../shared/types";
 
 export interface DatalabStatus {
   configured: boolean;
   clientIdHint: string | null;
 }
+
+export interface ImageApiKeyStatus {
+  configured: boolean;
+  hint: string | null;
+  /** .env의 키를 쓰는 중 (화면에서 지워도 남는다) */
+  fromEnv: boolean;
+}
+export type ImageApiStatus = Record<"gemini" | "chatgpt", ImageApiKeyStatus>;
 
 export interface WordPressStatus {
   configured: boolean;
@@ -57,6 +65,10 @@ export const api = {
   saveDatalab: (clientId: string, clientSecret: string) =>
     req<DatalabStatus>("/api/datalab", { method: "PUT", body: JSON.stringify({ clientId, clientSecret }) }),
   deleteDatalab: () => req<DatalabStatus>("/api/datalab", { method: "DELETE" }),
+  getImageApi: () => req<ImageApiStatus>("/api/image-api"),
+  saveImageApiKey: (ai: keyof ImageApiStatus, key: string) =>
+    req<ImageApiStatus>(`/api/image-api/${ai}`, { method: "PUT", body: JSON.stringify({ key }) }),
+  deleteImageApiKey: (ai: keyof ImageApiStatus) => req<ImageApiStatus>(`/api/image-api/${ai}`, { method: "DELETE" }),
   listRecommendations: () => req<Recommendation[]>("/api/recommendations"),
   startRecommendation: (field: string) =>
     req<Recommendation>("/api/recommendations", { method: "POST", body: JSON.stringify({ field }) }),
@@ -75,7 +87,7 @@ export const api = {
   }) =>
     req<void>(`/api/jobs/${id}/regenerate-images`, { method: "POST", body: JSON.stringify(opts) }),
   /** 이미지 한 장만 고른 AI·스타일로 다시 만든다. target: "thumbnail" 또는 "body-<블록 번호>" */
-  regenerateImage: (id: string, target: string, ai: { provider: ImageProvider; style: ImageStyle }) =>
+  regenerateImage: (id: string, target: string, ai: { provider: ImageProvider; style: ImageStyle; method?: ImageMethod }) =>
     req<void>(`/api/jobs/${id}/images/${target}/regenerate`, { method: "POST", body: JSON.stringify(ai) }),
   /** target: "thumbnail" 또는 "body-<블록 번호>" */
   uploadImage: (id: string, target: string, file: File) =>

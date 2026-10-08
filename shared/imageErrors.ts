@@ -12,6 +12,7 @@ export const IMAGE_ERROR_KINDS = [
   "browser_closed",
   "svg_invalid",
   "claude_error",
+  "api_error",
   "unknown",
 ] as const;
 export type ImageErrorKind = (typeof IMAGE_ERROR_KINDS)[number];
@@ -38,7 +39,7 @@ export const IMAGE_ERROR_INFO: Record<ImageErrorKind, ImageErrorInfo> = {
   },
   limit: {
     title: "생성 한도를 다 썼습니다",
-    advice: "계정의 이미지 생성 한도(또는 Claude 사용 한도)에 도달했습니다. 한도가 풀릴 때까지 기다리거나 다른 AI로 만드세요.",
+    advice: "계정의 이미지 생성 한도(또는 Claude 사용 한도, 이미지 API 잔액)에 도달했습니다. 한도가 풀린 뒤 다시 하거나, \"이미지 다시 생성\"에서 크롬이나 다른 AI로 만드세요.",
   },
   timeout: {
     title: "응답이 너무 오래 걸렸습니다",
@@ -71,6 +72,10 @@ export const IMAGE_ERROR_INFO: Record<ImageErrorKind, ImageErrorInfo> = {
   claude_error: {
     title: "Claude 호출에 실패했습니다",
     advice: "Claude가 작업을 끝내지 못했습니다. 사용량 화면에서 플랜 한도를 확인하고, 다시 하거나 다른 AI로 만드세요.",
+  },
+  api_error: {
+    title: "이미지 API 호출에 실패했습니다",
+    advice: "Gemini·OpenAI API가 이미지를 만들지 못했습니다. 설정 → 이미지 API에서 키를 확인하고 다시 하거나, \"이미지 다시 생성\"에서 크롬이나 다른 AI로 만드세요.",
   },
   unknown: {
     title: "알 수 없는 오류",

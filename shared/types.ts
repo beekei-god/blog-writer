@@ -18,6 +18,9 @@ export const MAX_BODY_IMAGES = 6;
 /** body-<블록 번호>: 본문 이미지 한 장만 */
 export type ImageScope = "all" | "failed" | "thumbnail" | `body-${number}`;
 
+/** Gemini/ChatGPT 이미지를 만드는 방법. api: API 키가 있으면 API로(없으면 크롬), chrome: 크롬(Claude in Chrome)에서 직접 */
+export type ImageMethod = "api" | "chrome";
+
 /** 본문 이미지 한 장을 가리키는 키 */
 export const bodyImageKey = (index: number): `body-${number}` => `body-${index}`;
 /** 이미지 하나를 가리키는 키: "thumbnail" 또는 "body-<블록 번호>" */
@@ -258,6 +261,8 @@ export interface Job {
   generatingImages?: string[];
   /** generatingImages 중 시작할 때 이미 파일이 있던 이미지 (다시 만드는 중). 처음 만드는 이미지와 구분한다 */
   regeneratingImages?: string[];
+  /** 이미지를 한 장씩 다시 만드는 것만 진행 중 (다른 이미지는 동시에 더 만들거나 올릴 수 있다) */
+  imageRunsOnly?: boolean;
   createdAt: string;
   updatedAt: string;
   researchNotes?: string;

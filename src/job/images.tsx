@@ -1,19 +1,16 @@
-import { useRef, useState } from "react";
-import { STYLES_BY_PROVIDER, fitStyle, type ImageProvider, type ImageSpec, type ImageStyle, type Job, type Post, type PostBlock } from "../../shared/types";
+import { useEffect, useRef, useState } from "react";
+import { STYLES_BY_PROVIDER, fitStyle, type ImageMethod, type ImageProvider, type ImageSpec, type ImageStyle } from "../../shared/types";
 import { classifyImageError, IMAGE_ERROR_INFO, type ImageErrorKind } from "../../shared/imageErrors";
-import { ExtensionStatus } from "../ExtensionStatus";
+import { api, type ImageApiStatus } from "../api";
 import { PROVIDER_LABEL, STYLE_LABEL } from "../labels";
 
-// ───────────────────────── 이미지 실패 · 다시 만들기 ─────────────────────────
-
-export const imageSpecs = (post: Post): ImageSpec[] => [
-  ...(post.thumbnail ? [post.thumbnail] : []),
-  ...post.blocks.filter((b): b is Extract<PostBlock, { type: "image" }> => b.type === "image"),
-];
+// ───────────────────────── 이미지 실패 · 한 장씩 다시 만들기 ─────────────────────────
 
 // "unknown"으로 저장된 예전 기록은 분류 규칙이 늘어났을 수 있으니 메시지로 다시 분류한다.
 const kindOf = (spec: ImageSpec): ImageErrorKind =>
   spec.errorKind && spec.errorKind !== "unknown" ? spec.errorKind : classifyImageError(spec.error);
+/** 화면에 보여 줄 실패 이유: 실제 오류 메시지의 첫 줄 (없으면 원인 종류의 제목) */
+const reasonOf = (spec: ImageSpec): string => spec.error?.split("\n")[0].trim() || IMAGE_ERROR_INFO[kindOf(spec)].title;
 const PROVIDERS = Object.keys(PROVIDER_LABEL) as ImageProvider[];
 
 
@@ -26,15 +23,24 @@ export function FailedPlaceholder({ spec, generating }: { spec: ImageSpec; gener
     );
   }
   if (!spec.error) return <div className="image-placeholder">이미지가 아직 없습니다</div>;
-  const info = IMAGE_ERROR_INFO[kindOf(spec)];
+  // 실패 이유와 해결 방법을 이미지 자리에 바로 보여 준다. 다시 만들기는 바로 아래 "이미지 다시 생성"에서 한 장씩 한다.
   return (
     <div className="image-placeholder failed">
-      <b>⚠ {info.title}</b>
+      <b>⚠ {reasonOf(spec)}</b>
       {spec.errorProvider && <span> ({PROVIDER_LABEL[spec.errorProvider]})</span>}
       <br />
-      <span className="small-note">위의 "이미지를 만들지 못했습니다" 안내에서 다른 AI로 다시 만들 수 있습니다.</span>
+      <span className="small-note">{IMAGE_ERROR_INFO[kindOf(spec)].advice}</span>
     </div>
   );
+}
+
+/** 이미지 API 키 연결 상태 (Gemini/ChatGPT를 API로 만들 수 있는지) */
+function useImageApi() {
+  const [status, setStatus] = useState<ImageApiStatus | null>(null);
+  useEffect(() => {
+    api.getImageApi().then(setStatus).catch(() => {});
+  }, []);
+  return status;
 }
 
 /** AI와 스타일 고르기 */
@@ -42,12 +48,10 @@ export function AiPicker({
   provider,
   style,
   onChange,
-  failedWith,
 }: {
   provider: ImageProvider;
   style: ImageStyle;
   onChange: (provider: ImageProvider, style: ImageStyle) => void;
-  failedWith?: ImageProvider[];
 }) {
   return (
     <div className="ai-picker">
@@ -55,7 +59,6 @@ export function AiPicker({
         {PROVIDERS.map((p) => (
           <button key={p} type="button" className={provider === p ? "on" : ""} onClick={() => onChange(p, fitStyle(p, style))}>
             {PROVIDER_LABEL[p]}
-            {failedWith?.includes(p) && <span className="failed-mark"> · 실패</span>}
           </button>
         ))}
       </div>
@@ -77,79 +80,48 @@ export function AiPicker({
   );
 }
 
-/** 실패한 이미지의 이유와, 다른 AI로 실패한 것만 다시 만들기 */
-export function ImageFailures({
-  failed,
-  current,
-  onRun,
+/**
+ * 고른 AI로 만드는 버튼. Gemini/ChatGPT는 "API로"와 "크롬에서" 두 버튼을 나란히 보여 주어 누르는 버튼으로 방법을 정한다.
+ * 설정에서 API 키를 연결하지 않았으면 API 버튼은 누를 수 없게 하고 툴팁으로 이유를 알려 준다.
+ */
+function MakeButtons({
+  provider,
+  apiStatus,
+  verb,
+  disabled,
+  onMake,
 }: {
-  failed: ImageSpec[];
-  current: Job["imageOptions"];
-  onRun: (o: { provider: ImageProvider; style: ImageStyle }) => void;
+  provider: ImageProvider;
+  apiStatus: ImageApiStatus | null;
+  /** "다시 만들기", "만들기" 등 */
+  verb: string;
+  disabled?: boolean;
+  onMake: (method: ImageMethod) => void;
 }) {
-  const kinds = [...new Set(failed.map(kindOf))];
-  const failedWith = [...new Set(failed.map((s) => s.errorProvider ?? current.provider))];
-
-  // 기본 선택은 실패하지 않은 다른 AI. 확장 프로그램·크롬 문제면 둘 다 크롬이 필요한 웹 AI 대신 Claude,
-  // 그 밖에는 화풍을 유지할 수 있는 다른 웹 AI(Gemini ↔ ChatGPT)를 먼저 권한다.
-  const needsClaude = kinds.some((k) => k === "extension" || k === "browser_busy" || k === "browser_closed");
-  const order: ImageProvider[] = needsClaude ? ["claude", "gemini", "chatgpt"] : ["gemini", "chatgpt", "claude"];
-  const suggested = order.find((p) => !failedWith.includes(p)) ?? current.provider;
-  // 거절이면 지브리풍 같은 화풍 대신 플랫을 먼저 권한다.
-  const suggestedStyle = kinds.includes("refused") && current.style !== "flat" ? "flat" : current.style;
-  const [provider, setProvider] = useState<ImageProvider>(suggested);
-  const [style, setStyle] = useState<ImageStyle>(fitStyle(suggested, suggestedStyle));
-
+  const name = PROVIDER_LABEL[provider];
+  if (provider === "claude") {
+    return (
+      <button type="button" className="primary" disabled={disabled} onClick={() => onMake("api")}>
+        {name}로 {verb}
+      </button>
+    );
+  }
+  const hasApi = !!apiStatus?.[provider].configured;
+  const why = !apiStatus
+    ? "API 연결 상태를 확인하는 중입니다."
+    : `${name} API 키가 연결되어 있지 않습니다. 설정 → 이미지 API 설정에서 키를 연결하면 쓸 수 있습니다.`;
   return (
-    <section className="image-failures">
-      <h3>⚠ 이미지 {failed.length}개를 만들지 못했습니다</h3>
-      <ul className="failure-reasons">
-        {kinds.map((k) => {
-          const specs = failed.filter((s) => kindOf(s) === k);
-          const by = [...new Set(specs.map((s) => s.errorProvider).filter(Boolean))] as ImageProvider[];
-          return (
-            <li key={k}>
-              <b>
-                {IMAGE_ERROR_INFO[k].title}
-                {by.length > 0 && ` (${by.map((p) => PROVIDER_LABEL[p]).join(", ")})`}
-              </b>
-              {specs.length > 1 && <span className="hint small"> · {specs.length}개</span>}
-              <p>{IMAGE_ERROR_INFO[k].advice}</p>
-              <details>
-                <summary>자세한 오류</summary>
-                <ul className="raw-errors">
-                  {[...new Set(specs.map((s) => s.error))].map((e) => (
-                    <li key={e}>
-                      <code>{e}</code>
-                    </li>
-                  ))}
-                </ul>
-              </details>
-            </li>
-          );
-        })}
-      </ul>
-      {kinds.includes("extension") && <ExtensionStatus compact />}
-      <div className="retry-row">
-        <span className="field-label">다시 만들 AI</span>
-        <AiPicker
-          provider={provider}
-          style={style}
-          failedWith={failedWith}
-          onChange={(p, s) => {
-            setProvider(p);
-            setStyle(s);
-          }}
-        />
-        <button className="primary" onClick={() => onRun({ provider, style })}>
-          실패한 {failed.length}개를 {PROVIDER_LABEL[provider]}로 다시 만들기
+    <>
+      {/* 누를 수 없는 버튼에는 툴팁이 뜨지 않는 브라우저가 있어 감싼 요소에 툴팁을 단다 */}
+      <span className="tip-wrap" title={hasApi ? undefined : why}>
+        <button type="button" className={hasApi ? "primary" : ""} disabled={disabled || !hasApi} onClick={() => onMake("api")}>
+          {name} API로 {verb}
         </button>
-      </div>
-      <p className="hint small">
-        만들어진 이미지는 그대로 두고 실패한 것만 다시 만듭니다.
-        {provider !== "claude" && " Gemini·ChatGPT는 평소 쓰는 크롬에서 Claude in Chrome으로 만들며, 그 크롬에 로그인되어 있어야 합니다."}
-      </p>
-    </section>
+      </span>
+      <button type="button" className={hasApi ? "" : "primary"} disabled={disabled} onClick={() => onMake("chrome")}>
+        크롬에서 {name}로 {verb}
+      </button>
+    </>
   );
 }
 
@@ -158,38 +130,38 @@ export type ImageToolsProps = {
   disabled: boolean;
   /** AI 고르기 창의 처음 값 (글의 썸네일·본문 이미지 설정) */
   defaults: { thumbnail: ImageAi; body: ImageAi };
-  onRegenerate: (target: string, ai: ImageAi) => void;
+  onRegenerate: (target: string, ai: ImageAi & { method: ImageMethod }) => void;
   onUpload: (target: string, file: File) => void;
 };
 
-/** 이미지 한 장 다시 만들기(AI·스타일 선택) · 직접 올리기 */
-export function ImageTools({ target, tools, hasFile }: { target: string; tools: ImageToolsProps; hasFile: boolean }) {
+/** 이미지 한 장 다시 만들기(AI·스타일 선택) · 직접 올리기. again: 이미 만들었거나 실패한 이미지면 "다시 만들기" */
+export function ImageTools({ target, tools, again }: { target: string; tools: ImageToolsProps; again: boolean }) {
   const input = useRef<HTMLInputElement>(null);
   const initial = target === "thumbnail" ? tools.defaults.thumbnail : tools.defaults.body;
   const [open, setOpen] = useState(false);
   const [ai, setAi] = useState<ImageAi>(initial);
-  const runText = hasFile ? "다시 만들기" : "만들기";
+  const apiStatus = useImageApi();
+  const runText = again ? "다시 만들기" : "만들기";
   if (open) {
     return (
       <div className="image-actions open">
         <AiPicker provider={ai.provider} style={ai.style} onChange={(provider, style) => setAi({ provider, style })} />
-        <button
-          type="button"
-          className="primary"
-          disabled={tools.disabled}
-          onClick={() => {
-            setOpen(false);
-            tools.onRegenerate(target, ai);
-          }}
-        >
-          {PROVIDER_LABEL[ai.provider]}로 {runText}
-        </button>
-        <button type="button" className="ghost" onClick={() => setOpen(false)}>
-          취소
-        </button>
-        <span className="hint small">
-          이 이미지에만 적용됩니다.{ai.provider !== "claude" && " Gemini·ChatGPT는 평소 쓰는 크롬에 로그인되어 있어야 합니다."}
-        </span>
+        <div className="retry-actions">
+          <MakeButtons
+            provider={ai.provider}
+            apiStatus={apiStatus}
+            verb={runText}
+            disabled={tools.disabled}
+            onMake={(method) => {
+              setOpen(false);
+              tools.onRegenerate(target, { ...ai, method });
+            }}
+          />
+          <button type="button" className="ghost" onClick={() => setOpen(false)}>
+            취소
+          </button>
+        </div>
+        <span className="hint small">이 이미지에만 적용됩니다.</span>
       </div>
     );
   }
@@ -203,7 +175,7 @@ export function ImageTools({ target, tools, hasFile }: { target: string; tools: 
           setOpen(true);
         }}
       >
-        {runText}…
+        {again ? "이미지 다시 생성" : "이미지 생성"}
       </button>
       <button type="button" disabled={tools.disabled} onClick={() => input.current?.click()}>
         직접 올리기
@@ -253,7 +225,7 @@ export function PreviewImage({
           <span className="spinner" /> 이 이미지를 다시 만드는 중입니다
         </p>
       )}
-      {!tools.disabled && <ImageTools target={target} tools={tools} hasFile={!!spec.file} />}
+      {!tools.disabled && !generating && !regenerating && <ImageTools target={target} tools={tools} again={!!spec.file || !!spec.error} />}
     </figure>
   );
 }

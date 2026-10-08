@@ -11,22 +11,25 @@ export class CancelledError extends Error {
 }
 
 const store = new AsyncLocalStorage<AbortSignal>();
-const controllers = new Map<string, AbortController>();
+// 한 작업에서 이미지 여러 장을 동시에 다시 만들 수 있어 작업마다 여러 개를 둔다.
+const controllers = new Map<string, Set<AbortController>>();
 
 export function withCancel<T>(id: string, fn: () => Promise<T>): Promise<T> {
   const c = new AbortController();
-  controllers.set(id, c);
+  const set = controllers.get(id) ?? new Set();
+  set.add(c);
+  controllers.set(id, set);
   return store.run(c.signal, fn).finally(() => {
-    if (controllers.get(id) === c) controllers.delete(id);
+    set.delete(c);
+    if (!set.size && controllers.get(id) === set) controllers.delete(id);
   });
 }
 
-/** 진행 중인 작업이 있으면 중지 신호를 보내고 true */
+/** 진행 중인 작업이 있으면 (동시에 도는 것까지 모두) 중지 신호를 보내고 true */
 export function cancelJob(id: string): boolean {
-  const c = controllers.get(id);
-  if (!c || c.signal.aborted) return false;
-  c.abort();
-  return true;
+  const live = [...(controllers.get(id) ?? [])].filter((c) => !c.signal.aborted);
+  for (const c of live) c.abort();
+  return live.length > 0;
 }
 
 export const currentSignal = () => store.getStore();

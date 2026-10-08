@@ -5,12 +5,13 @@ import { MODEL_CHOICES, STAGES, type ModelChoice, type Stage } from "../../share
 import { testDatalab } from "../datalab";
 import { getRules, resetRules, saveRules } from "../rules";
 import { ImageOptionsSchema } from "../schema";
-import { getNaverKeys, saveNaverKeys, saveWordPressAuth } from "../secrets";
+import { testImageApiKey } from "../images/api";
+import { getImageApiKey, getNaverKeys, saveImageApiKey, saveNaverKeys, saveWordPressAuth } from "../secrets";
 import { getSettings, saveSettings } from "../store";
 import { listCategories, testWordPress, WordPressError } from "../wordpress";
 import { wordpressStatus, wrap } from "./util";
 
-/** 설정, 글쓰기 규칙, 데이터랩 키, 워드프레스 연결 */
+/** 설정, 글쓰기 규칙, 데이터랩 키, 이미지 API 키, 워드프레스 연결 */
 export const router = Router();
 
 const SettingsSchema = z
@@ -84,6 +85,42 @@ router.delete(
   wrap(async (_req, res) => {
     await saveNaverKeys(null);
     res.json({ configured: !!(await getNaverKeys()), clientIdHint: null });
+  }),
+);
+
+// ───── 이미지 API 키 (Gemini, OpenAI. 값은 돌려주지 않고 설정 여부만 알려 준다) ─────
+const IMAGE_APIS = ["gemini", "chatgpt"] as const;
+const keyStatus = async (ai: (typeof IMAGE_APIS)[number]) => {
+  const k = await getImageApiKey(ai);
+  return { configured: !!k, hint: k ? `${k.key.slice(0, 6)}…` : null, fromEnv: !!k?.fromEnv };
+};
+const imageApiStatus = async () => ({ gemini: await keyStatus("gemini"), chatgpt: await keyStatus("chatgpt") });
+const ImageApiParam = z.enum(IMAGE_APIS);
+
+router.get("/api/image-api", wrap(async (_req, res) => res.json(await imageApiStatus())));
+router.put(
+  "/api/image-api/:ai",
+  wrap(async (req, res) => {
+    const ai = ImageApiParam.safeParse(req.params.ai);
+    if (!ai.success) return void res.status(404).json({ error: "알 수 없는 이미지 API입니다." });
+    const parsed = z.object({ key: z.string().trim().min(1).max(500) }).safeParse(req.body);
+    if (!parsed.success) return void res.status(400).json({ error: "API 키를 입력하세요." });
+    try {
+      await testImageApiKey(ai.data, parsed.data.key);
+    } catch (e) {
+      return void res.status(400).json({ error: errorText(e) });
+    }
+    await saveImageApiKey(ai.data, parsed.data.key);
+    res.json(await imageApiStatus());
+  }),
+);
+router.delete(
+  "/api/image-api/:ai",
+  wrap(async (req, res) => {
+    const ai = ImageApiParam.safeParse(req.params.ai);
+    if (!ai.success) return void res.status(404).json({ error: "알 수 없는 이미지 API입니다." });
+    await saveImageApiKey(ai.data, null);
+    res.json(await imageApiStatus());
   }),
 );
 

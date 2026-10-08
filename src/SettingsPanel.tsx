@@ -3,6 +3,7 @@ import { MODEL_CHOICES, RECOMMENDED_MODELS, STAGES, blogIdOf, type ModelChoice, 
 import { api, type DatalabStatus, type WordPressStatus } from "./api";
 import { BlockedSites } from "./BlockedSites";
 import { ExtensionStatus } from "./ExtensionStatus";
+import { ImageApiSettings } from "./ImageApiSettings";
 import { errorText, MODEL_CHOICE_LABEL, MODEL_REASON, prettyModel, STAGE_HINT, STAGE_LABEL } from "./labels";
 import { PLATFORM_LABEL } from "../shared/labels";
 
@@ -287,6 +288,8 @@ export function SettingsPanel({ onSaved, defaultModel }: { onSaved: (s: Settings
           {keyMsg && <span className={keyMsg.ok ? "ok-text" : "error"}>{keyMsg.text}</span>}
         </div>
       </section>
+
+      <ImageApiSettings />
 
       <section className="card">
         <div className="card-head">

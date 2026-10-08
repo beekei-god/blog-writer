@@ -6,7 +6,7 @@ import type { ImageStyle } from "../../shared/types";
 import { assertExtensionInstalled, BROWSER_RULES, ChromeExtensionError } from "../browser/claudeChrome";
 import { runClaude } from "../claude";
 import { ImageGenError } from "./errors";
-import { styledPrompt } from "./styles";
+import { imageRequest } from "./styles";
 
 /**
  * Gemini / ChatGPT 웹 화면에서 Claude in Chrome으로 이미지를 만든다 (사용자가 평소 쓰는 크롬과 로그인 그대로).
@@ -191,23 +191,7 @@ export async function generateWithWebAi(
     throw new ImageGenError("extension", (e as Error).message);
   }
   const site = SITE[ai];
-  const headline = opts.headline?.trim();
-  const request = headline
-    ? opts.kind === "thumbnail"
-      ? `블로그 썸네일 이미지를 생성해줘. 가로로 긴 16:9 비율로.
-이미지 가운데에 아래 한국어 문구를 크고 굵고 또렷하게 넣어 줘. 글자는 맞춤법 그대로, 한 글자도 바꾸지 말고, 배경과 대비가 강하게 (흰 글자+어두운 테두리 또는 색 띠). 문구 말고 다른 글자는 넣지 마.
-목록에서 정사각형으로 잘려도 보이도록 문구와 핵심 대상은 가운데에 모아 줘.
-문구: "${headline}"
-
-배경 장면:
-${styledPrompt(prompt, style)}`
-      : `블로그 본문에 들어갈 이미지를 생성해줘. 가로로 긴 16:9 비율로.
-이미지 안에 아래 한국어 문구를 짧은 제목이나 라벨처럼 또렷하게 넣어 줘. 모바일에서도 읽히는 큰 글자로, 글자는 맞춤법 그대로 한 글자도 바꾸지 말고, 배경과 대비가 분명하게. 문구 말고 다른 글자는 넣지 마.
-문구: "${headline}"
-
-장면:
-${styledPrompt(prompt, style)}`
-    : `이미지 생성해줘. 이미지 안에 글자는 넣지 말고, 가로로 긴 16:9 비율로.\n\n${styledPrompt(prompt, style)}`;
+  const request = imageRequest(prompt, style, opts.headline, opts.kind);
   const system = `당신은 사용자의 크롬에서 ${site.name}로 이미지 한 장을 만드는 도우미입니다. Claude in Chrome 브라우저 도구만 씁니다.
 
 ${BROWSER_RULES}

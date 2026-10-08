@@ -3,7 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { z } from "zod";
 import { bodyImageKey, bodyIndexOf, STYLES_BY_PROVIDER } from "../../shared/types";
-import { isRunning, runImages } from "../pipeline";
+import { isImageBusy, isRunning, runImage, runImages } from "../pipeline";
 import { ImageOptionsSchema } from "../schema";
 import { getJob, jobImageDir, log, removeImageFile, updateJob } from "../store";
 import { markBusy, wrap } from "./util";
@@ -68,17 +68,22 @@ router.post(
 
 // 이미지 한 장만 다시 만들기: target은 "thumbnail" 또는 "body-<블록 번호>".
 // 고른 AI·스타일은 이번에만 쓰고 글의 이미지 설정은 바꾸지 않는다 (다른 이미지에 영향 없음).
+// 다른 이미지를 한 장씩 다시 만드는 중이어도 받는다 (동시에 만든다). 다른 단계가 돌거나 그 이미지를 만드는 중이면 409.
 router.post(
   "/api/jobs/:id/images/:target/regenerate",
   wrap(async (req, res) => {
     const job = await getJob(String(req.params.id));
     if (!job?.post) return void res.status(400).json({ error: "초안이 없습니다." });
-    if (isRunning(job.id)) return void res.status(409).json({ error: "이미 진행 중입니다." });
+    if (isImageBusy(job.id, String(req.params.target))) return void res.status(409).json({ error: "이미 진행 중입니다." });
     const body = z
-      .object({ provider: z.enum(["claude", "gemini", "chatgpt"]), style: z.enum(["flat", "ghibli", "realistic", "anime"]) })
+      .object({
+        provider: z.enum(["claude", "gemini", "chatgpt"]),
+        style: z.enum(["flat", "ghibli", "realistic", "anime"]),
+        method: z.enum(["api", "chrome"]).optional(),
+      })
       .safeParse(req.body ?? {});
     if (!body.success) return void res.status(400).json({ error: "AI와 스타일을 골라 주세요." });
-    const { provider, style } = body.data;
+    const { provider, style, method } = body.data;
     if (!STYLES_BY_PROVIDER[provider].includes(style)) {
       return void res.status(400).json({ error: "Claude(SVG)는 플랫 일러스트만 그릴 수 있습니다. 다른 스타일은 Gemini 또는 ChatGPT를 고르세요." });
     }
@@ -93,7 +98,10 @@ router.post(
       });
     }
     await markBusy(job.id, "generating_images");
-    void runImages(job.id, index === null ? "thumbnail" : bodyImageKey(index), { provider, style });
+    await updateJob(job.id, (j) => {
+      j.imageRunsOnly = true;
+    });
+    void runImage(job.id, index === null ? "thumbnail" : bodyImageKey(index), { provider, style }, method);
     res.status(202).json({ ok: true });
   }),
 );
@@ -106,7 +114,8 @@ router.post(
   wrap(async (req, res) => {
     const job = await getJob(String(req.params.id));
     if (!job?.post) return void res.status(400).json({ error: "초안이 없습니다." });
-    if (isRunning(job.id)) return void res.status(409).json({ error: "진행 중인 작업이 끝난 뒤에 올려 주세요." });
+    // 다른 이미지를 한 장씩 만드는 중이면 올릴 수 있다. 다른 단계가 돌거나 바로 그 이미지를 만드는 중이면 막는다.
+    if (isImageBusy(job.id, String(req.params.target))) return void res.status(409).json({ error: "진행 중인 작업이 끝난 뒤에 올려 주세요." });
     const ext = UPLOAD_EXT[String(req.headers["content-type"] ?? "").split(";")[0]];
     if (!ext || !Buffer.isBuffer(req.body) || req.body.length === 0) {
       return void res.status(400).json({ error: "PNG, JPG, WEBP, GIF 이미지만 올릴 수 있습니다." });

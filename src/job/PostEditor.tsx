@@ -78,7 +78,7 @@ function ImageEditor({
       ) : (
         <FailedPlaceholder spec={spec} />
       )}
-      {!tools.disabled && <ImageTools target={target} tools={tools} hasFile={!!spec.file} />}
+      {!tools.disabled && <ImageTools target={target} tools={tools} again={!!spec.file || !!spec.error} />}
       {spec.basis && <p className="basis">이 이미지가 그리는 본문: “{spec.basis}”</p>}
       <label className="mini-label">
         {thumbnail

@@ -140,6 +140,7 @@ export async function recoverStuckJobs() {
         j.error = "서버가 재시작되어 작업이 중단되었습니다.";
         delete j.generatingImages;
         delete j.regeneratingImages;
+        delete j.imageRunsOnly;
       });
     }
   }
