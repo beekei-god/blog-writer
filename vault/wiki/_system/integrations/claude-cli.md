@@ -6,15 +6,15 @@ confidence: high
 source:
   - blog-writer:server/claude.ts:1-198
   - blog-writer:server/research.ts:5-88
-  - blog-writer:server/writer.ts:6-215
+  - blog-writer:server/writer.ts:6-218
   - blog-writer:server/images/plan.ts:67-113
   - blog-writer:server/images/svg.ts:8-63
-  - blog-writer:server/images/webAi.ts:194-238
-  - blog-writer:server/browser/blogPost.ts:180-212
+  - blog-writer:server/images/webAi.ts:192-236
+  - blog-writer:server/browser/blogPost.ts:179-214
   - blog-writer:server/recommend.ts:69-196
   - blog-writer:server/routes/browser.ts:33-47
   - blog-writer:server/routes/usage.ts:19-27
-updated: 2026-10-07
+updated: 2026-10-09
 ---
 # Claude Code CLI 연동
 
@@ -51,7 +51,7 @@ updated: 2026-10-07
 | images (기획) | `server/images/plan.ts:86-106` | 없음 | low / 4분 | 이미지가 놓인 섹션의 구체 내용이 보이게 prompt를 쓰고, 글자는 headline에만, 본문에 있는 사실로만, 썸네일 8~16자·본문 4~20자, key마다 하나 | `{images[{key,headline,basis,prompt}]}` | [[image/business-rules/BR-IMG-004 본문 기반 이미지 기획]] |
 | images (SVG) | `server/images/svg.ts:8-63` | 없음 | low / 5분 | 단일 SVG, viewBox 지정, flat, 스크립트·외부 참조 금지, 문구는 한 글자도 바꾸지 말고 크게 | `{svg}` | [[image/business-rules/BR-IMG-011 SVG 안전 검증과 크기]] |
 | browser (이미지) | `server/images/webAi.ts:209-251` | Claude in Chrome | low / 10분 | 새 탭에서 Gemini/ChatGPT 열기, 입력 스크립트 그대로 실행, 완료까지 JS로 대기, 다운로드 스크립트 실행, 탭 닫기 | `{status, imageUrl, downloadClicked, replyText, message}` | [[_system/integrations/gemini-chatgpt-web]] |
-| browser (블로그) | `server/browser/blogPost.ts:149-201` | Claude in Chrome + `--add-dir` 이미지 폴더 | medium / 45분 | 임시저장까지만·발행 금지, 조각 순서대로 paste/file_upload, 대체 텍스트, 플랫폼 안내, 탭은 남겨 둠 | `{status, message, imagesInserted, problems}` | [[publishing/business-rules/BR-PUB-001 발행하지 않고 임시저장까지만]] |
+| browser (블로그) | `server/browser/blogPost.ts:143-190` | Claude in Chrome + `--add-dir` 이미지 폴더 | medium / 45분 | 임시저장까지(임시저장만이면 발행 금지, 예약·자동이면 `publishPrompt` 발행 절차만 예외), 조각 순서대로 paste/file_upload, 대체 텍스트, 플랫폼 안내, 탭은 남겨 둠 | `{status(saved/published/scheduled/login_required/failed), message, imagesInserted, problems}` | [[publishing/business-rules/BR-PUB-001 발행하지 않고 임시저장까지만]] |
 | recommend | `server/recommend.ts:70-187` | WebSearch, WebFetch | high / 20분 | 최근 2주 뉴스·최근 통계·공고, 일정 임박·제도 변화 우선, 근거 필수, WebFetch 최대 3번, 10~12개, 이미 쓴 글과 같은 의도 제외 | `{anchorKeyword, candidates[]}` | [[topic/business-rules/BR-TOP-001 추천 후보 조건]] |
 | check (연결 확인) | `server/routes/browser.ts:33-47` | Claude in Chrome | low / 90초, haiku | `tabs_context_mcp`를 createIfEmpty false로 한 번만 호출, 이동·클릭 금지 | `{connected, detail}` | [[publishing/flows/Claude in Chrome 연결 확인 플로우]] |
 | check (한도 확인) | `server/routes/usage.ts:19-27` | 없음 | low / 60초, haiku | "ok=true" 응답 | `{ok}` | [[usage/flows/사용량 확인 플로우]] |

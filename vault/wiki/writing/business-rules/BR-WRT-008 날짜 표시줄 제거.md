@@ -8,7 +8,7 @@ confidence: high
 consistency: consistent
 source:
   - blog-writer:rules/default-writing-rules.md:51
-  - blog-writer:server/writer.ts:179-183
+  - blog-writer:server/writer.ts:182-186
   - blog-writer:server/writer.ts:166
   - blog-writer:tests/writer.test.ts:6-16
 entities: [Post]
@@ -29,7 +29,7 @@ updated: 2026-10-07
 | 레이어 | 구현 | 값/내용 | 근거 |
 |---|---|---|---|
 | 규칙 문서 | 금지 | | `blog-writer:rules/default-writing-rules.md:51` |
-| 서버(작성 직후) | `stripUpdateLines` | 40자 이하 문단만 | `blog-writer:server/writer.ts:179-183` |
+| 서버(작성 직후) | `stripUpdateLines` | 40자 이하 문단만 | `blog-writer:server/writer.ts:182-186` |
 | 화면 | 없음 | | |
 | 테스트 | 짧은 날짜 문단만 삭제, 긴 문단·소제목은 유지 | | `blog-writer:tests/writer.test.ts:6-16` |
 

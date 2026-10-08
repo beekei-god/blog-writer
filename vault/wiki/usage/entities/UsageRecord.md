@@ -6,11 +6,11 @@ aliases: [사용 기록, 호출 기록, 토큰]
 status: active
 confidence: high
 source:
-  - blog-writer:server/usage.ts:15-27
+  - blog-writer:server/usage.ts:16-28
   - blog-writer:server/claude.ts:166-181
-  - blog-writer:shared/types.ts:58-66
-  - blog-writer:shared/types.ts:93-119
-updated: 2026-10-07
+  - blog-writer:shared/types.ts:69-77
+  - blog-writer:shared/types.ts:104-130
+updated: 2026-10-09
 ---
 # UsageRecord (Claude 호출 기록)
 
@@ -34,7 +34,7 @@ Claude CLI 호출 한 번에서 모델별로 쓴 토큰과 API 정가 환산 금
 추가만 한다. 서버 시작 시 90일 지난 줄 삭제 → [[usage/business-rules/BR-USG-003 사용 기록 보관 기간]].
 
 ## 저장 위치
-`data/usage.jsonl` (줄 덧붙이기. 90일 정리 때만 파일 전체를 임시 파일에 써서 바꿔 넣는다: `blog-writer:server/usage.ts:37-43`, `:76-83`)
+`data/usage.jsonl` (줄 덧붙이기. 90일 정리 때만 파일 전체를 임시 파일에 써서 바꿔 넣는다: `blog-writer:server/usage.ts:38-44`, `:72-79`)
 
 ## 적용되는 규칙
 [[usage/business-rules/BR-USG-004 사용량 집계 기준]], [[usage/business-rules/BR-USG-006 실패한 호출도 기록]]

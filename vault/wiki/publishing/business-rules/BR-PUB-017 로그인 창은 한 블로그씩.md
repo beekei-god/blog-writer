@@ -10,10 +10,10 @@ source:
   - blog-writer:server/browser/loginWindow.ts:11-52
   - blog-writer:server/routes/browser.ts:79-121
   - blog-writer:src/LoginWindow.tsx:10-76
-  - blog-writer:src/BlockedSites.tsx:58-61
-  - blog-writer:tests/api.test.ts:133-138
+  - blog-writer:src/BlockedSites.tsx:59-60
+  - blog-writer:tests/api.test.ts:147-153
 entities: [블로그 설정]
-updated: 2026-10-07
+updated: 2026-10-09
 ---
 # BR-PUB-017 로그인 창은 한 블로그씩
 
@@ -39,8 +39,8 @@ updated: 2026-10-07
 | 서버 | `procFor`, `loginWindowFor`, `openLoginWindow(urls, forBlog)` | `blog-writer:server/browser/loginWindow.ts:11-52` |
 | 서버(API) | 검사 순서: 자동 조작 → 블로그 값 → 열린 창 → 블로그 ID → 열기 | `blog-writer:server/routes/browser.ts:90-114` |
 | 화면 | `LoginWindow` (블로그별, 3초마다 상태 확인) | `blog-writer:src/LoginWindow.tsx:10-76` |
-| 화면(설정) | 네이버·티스토리 로그인 창 버튼 | `blog-writer:src/BlockedSites.tsx:58-61` |
-| 테스트 | 워드프레스 거절, 블로그 ID 없음 | `blog-writer:tests/api.test.ts:133-138` |
+| 화면(설정) | 네이버·티스토리 로그인 창 버튼 | `blog-writer:src/BlockedSites.tsx:59-60` |
+| 테스트 | 워드프레스 거절, 블로그 ID 없음 | `blog-writer:tests/api.test.ts:147-153` |
 
 ## 예외 / 경계값
 - 서버가 다시 시작되면 열린 창의 기록을 잃는다(창은 남아 있어도 `open: false`).
@@ -53,3 +53,4 @@ updated: 2026-10-07
 | 날짜 | 변경 | 근거 |
 |---|---|---|
 | 2026-10-07 | 최초 기록. 예전에는 설정의 기본 블로그로만 열었고, 어느 블로그 창인지 구분하지 않았다 | `blog-writer:server/routes/browser.ts:96-103` |
+| 2026-10-09 | 근거 줄 번호 갱신 (동작 변화 없음) | 커밋 65bfa3e |

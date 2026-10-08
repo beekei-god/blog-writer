@@ -4,13 +4,13 @@ project: blog-writer
 system: Gemini · OpenAI 이미지 API
 confidence: high
 source:
-  - blog-writer:server/images/api.ts:1-126
-  - blog-writer:server/images/index.ts:120-132
+  - blog-writer:server/images/api.ts:1-131
+  - blog-writer:server/images/index.ts:111-123
   - blog-writer:server/images/styles.ts:21-40
-  - blog-writer:server/secrets.ts:77-93
+  - blog-writer:server/secrets.ts:70-86
   - blog-writer:server/routes/settings.ts:91-125
   - blog-writer:tests/imageApi.test.ts
-updated: 2026-10-08
+updated: 2026-10-09
 ---
 # Gemini · OpenAI 이미지 API
 

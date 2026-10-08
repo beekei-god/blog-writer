@@ -12,7 +12,7 @@ source:
   - blog-writer:server/recommend.ts:49-66
   - blog-writer:server/recommend.ts:141-167
   - blog-writer:src/Recommend.tsx:118-123
-  - blog-writer:tests/api.test.ts:139-142
+  - blog-writer:tests/api.test.ts:154-157
 entities: [Recommendation]
 updated: 2026-10-07
 ---
@@ -37,7 +37,7 @@ updated: 2026-10-07
 |---|---|---|---|
 | 서버 | zod, 길이 초과 전용 문구, `isRecommending`, `running` | 2~100 | `blog-writer:server/routes/recommendations.ts:12-31`, `blog-writer:server/recommend.ts:141-167` |
 | 화면 | 버튼 비활성 + `maxLength=100` (2026-10-05 추가) | 2자 이상, 100자 이하, 진행 중이면 비활성 | `blog-writer:src/Recommend.tsx:119-120` |
-| 테스트 | 1자 → "2자 이상", 101자 → "100자 이하" | 2~100 | `blog-writer:tests/api.test.ts:139-142` |
+| 테스트 | 1자 → "2자 이상", 101자 → "100자 이하" | 2~100 | `blog-writer:tests/api.test.ts:154-157` |
 
 ## 예외 / 경계값
 - 추천은 작업과 같은 중지 방식(`withCancel`)으로 돈다 (`blog-writer:server/recommend.ts:163-165`). 중지 요청은 작업 중지와 같은 `cancelJob`을 추천 id로 부른다 (`blog-writer:server/routes/recommendations.ts:24-31`).
@@ -51,4 +51,4 @@ updated: 2026-10-07
 | 2026-10-05 | 최초 기록 | |
 | 2026-10-05 | 분야 100자 상한을 화면에도 적용, 서버 초과 오류 문구 분리 (consistency conflict → consistent) | `blog-writer:src/Recommend.tsx:119`, `blog-writer:server/routes/recommendations.ts:15-19` |
 | 2026-10-05 | 추천 중지 기능 추가 | `blog-writer:server/recommend.ts:163`, `blog-writer:server/routes/recommendations.ts:24-31`, `blog-writer:src/Recommend.tsx:179-190` |
-| 2026-10-07 | API가 `server/routes/recommendations.ts`로 옮겨짐(동작 같음), 입력 길이 자동 테스트 추가. 예외 항목의 낡은 서술("withCancel 밖") 정정 | `blog-writer:tests/api.test.ts:139-142` |
+| 2026-10-07 | API가 `server/routes/recommendations.ts`로 옮겨짐(동작 같음), 입력 길이 자동 테스트 추가. 예외 항목의 낡은 서술("withCancel 밖") 정정 | `blog-writer:tests/api.test.ts:154-157` |

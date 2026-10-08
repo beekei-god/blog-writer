@@ -7,15 +7,15 @@ status: active
 confidence: high
 consistency: consistent
 source:
-  - blog-writer:server/pipeline.ts:22-47
-  - blog-writer:server/pipeline.ts:131-173
-  - blog-writer:server/pipeline.ts:306-317
+  - blog-writer:server/pipeline.ts:23-58
+  - blog-writer:server/pipeline.ts:149-191
+  - blog-writer:server/pipeline.ts:319-330
   - blog-writer:server/routes/jobs.ts:84-98
-  - blog-writer:server/routes/jobs.ts:100-141
-  - blog-writer:server/routes/jobs.ts:157-207
-  - blog-writer:server/routes/images.ts:19
-  - blog-writer:server/routes/images.ts:77
-  - blog-writer:server/routes/images.ts:118
+  - blog-writer:server/routes/jobs.ts:100-152
+  - blog-writer:server/routes/jobs.ts:161-211
+  - blog-writer:server/routes/images.ts:20
+  - blog-writer:server/routes/images.ts:79
+  - blog-writer:server/routes/images.ts:119
   - blog-writer:src/job/JobDetail.tsx:34
   - blog-writer:src/job/JobDetail.tsx:129-131
 entities: [Job]
@@ -44,9 +44,9 @@ updated: 2026-10-08
 ## 구현 현황
 | 레이어 | 구현 | 값/내용 | 근거 |
 |---|---|---|---|
-| 서버(파이프라인) | 메모리 Set `running`(작업 잠금) + Map `imageRuns`(한 장씩 만드는 이미지), `isRunning`(둘 중 하나라도) · `isImageBusy`(잠금 또는 그 이미지) | | `blog-writer:server/pipeline.ts:22`, `:29-40`, `:131-173`, `:306-317` |
-| 서버(API) | `isRunning` 검사 → 409 | | `blog-writer:server/routes/jobs.ts:89`(초안 수정), `:105`(블로그 등록), `:165`(수기 상태), `:193`(재시도), `:203`(삭제), `blog-writer:server/routes/images.ts:19`(전체 이미지) |
-| 서버(API) | `isImageBusy` 검사 → 409 | 이미지 한 장 | `blog-writer:server/routes/images.ts:77`(다시 만들기), `:118`(직접 올리기) |
+| 서버(파이프라인) | 메모리 Set `running`(작업 잠금) + Map `imageRuns`(한 장씩 만드는 이미지), `isRunning`(둘 중 하나라도) · `isImageBusy`(잠금 또는 그 이미지) | | `blog-writer:server/pipeline.ts:23`, `:47-58`, `:149-191`, `:319-330` |
+| 서버(API) | `isRunning` 검사 → 409 | | `blog-writer:server/routes/jobs.ts:89`(초안 수정), `:105`(블로그 등록), `:169`(수기 상태), `:197`(재시도), `:207`(삭제), `blog-writer:server/routes/images.ts:20`(전체 이미지) |
+| 서버(API) | `isImageBusy` 검사 → 409 | 이미지 한 장 | `blog-writer:server/routes/images.ts:79`(다시 만들기), `:119`(직접 올리기) |
 | 화면 | `busy` 상태로 비활성, `imageRunsOnly`면 이미지 도구만 허용 | 상태 기준 | `blog-writer:src/job/JobDetail.tsx:34`, `:129-131` |
 
 ## 예외 / 경계값

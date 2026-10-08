@@ -7,14 +7,14 @@ status: active
 confidence: high
 consistency: consistent
 source:
-  - blog-writer:server/pipeline.ts:22-24
-  - blog-writer:server/pipeline.ts:286-298
-  - blog-writer:server/pipeline.ts:306-317
-  - blog-writer:server/browser/runner.ts:20-51
+  - blog-writer:server/pipeline.ts:23-25
+  - blog-writer:server/pipeline.ts:301-313
+  - blog-writer:server/pipeline.ts:319-329
+  - blog-writer:server/browser/runner.ts:21-52
   - blog-writer:server/routes/browser.ts:90-114
-  - blog-writer:server/fsutil.ts:20-28
+  - blog-writer:server/fsutil.ts:32-39
 entities: [블로그 설정]
-updated: 2026-10-08
+updated: 2026-10-09
 ---
 # BR-PUB-004 크롬 작업 직렬화
 
@@ -24,7 +24,7 @@ updated: 2026-10-08
 ## 조건과 결과
 | 조건 | 결과 |
 |---|---|
-| 네이버·티스토리 블로그 입력 | 항상 전역 크롬 큐(`enqueueBrowser`)에 넣음. 대기 중에도 그 작업은 실행 중 |
+| 네이버·티스토리 블로그 입력 | 항상 전역 크롬 큐(`enqueueBrowser`)에 넣음. 대기 중에도 그 작업은 실행 중. 예약발행·자동발행이면 발행 창 단계까지 같은 차례 안에서 끝낸다 |
 | 워드프레스 등록 | 큐 없이 바로 (`doWordPressPost`) |
 | 이미지 생성 대상 중 **실제로 크롬에서 만들** Gemini·ChatGPT 이미지(방법이 `chrome`이거나 API 키가 없음)가 하나라도 있음 | 그 실행의 이미지 생성 전체를 큐에 넣음 |
 | Claude(SVG)만, 또는 이미지 API로만 만듦 | 큐 없이 바로 (Claude는 별도 헤드리스 크롬). 이미지 한 장씩 다시 만들기는 서로 동시에 진행 → [[image/business-rules/BR-IMG-014 한 장씩 다시 만들기 동시 실행]] |
@@ -37,11 +37,11 @@ updated: 2026-10-08
 ## 구현 현황
 | 레이어 | 구현 | 근거 |
 |---|---|---|
-| 공용 | `serialQueue` (앞 작업이 실패해도 다음 작업 실행) | `blog-writer:server/fsutil.ts:20-28` |
-| 서버 | `enqueueBrowser = serialQueue()` | `blog-writer:server/pipeline.ts:22-24` |
-| 서버 | 블로그 입력 분기 (워드프레스 제외) | `blog-writer:server/pipeline.ts:310-315` |
-| 서버 | 이미지 분기 (크롬을 실제로 쓸 때만) | `blog-writer:server/pipeline.ts:286-298` |
-| 서버 | 프로필 충돌 방지 | `blog-writer:server/browser/runner.ts:46-51`, `blog-writer:server/routes/browser.ts:93-95`, `:106` |
+| 공용 | `serialQueue` (앞 작업이 실패해도 다음 작업 실행) | `blog-writer:server/fsutil.ts:32-39` |
+| 서버 | `enqueueBrowser = serialQueue()` | `blog-writer:server/pipeline.ts:23-25` |
+| 서버 | 블로그 입력 분기 (워드프레스 제외) | `blog-writer:server/pipeline.ts:324-327` |
+| 서버 | 이미지 분기 (크롬을 실제로 쓸 때만) | `blog-writer:server/pipeline.ts:301-313` |
+| 서버 | 프로필 충돌 방지 | `blog-writer:server/browser/runner.ts:46-52`, `blog-writer:server/routes/browser.ts:93-95`, `:106` |
 
 ## 예외 / 경계값
 - 큐는 메모리에만 있다. 서버 재시작 시 대기 중 작업은 복구 규칙으로 정리된다 → [[writing/business-rules/BR-WRT-012 중단 시 작업 상태 복구]].
@@ -56,3 +56,4 @@ updated: 2026-10-08
 | 2026-10-05 | 최초 기록 | |
 | 2026-10-07 | 워드프레스 등록은 크롬 큐를 거치지 않음. 큐 구현이 공용 `serialQueue`로 바뀜(동작 같음) | `blog-writer:server/pipeline.ts:265-269`, `blog-writer:server/fsutil.ts:20-28` |
 | 2026-10-08 | 이미지는 실제로 크롬에서 만들 때만 큐에 넣음. 이미지 API로 만드는 Gemini·ChatGPT 이미지는 큐 없이 진행 | `blog-writer:server/pipeline.ts:286-298`, 커밋 38ae96c |
+| 2026-10-09 | 규칙 변화 없음. 네이버·티스토리 발행 창 단계도 같은 큐 차례 안에서 실행됨을 적음. 근거 줄 번호 갱신 | 커밋 65bfa3e, `blog-writer:server/pipeline.ts:319-329` |

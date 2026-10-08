@@ -10,12 +10,12 @@ source:
   - blog-writer:server/writer.ts:65-80
   - blog-writer:server/images/plan.ts:94-97
   - blog-writer:server/images/plan.ts:109-112
-  - blog-writer:server/schema.ts:7-8
-  - blog-writer:src/job/PostEditor.tsx:83-98
+  - blog-writer:server/schema.ts:11-12
+  - blog-writer:src/job/PostEditor.tsx:84-99
   - blog-writer:server/images/svg.ts:51-57
-  - blog-writer:server/images/webAi.ts:194-194
+  - blog-writer:server/images/webAi.ts:192-192
 entities: [ImageSpec]
-updated: 2026-10-07
+updated: 2026-10-09
 ---
 # BR-IMG-005 이미지 안 문구 길이
 
@@ -36,9 +36,9 @@ updated: 2026-10-07
 |---|---|---|---|
 | 프롬프트(작성) | 썸네일 headline 8~16자·2줄, 본문 4~20자 | | `blog-writer:server/writer.ts:68`, `:79` |
 | 프롬프트(기획) | 같은 값 | | `blog-writer:server/images/plan.ts:95-97` |
-| 서버 | 60자 자르기 | 60 | `blog-writer:server/schema.ts:8`, `blog-writer:server/images/plan.ts:111` |
-| 화면 | 안내 문구, `maxLength=60` | "8~16자 권장", "4~20자" | `blog-writer:src/job/PostEditor.tsx:84-91` |
-| 생성 요청 | 크기·위치 지시 | | `blog-writer:server/images/svg.ts:51-57`, `blog-writer:server/images/webAi.ts:194-194` |
+| 서버 | 60자 자르기 | 60 | `blog-writer:server/schema.ts:12`, `blog-writer:server/images/plan.ts:111` |
+| 화면 | 안내 문구, `maxLength=60` | "8~16자 권장", "4~20자" | `blog-writer:src/job/PostEditor.tsx:85-92` |
+| 생성 요청 | 크기·위치 지시 | | `blog-writer:server/images/svg.ts:51-57`, `blog-writer:server/images/webAi.ts:192-192` |
 
 8~16 / 4~20은 프롬프트와 화면 안내가 같은 값이고 코드로 강제하지 않는다. 강제 상한은 60자로 모든 레이어가 같다.
 

@@ -110,3 +110,13 @@ updated: 2026-10-05
 - 줄 번호 보정: 손으로 고치지 않은 페이지의 바뀐 파일 참조 214곳을 d84d474 → 38ae96c 줄 대응(difflib)으로 옮김
 - 불일치: 없음. 새 open question 없음 (작업 오류 문구가 동시 실행에서 지워질 수 있는 점·미사용 `onlyFailed` 화면 경로는 known-issues #21, #22)
 - 분석 시점: git 38ae96c (스냅샷 `_snapshot.json`)
+
+## [2026-10-09] update | image · publishing · writing · _system (만드는 방법 선택, 상태 이름·글 상태, 네이버·티스토리 예약·자동발행, 리팩터링)
+- 읽은 범위: 커밋 38ae96c..65bfa3e(7a8a0ea, 65bfa3e)에서 바뀐 44개 파일 (추가 `server/browser/publish.ts`, `tests/publish.test.ts`; 수정 server 23개, shared 4개, src 11개, tests 4개)
+- 변경 내용: 새 글 쓰기에서 썸네일·본문 이미지마다 만드는 방법(API/크롬) 선택, 썸네일·본문 설정 완전 독립, 스타일 → AI → 방법 순서로 화면 통일, 실패 원인 `site_error` 추가(15종). 진행 단계·상태 이름 통일, "내 글" 필터 5개로 재구성, 초안 검토 이후 글 상태 직접 변경(`MANUAL_STATUSES`), 본문 복사 기능 삭제. 네이버·티스토리도 임시저장·예약발행·자동발행(늘 임시저장 먼저, 발행 창 단계 `server/browser/publish.ts`). 중복 코드를 공용 함수로 합친 리팩터링(동작 동일)
+- 생성: [[publishing/business-rules/BR-PUB-018 발행 창 단계와 안전장치]], [[publishing/business-rules/BR-PUB-019 다른 블로그에 올린 글 표시]]
+- 갱신(내용): image — BR-IMG-003, BR-IMG-007, BR-IMG-009, BR-IMG-010, BR-IMG-013, ImageOptions, 두 플로우, 구현 지도 / publishing — BR-PUB-001(이름 변경: 임시저장 먼저, 고른 방식대로 발행), BR-PUB-013, BR-PUB-014, 임시저장·발행 플로우, 워드프레스 API 등록 플로우, 구현 지도 / writing — Job, BR-WRT-004, BR-WRT-010, BR-WRT-012, 내 글 목록 상태 필터 플로우, 초안 작성 플로우, 초안 편집과 자동 저장 플로우(본문 복사 단계 폐기 표시), 구현 지도 / _system — modules 12쪽, api, integrations(blog-editors·claude-in-chrome·chrome-applescript·playwright-chrome·gemini-chatgpt-web 외), configuration, data-storage, operations, known-issues(#24~28), architecture, overview / glossary, index, _registry
+- 줄 번호 보정: 바뀐 파일을 가리키는 모든 `blog-writer:` 참조를 HEAD 기준으로 다시 맞춤 (topic·usage 포함). 파일 길이를 넘는 참조 0개
+- 불일치: BR-PUB-001 (설정 화면 문구 "임시저장까지만"이 남아 있음 → publishing open-questions #12), BR-PUB-019 (크롬 블로그는 `job.postingTo`, 워드프레스는 `job.wordpress`로 "이 블로그에 올렸는지"를 판단 → #15)
+- 새 open question: image #6~8, publishing #11~15, writing #9. 네이버·티스토리 발행 창 단계는 모의 발행 창으로만 확인(실제 사이트 미검증, confidence medium)
+- 분석 시점: git 65bfa3e (스냅샷 `_snapshot.json`)

@@ -7,14 +7,14 @@ status: active
 confidence: high
 consistency: consistent
 source:
-  - blog-writer:server/browser/blogPost.ts:34-37
-  - blog-writer:server/browser/blogPost.ts:77
-  - blog-writer:server/browser/userChrome.ts:148-149
-  - blog-writer:server/browser/adapters.ts:239-243
-  - blog-writer:server/browser/adapters.ts:355-359
-  - blog-writer:server/wordpress.ts:277-303
+  - blog-writer:server/browser/blogPost.ts:32-35
+  - blog-writer:server/browser/blogPost.ts:68
+  - blog-writer:server/browser/userChrome.ts:149-150
+  - blog-writer:server/browser/adapters.ts:249-253
+  - blog-writer:server/browser/adapters.ts:367-371
+  - blog-writer:server/wordpress.ts:269-296
 entities: [블로그 설정]
-updated: 2026-10-07
+updated: 2026-10-09
 ---
 # BR-PUB-005 썸네일 위치
 
@@ -31,11 +31,10 @@ updated: 2026-10-07
 ## 구현 현황
 | 레이어 | 구현 | 근거 |
 |---|---|---|
-| Claude in Chrome | 조각 맨 앞 + 네이버 안내 "제목 바로 아래, 본문 첫 줄" | `blog-writer:server/browser/blogPost.ts:34-37`, `:77` |
-| 평소 크롬(네이버) | 조각 맨 앞 | `blog-writer:server/browser/userChrome.ts:148-149` |
-| 자동 조작 | 네이버·티스토리 본문 첫 삽입 | `blog-writer:server/browser/adapters.ts:239-243`, `:355-359` |
-| 워드프레스 API | 썸네일 업로드 → `featured_media` | `blog-writer:server/wordpress.ts:277-278`, `:296-303` |
-| 복사 | `[썸네일]` 자리 표시를 맨 앞에 | `blog-writer:shared/postHtml.ts:95`, `:130` |
+| Claude in Chrome | 조각 맨 앞 + 네이버 안내 "제목 바로 아래, 본문 첫 줄" | `blog-writer:server/browser/blogPost.ts:32-35`, `:68` |
+| 평소 크롬(네이버) | 조각 맨 앞 | `blog-writer:server/browser/userChrome.ts:149-150` |
+| 자동 조작 | 네이버·티스토리 본문 첫 삽입 | `blog-writer:server/browser/adapters.ts:249-253`, `:367-371` |
+| 워드프레스 API | 썸네일 업로드 → `featured_media` | `blog-writer:server/wordpress.ts:271`, `:289`, `:296` |
 
 ## 영향받는 플로우
 [[publishing/flows/블로그 임시저장 플로우]], [[publishing/flows/워드프레스 API 등록 플로우]]
@@ -45,3 +44,4 @@ updated: 2026-10-07
 |---|---|---|
 | 2026-10-05 | 최초 기록 | |
 | 2026-10-07 | 워드프레스 대표 이미지는 크롬 자동 조작(`setFeaturedImage`) 대신 REST API의 `featured_media`로 지정. Claude in Chrome의 워드프레스 대표 이미지 경로 삭제 | `blog-writer:server/wordpress.ts:296-303` |
+| 2026-10-09 | 화면의 "본문 복사" 기능이 없어져 복사용 `[썸네일]` 자리 표시도 없어짐. 근거 줄 번호 갱신 (규칙 변화 없음) | 커밋 65bfa3e |

@@ -8,7 +8,7 @@ confidence: high
 consistency: consistent
 source:
   - blog-writer:shared/length.ts:6-33
-  - blog-writer:tests/shared.test.ts:24-46
+  - blog-writer:tests/shared.test.ts:23-45
 entities: [Post]
 updated: 2026-10-07
 ---
@@ -27,10 +27,10 @@ updated: 2026-10-07
 | 레이어 | 구현 | 값/내용 | 근거 |
 |---|---|---|---|
 | 공용 | `countBodyChars` | 위 규칙 | `blog-writer:shared/length.ts:14-33` |
-| 서버 | 작성·줄이기 판단, 로그 | 같은 함수 | `blog-writer:server/writer.ts:152`, `:191` |
-| 화면 | 글자수 칩 | 같은 함수 | `blog-writer:src/job/JobDetail.tsx:168`, `:270-273` |
-| 테스트 | 공백 포함·줄바꿈/굵게/이미지 제외, 참고 자료 이후 제외, 이모지 1자 | | `blog-writer:tests/shared.test.ts:24-46` |
-| 프롬프트 | "참고 자료 소제목 앞까지만, 공백 포함" | | `blog-writer:server/writer.ts:199` |
+| 서버 | 작성·줄이기 판단, 로그 | 같은 함수 | `blog-writer:server/writer.ts:152`, `:194` |
+| 화면 | 글자수 칩 | 같은 함수 | `blog-writer:src/job/JobDetail.tsx:168`, `:272-275` |
+| 테스트 | 공백 포함·줄바꿈/굵게/이미지 제외, 참고 자료 이후 제외, 이모지 1자 | | `blog-writer:tests/shared.test.ts:23-45` |
+| 프롬프트 | "참고 자료 소제목 앞까지만, 공백 포함" | | `blog-writer:server/writer.ts:201` |
 
 ## 예외 / 경계값
 - 줄바꿈은 세지 않는다. 주석·규칙 문서와 일치한다 (2026-10-05 수정).

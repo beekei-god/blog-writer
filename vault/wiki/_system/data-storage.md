@@ -2,15 +2,15 @@
 type: data-storage
 project: blog-writer
 source:
-  - blog-writer:server/store.ts:1-147
-  - blog-writer:server/fsutil.ts:1-38
-  - blog-writer:server/usage.ts:1-96
+  - blog-writer:server/store.ts:1-143
+  - blog-writer:server/fsutil.ts:1-49
+  - blog-writer:server/usage.ts:1-91
   - blog-writer:server/recommend.ts:13-68
-  - blog-writer:server/rules.ts:1-39
-  - blog-writer:server/secrets.ts:1-75
+  - blog-writer:server/rules.ts:1-42
+  - blog-writer:server/secrets.ts:1-68
   - blog-writer:server/browser/blockedSites.ts:1-37
-  - blog-writer:shared/types.ts:125-325
-updated: 2026-10-08
+  - blog-writer:shared/types.ts:136-353
+updated: 2026-10-09
 ---
 # 데이터 저장
 
@@ -34,23 +34,23 @@ DB는 없다. 모두 프로젝트 루트의 `data/` 아래 로컬 파일이다. 
 임시 파일: `os.tmpdir()`에 `bw-js-*.js`(AppleScript로 넘길 스크립트), `bw-img-*.jpg`(줄인 이미지), `bw-alt-*/`(대체 텍스트 이름 사본)를 만들고 바로 지운다.
 
 ## 쓰기 안전장치
-- **원자적 쓰기**: 공용 `writeFileAtomic`/`writeJsonAtomic`이 무작위 이름의 임시 파일에 쓰고 `rename`한다. 권한을 줄 수 있다(비밀 정보 0600) (`blog-writer:server/fsutil.ts:5-18`). 작업·설정·규칙·비밀 정보·추천 갱신·플랜 한도·사용량 정리가 이것을 쓴다.
-- **직렬화**: 작업 파일·설정은 키별 줄(`keyedQueue`)로 읽기-수정-쓰기를 한 번에 처리해 로그와 상태 갱신이 서로 덮어쓰지 않는다 (`blog-writer:server/store.ts:25`, `:111-120`). 추천·사용량·비밀 정보는 파일마다 줄 하나(`serialQueue`) (`blog-writer:server/fsutil.ts:20-38`).
-- **경로 제한**: job id와 이미지 파일명은 `path.basename`으로 자른다 (`blog-writer:server/store.ts:56`, `:83`, `:87`, `blog-writer:server/routes/images.ts:151`). 초안 JSON의 `file`은 `^(?!\.)[\w.-]+$`만 허용 (`blog-writer:server/schema.ts:12-13`).
+- **원자적 쓰기**: 공용 `writeFileAtomic`/`writeJsonAtomic`이 무작위 이름의 임시 파일에 쓰고 `rename`한다. 권한을 줄 수 있다(비밀 정보 0600) (`blog-writer:server/fsutil.ts:5-27`). 작업·설정·규칙·비밀 정보·추천 갱신·플랜 한도·사용량 정리가 이것을 쓴다.
+- **직렬화**: 작업 파일·설정은 키별 줄(`keyedQueue`)로 읽기-수정-쓰기를 한 번에 처리해 로그와 상태 갱신이 서로 덮어쓰지 않는다 (`blog-writer:server/store.ts:25`, `:107-116`). 추천·사용량·비밀 정보는 파일마다 줄 하나(`serialQueue`) (`blog-writer:server/fsutil.ts:31-49`).
+- **경로 제한**: job id와 이미지 파일명은 `path.basename`으로 자른다 (`blog-writer:server/store.ts:56`, `:77`, `:79`, `blog-writer:server/routes/images.ts:137-138`). 초안 JSON의 `file`은 `^(?!\.)[\w.-]+$`만 허용 (`blog-writer:server/schema.ts:16-17`).
 - 예외: 막힌 사이트 파일(`blog-writer:server/browser/blockedSites.ts:28-33`)과 새 추천의 첫 파일(`blog-writer:server/recommend.ts:158`)은 원자적 쓰기가 아니다 ([[_system/known-issues]]).
 
 ## 스키마
 ### Job (`data/jobs/*.json`)
-`id`, `topic`, `links?`, `status`(researching/writing/generating_images/draft_ready/posting/posted/scheduled/published/failed), `imageOptions`, `generatingImages?`, `regeneratingImages?`, `imageRunsOnly?`, `createdAt`, `updatedAt`, `researchNotes?`, `rulesSnapshot?`, `sources[]`({title,url,kind?}), `post?`, `logs[]`({at,message}), `error?`, `wordpress?`(워드프레스에 올린 글: `postId`, `link`, `mode`, `scheduledAt?`, `mediaIds?` 파일 이름→`{id,url}`) (`blog-writer:shared/types.ts:238-277`). 의미는 [[writing/entities/Job]].
+`id`, `topic`, `links?`, `status`(researching/writing/generating_images/draft_ready/posting/posted/scheduled/published/failed — `scheduled`·`published`는 2026-10-09부터 네이버·티스토리 예약발행·자동발행에서도 앱이 정한다), `imageOptions`(2026-10-09부터 `method?`·`thumbnailMethod?` 포함), `postingTo?`(마지막으로 올린 블로그), `generatingImages?`, `regeneratingImages?`, `imageRunsOnly?`, `createdAt`, `updatedAt`, `researchNotes?`, `rulesSnapshot?`, `sources[]`({title,url,kind?}), `post?`, `logs[]`({at,message}), `error?`, `wordpress?`(워드프레스에 올린 글: `postId`, `link`, `mode`, `scheduledAt?`, `mediaIds?` 파일 이름→`{id,url}`) (`blog-writer:shared/types.ts:260-305`). 의미는 [[writing/entities/Job]].
 
 ### Post (job.post)
-`title`, `summary`, `tags[]`, 리포트 필드(`searchQuestion`, `mainKeyword`, `subKeywords`, `titleCandidates`, `tagDetails`, `tagsCheckedAt`, `omittedItems`), `thumbnail?`(ImageSpec), `blocks[]`(heading/paragraph/list/quote/table/image) (`blog-writer:shared/types.ts:152-211`). 의미는 [[writing/entities/Post]], 이미지는 [[image/entities/ImageSpec]].
+`title`, `summary`, `tags[]`, 리포트 필드(`searchQuestion`, `mainKeyword`, `subKeywords`, `titleCandidates`, `tagDetails`, `tagsCheckedAt`, `omittedItems`), `thumbnail?`(ImageSpec), `blocks[]`(heading/paragraph/list/quote/table/image) (`blog-writer:shared/types.ts:163-222`). 의미는 [[writing/entities/Post]], 이미지는 [[image/entities/ImageSpec]].
 
 ### Recommendation
-`id`, `field`, `status`(running/done/failed), `anchorKeyword?`, `datalab`(ok/not_configured/failed/pending), `period?`, `candidates[]`, `logs[]`, `error?` (`blog-writer:shared/types.ts:309-325`). [[topic/entities/Recommendation]].
+`id`, `field`, `status`(running/done/failed), `anchorKeyword?`, `datalab`(ok/not_configured/failed/pending), `period?`, `candidates[]`, `logs[]`, `error?` (`blog-writer:shared/types.ts:337-353`). [[topic/entities/Recommendation]].
 
 ### UsageRecord (`usage.jsonl` 한 줄)
-`at`, `stage`, `jobId?`, `callId?`, `model`, `input`, `output`, `cacheRead`, `cacheWrite`, `costUSD` (`blog-writer:server/usage.ts:15-28`). [[usage/entities/UsageRecord]].
+`at`, `stage`, `jobId?`, `callId?`, `model`, `input`, `output`, `cacheRead`, `cacheWrite`, `costUSD` (`blog-writer:server/usage.ts:16-29`). [[usage/entities/UsageRecord]].
 
 ### PlanLimits
-`fiveHour`/`sevenDay`: `{utilization 0~1, resetsAt ISO}` 또는 null, `status`, `checkedAt` (`blog-writer:shared/types.ts:77-92`). [[usage/entities/PlanLimits]].
+`fiveHour`/`sevenDay`: `{utilization 0~1, resetsAt ISO}` 또는 null, `status`, `checkedAt` (`blog-writer:shared/types.ts:88-103`). [[usage/entities/PlanLimits]].

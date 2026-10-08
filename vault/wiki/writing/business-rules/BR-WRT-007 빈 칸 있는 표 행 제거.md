@@ -9,10 +9,10 @@ consistency: consistent
 source:
   - blog-writer:server/writer.ts:25
   - blog-writer:server/writer.ts:166
-  - blog-writer:server/writer.ts:261-265
+  - blog-writer:server/writer.ts:264-268
   - blog-writer:rules/default-writing-rules.md:45
-  - blog-writer:shared/types.ts:177-178
-  - blog-writer:src/job/PostEditor.tsx:49-55
+  - blog-writer:shared/types.ts:188-189
+  - blog-writer:src/job/PostEditor.tsx:50-56
   - blog-writer:server/routes/jobs.ts:84-98
   - blog-writer:tests/writer.test.ts:18-27
 entities: [Post]
@@ -35,9 +35,9 @@ updated: 2026-10-07
 |---|---|---|---|
 | 규칙 문서 | 빈 칸·"-"·"미정" 금지, 행 삭제 | | `blog-writer:rules/default-writing-rules.md:45` |
 | 프롬프트(작성) | 칸 수 같게, 모두 채움, 못 채우면 행 빼기 | | `blog-writer:server/writer.ts:25` |
-| 서버(작성 직후) | `isCompleteTable` 필터 | 위 표 | `blog-writer:server/writer.ts:166`, `:261-265` |
+| 서버(작성 직후) | `isCompleteTable` 필터 | 위 표 | `blog-writer:server/writer.ts:166`, `:264-268` |
 | 서버(저장 PUT) | 같은 필터 적용 (2026-10-05 추가) | 편집 결과에서도 불완전한 행·표 제거 | `blog-writer:server/routes/jobs.ts:90-93` |
-| 화면(편집) | 검사 없음 (저장 때 서버가 정리) | `|`로 나눈 텍스트를 그대로 표로 저장 요청 | `blog-writer:src/job/PostEditor.tsx:49-55` |
+| 화면(편집) | 검사 없음 (저장 때 서버가 정리) | `|`로 나눈 텍스트를 그대로 표로 저장 요청 | `blog-writer:src/job/PostEditor.tsx:50-56` |
 | 테스트 | 빈 칸·"-"·"미정"·칸 수 다른 행 제거, 남은 행 없으면 표 제거 | | `blog-writer:tests/writer.test.ts:18-27` |
 
 ## 예외 / 경계값

@@ -4,26 +4,26 @@ domain: topic
 project: blog-writer
 paths: [server/recommend.ts, server/datalab.ts, server/secrets.ts, server/routes/recommendations.ts, server/routes/settings.ts, src/Recommend.tsx, src/SettingsPanel.tsx, tests/writer.test.ts, tests/api.test.ts]
 last_ingested_commit: 스냅샷 2026-10-07 (git 없음)
-updated: 2026-10-07
+updated: 2026-10-09
 ---
 # blog-writer의 topic 구현
 
 ## 파일과 역할
 | 파일 | 함수/컴포넌트 | 구현하는 규칙/엔티티 |
 |---|---|---|
-| `shared/types.ts` | `Evidence`(274-280), `InterestStat`(282-289), `TopicCandidate`(291-300), `Recommendation`(302-318) | [[topic/entities/Recommendation]], [[topic/entities/TopicCandidate]] |
+| `shared/types.ts` | `Evidence`(309-315), `InterestStat`(317-324), `TopicCandidate`(326-335), `Recommendation`(337-353) | [[topic/entities/Recommendation]], [[topic/entities/TopicCandidate]] |
 | `server/recommend.ts` | `update`(19-29, `serialQueue`+`writeJsonAtomic`), `deleteRecommendation`(49-52), `recoverRecommendations`(57-66), `SYSTEM`(69-83), `ResultSchema`(121-138), `startRecommendation`(141-167, `withCancel`), `run`(169-255) | BR-TOP-001, 004, 005 |
 | `server/datalab.ts` | `dateRange`(20-28), `call`(30-49), `testDatalab`(52-55), `interestStat`(63-73, 순수 계산), `compareInterest`(84-116) | BR-TOP-002, 003, 006 |
-| `server/secrets.ts` | `update`(32-35, 읽고 합쳐 0600으로 씀), `getNaverKeys`(42-49), `saveNaverKeys`(51-55) | BR-TOP-006 |
+| `server/secrets.ts` | `update`(32, 읽고 합쳐 0600으로 씀), `getNaverKeys`(39-46), `saveNaverKeys`(48-52) | BR-TOP-006 |
 | `server/fsutil.ts` | `serialQueue`, `writeJsonAtomic` (저장 공용 도우미) | [[_system/modules/server-core]] |
-| `server/naver.ts` | `naverAutocomplete`(2-17) | 자동완성 개수 |
+| `server/naver.ts` | `naverAutocomplete`(4-19) | 자동완성 개수 |
 | `server/routes/recommendations.ts` | `GET/POST /api/recommendations`(11-23), `POST /:id/cancel`(24-31), `DELETE /:id`(32-42) | BR-TOP-005 |
 | `server/routes/settings.ts` | `GET/PUT/DELETE /api/datalab`(60-88) | BR-TOP-006 |
 | `src/Recommend.tsx` | `Recommend`(63-207), `CandidateCard`(20-61), `Sparkline`(8-18) | [[topic/flows/주제 추천 플로우]] |
-| `src/SettingsPanel.tsx` | "네이버 데이터랩 설정" 카드(263-289), `saveKeys`(106-119), `deleteKeys`(148-161) | BR-TOP-006 |
-| `src/App.tsx` | 추천 → 새 글 폼 채우기(193-202) | [[topic/entities/TopicCandidate]] |
+| `src/SettingsPanel.tsx` | "네이버 데이터랩 설정" 카드(260-286), `saveKeys`(103-116), `deleteKeys`(145-158) | BR-TOP-006 |
+| `src/App.tsx` | 추천 → 새 글 폼 채우기(195-204) | [[topic/entities/TopicCandidate]] |
 | `tests/writer.test.ts` | "데이터랩 관심도 환산"(70-83) | BR-TOP-002, 003 |
-| `tests/api.test.ts` | "추천 분야 길이"(139-142) | BR-TOP-005 |
+| `tests/api.test.ts` | "추천 분야 길이"(154-157) | BR-TOP-005 |
 
 API 라우터 구성은 [[_system/modules/server-routes]] 참고.
 

@@ -7,16 +7,16 @@ status: active
 confidence: high
 consistency: consistent
 source:
-  - blog-writer:server/pipeline.ts:306-316
-  - blog-writer:server/pipeline.ts:357-404
+  - blog-writer:server/pipeline.ts:319-329
+  - blog-writer:server/pipeline.ts:366-409
   - blog-writer:server/browser/blockedSites.ts:6-37
   - blog-writer:server/browser/claudeChrome.ts:27-35
   - blog-writer:server/claude.ts:128-132
-  - blog-writer:server/browser/blogPost.ts:207-209
+  - blog-writer:server/browser/blogPost.ts:207-208
   - blog-writer:server/routes/browser.ts:60-77
   - blog-writer:src/BlockedSites.tsx:9-65
 entities: [막힌 사이트, 블로그 설정]
-updated: 2026-10-07
+updated: 2026-10-09
 ---
 # BR-PUB-003 입력 경로 선택과 막힌 사이트 기억
 
@@ -35,12 +35,14 @@ updated: 2026-10-07
 | 대체 경로: 그 밖 (티스토리, macOS가 아닌 네이버) | 앱 전용 크롬 자동 조작 (`postWithChrome`) |
 | 그 밖 오류 | 실패 (대체 경로로 가지 않음) |
 
+어느 경로로 가든 고른 등록 방식은 그대로 넘긴다. 예약발행·자동발행이면 대체 경로도 임시저장 뒤 발행 창 단계까지 이어서 한다 → [[publishing/business-rules/BR-PUB-018 발행 창 단계와 안전장치]].
+
 ## 구현 현황
 | 레이어 | 구현 | 근거 |
 |---|---|---|
-| 서버 | 워드프레스 분기 | `blog-writer:server/pipeline.ts:310-314` |
-| 서버 | 경로 선택·기억 | `blog-writer:server/pipeline.ts:374-401` |
-| 서버 | 차단 감지 2곳 | `blog-writer:server/claude.ts:128-132`, `blog-writer:server/browser/blogPost.ts:207-209` |
+| 서버 | 워드프레스 분기 | `blog-writer:server/pipeline.ts:324-327` |
+| 서버 | 경로 선택·기억 | `blog-writer:server/pipeline.ts:379-409` |
+| 서버 | 차단 감지 2곳 | `blog-writer:server/claude.ts:128-132`, `blog-writer:server/browser/blogPost.ts:207-208` |
 | 저장 | `data/blocked-sites.json` | `blog-writer:server/browser/blockedSites.ts:10-37` |
 | 서버(API) | 막힌 목록에 실제 대체 경로 `fallback`을 붙여 돌려줌, 초기화 | `blog-writer:server/routes/browser.ts:60-77` |
 | 화면 | 막힌 목록, 초기화 버튼, 대체 경로 설명, 네이버·티스토리 로그인 창 | `blog-writer:src/BlockedSites.tsx:9-65` |
@@ -60,3 +62,4 @@ updated: 2026-10-07
 | 2026-10-05 | 최초 기록 | |
 | 2026-10-05 | 막힌 목록에 실제 대체 경로(`fallback`) 표시 | `blog-writer:server/routes/browser.ts:60-70`, `blog-writer:src/BlockedSites.tsx:30` |
 | 2026-10-07 | 워드프레스는 크롬 경로에서 빠지고 REST API로만 올림 (워드프레스 크롬 어댑터·Claude in Chrome 안내 삭제) | `blog-writer:server/pipeline.ts:310-314`, `blog-writer:server/browser/adapters.ts:382-386` |
+| 2026-10-09 | 경로 선택 규칙은 같음. 세 경로 모두 등록 방식(`PublishRequest`)을 받아 예약발행·자동발행까지 하게 됨. 근거 줄 번호 갱신 | 커밋 65bfa3e, `blog-writer:server/pipeline.ts:383-393` |

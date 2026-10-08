@@ -5,9 +5,9 @@ system: NAVER API HUB 검색어 트렌드 (데이터랩)
 confidence: high
 source:
   - blog-writer:server/datalab.ts:1-116
-  - blog-writer:server/secrets.ts:41-59
+  - blog-writer:server/secrets.ts:34-52
   - blog-writer:server/routes/settings.ts:61-89
-updated: 2026-10-07
+updated: 2026-10-09
 ---
 # NAVER API HUB 검색어 트렌드 (데이터랩)
 

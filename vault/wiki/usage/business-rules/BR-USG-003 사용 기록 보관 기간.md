@@ -7,12 +7,12 @@ status: active
 confidence: high
 consistency: consistent
 source:
-  - blog-writer:server/usage.ts:11-13
-  - blog-writer:server/usage.ts:76-83
+  - blog-writer:server/usage.ts:12-14
+  - blog-writer:server/usage.ts:72-79
   - blog-writer:server/index.ts:10
   - blog-writer:README.md:204
 entities: [UsageRecord]
-updated: 2026-10-07
+updated: 2026-10-09
 ---
 # BR-USG-003 사용 기록 보관 기간
 
@@ -29,7 +29,7 @@ Claude 호출 기록은 **90일** 보관한다. 서버를 시작할 때 한 번,
 ## 구현 현황
 | 레이어 | 구현 | 근거 |
 |---|---|---|
-| 서버 | `KEEP_DAYS = 90`, `pruneUsage` | `blog-writer:server/usage.ts:13`, `:76-83` |
+| 서버 | `KEEP_DAYS = 90`, `pruneUsage` | `blog-writer:server/usage.ts:14`, `:72-79` |
 | README | "90일 보관" | `blog-writer:README.md:204` |
 
 ## 예외 / 경계값

@@ -7,12 +7,12 @@ status: active
 confidence: high
 consistency: consistent
 source:
-  - blog-writer:server/usage.ts:96-168
-  - blog-writer:server/usage.ts:85-94
+  - blog-writer:server/usage.ts:93-162
+  - blog-writer:server/usage.ts:81-90
   - blog-writer:src/labels.ts:70
   - blog-writer:src/Usage.tsx:84-92
 entities: [UsageRecord]
-updated: 2026-10-07
+updated: 2026-10-09
 ---
 # BR-USG-004 사용량 집계 기준
 
@@ -33,7 +33,7 @@ updated: 2026-10-07
 ## 구현 현황
 | 레이어 | 구현 | 근거 |
 |---|---|---|
-| 서버 | `kstDate`, `kstWeekStart`, `getUsageSummary`, `getJobUsage` | `blog-writer:server/usage.ts:98-168`, `:85-94` |
+| 서버 | `kstDate`(한국 날짜, 2026-10-09부터 `server/rules.ts` 공용), `kstWeekStart`, `getUsageSummary`, `getJobUsage` | `blog-writer:server/usage.ts:93-162`, `:81-90`, `blog-writer:server/rules.ts:40` |
 | 화면 | `totalTokens` 합산, 표·막대 | `blog-writer:src/labels.ts:70`, `blog-writer:src/Usage.tsx` |
 
 ## 예외 / 경계값
@@ -46,6 +46,6 @@ updated: 2026-10-07
 | 날짜 | 변경 | 근거 |
 |---|---|---|
 | 2026-10-05 | 최초 기록 | |
-| 2026-10-05 | 호출 수를 `callId` 기준으로 집계 | `blog-writer:server/usage.ts:102-117`, `blog-writer:server/claude.ts:168-171` |
+| 2026-10-05 | 호출 수를 `callId` 기준으로 집계 | `blog-writer:server/usage.ts:98-112`, `blog-writer:server/claude.ts:168-171` |
 | 2026-10-05 | 요일 라벨을 시간대와 무관하게 계산 | `blog-writer:src/Usage.tsx:216-221` |
 | 2026-10-07 | 줄 번호·경로 보정 (리팩터링: API는 `server/routes/`로, 저장은 `server/fsutil.ts` 공용 도우미로). 규칙 변화 없음 | |

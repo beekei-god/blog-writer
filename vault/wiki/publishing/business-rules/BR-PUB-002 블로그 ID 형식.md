@@ -11,9 +11,9 @@ source:
   - blog-writer:server/routes/jobs.ts:116-120
   - blog-writer:server/routes/browser.ts:104-105
   - blog-writer:server/wordpress.ts:26-31
-  - blog-writer:src/SettingsPanel.tsx:11-27
+  - blog-writer:src/SettingsPanel.tsx:12-23
 entities: [블로그 설정]
-updated: 2026-10-07
+updated: 2026-10-09
 ---
 # BR-PUB-002 블로그 ID 형식
 
@@ -35,8 +35,8 @@ updated: 2026-10-07
 | 서버(설정 저장) | `SettingsSchema.superRefine` 블로그별 검사 | `blog-writer:server/routes/settings.ts:17-35` |
 | 서버(올리기) | 고른 블로그의 값이 비면 400 | `blog-writer:server/routes/jobs.ts:116-120` |
 | 서버(로그인 창) | 블로그 ID가 비면 400 | `blog-writer:server/routes/browser.ts:104-105` |
-| 서버(사용) | 글쓰기 URL·로그인 URL, 워드프레스 주소 정리 | `blog-writer:server/browser/blogPost.ts:61-66`, `blog-writer:server/routes/browser.ts:79-82`, `blog-writer:server/wordpress.ts:26-31` |
-| 화면 | 블로그별 라벨·예시·도움말, 형식 검사 없음 (서버 메시지 표시) | `blog-writer:src/SettingsPanel.tsx:11-27`, `:172-262` |
+| 서버(사용) | 글쓰기 URL·로그인 URL, 워드프레스 주소 정리 | `blog-writer:server/browser/postHtml.ts:22-24`, `blog-writer:server/routes/browser.ts:79-82`, `blog-writer:server/wordpress.ts:26-31` |
+| 화면 | 블로그별 라벨·예시·도움말, 형식 검사 없음 (서버 메시지 표시) | `blog-writer:src/SettingsPanel.tsx:12-23`, `:172-258` |
 
 ## 영향받는 플로우
 [[publishing/flows/블로그 임시저장 플로우]], [[publishing/flows/워드프레스 API 등록 플로우]]
@@ -46,3 +46,4 @@ updated: 2026-10-07
 |---|---|---|
 | 2026-10-05 | 최초 기록 | |
 | 2026-10-07 | 플랫폼 하나의 `blogId` 대신 블로그별 필드(`naverBlogId`·`tistoryBlogId`·`wordpressUrl`)로 나눠 각각 검사. 워드프레스 주소는 `https?://`에서 `https://`만 허용으로 바뀜 | `blog-writer:server/routes/settings.ts:27-35` |
+| 2026-10-09 | 근거 줄 번호 갱신. 글쓰기 주소 `writeUrl`이 `server/browser/postHtml.ts`로 옮겨짐 (동작 같음) | 커밋 65bfa3e |

@@ -7,12 +7,12 @@ status: active
 confidence: high
 consistency: consistent
 source:
-  - blog-writer:server/browser/userChrome.ts:377-402
-  - blog-writer:server/browser/blogPost.ts:72
-  - blog-writer:server/browser/blogPost.ts:82
-  - blog-writer:server/browser/adapters.ts:215
-  - blog-writer:server/browser/adapters.ts:305
-updated: 2026-10-07
+  - blog-writer:server/browser/userChrome.ts:381-406
+  - blog-writer:server/browser/blogPost.ts:63
+  - blog-writer:server/browser/blogPost.ts:73
+  - blog-writer:server/browser/adapters.ts:225
+  - blog-writer:server/browser/adapters.ts:317
+updated: 2026-10-09
 ---
 # BR-PUB-010 이어쓰기 글이 있으면 중단
 
@@ -38,3 +38,4 @@ updated: 2026-10-07
 |---|---|---|
 | 2026-10-05 | 최초 기록 | |
 | 2026-10-07 | 근거 줄 번호 갱신 (동작 변화 없음) | |
+| 2026-10-09 | 근거 줄 번호 갱신 (동작 변화 없음) | 커밋 65bfa3e |

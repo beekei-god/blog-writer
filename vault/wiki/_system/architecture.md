@@ -6,10 +6,10 @@ source:
   - blog-writer:package.json:6-13
   - blog-writer:server/index.ts:1-11
   - blog-writer:server/app.ts:10-40
-  - blog-writer:server/pipeline.ts:22-46
+  - blog-writer:server/pipeline.ts:23-64
   - blog-writer:server/claude.ts:58-198
   - blog-writer:vite.config.ts:1-10
-updated: 2026-10-07
+updated: 2026-10-09
 ---
 # 아키텍처
 
@@ -19,9 +19,9 @@ updated: 2026-10-07
 | API 서버 | `server/index.ts` → `server/app.ts` `createApp()` | `tsx watch server/index.ts`, `127.0.0.1:${PORT ?? 5172}` | REST API, 파이프라인 실행, 파일 저장 |
 | 화면 | `index.html` → `src/main.tsx` | `vite` :5173, `/api`를 `127.0.0.1:5172`로 프록시 | React SPA |
 | Claude 호출 | `server/claude.ts` `runClaude` | 호출마다 `claude -p` 자식 프로세스 (cwd = OS 임시 폴더) | 리서치·글 작성·이미지 기획·SVG·브라우저 조작·추천 |
-| 앱 전용 크롬 | `server/browser/runner.ts` | Playwright `launchPersistentContext(data/chrome-profile)` | Claude in Chrome이 막는 블로그(네이버 외 OS 등)의 자동 조작 |
+| 앱 전용 크롬 | `server/browser/runner.ts` | Playwright `launchPersistentContext(data/chrome-profile)` | Claude in Chrome이 막는 블로그(네이버 외 OS 등)의 자동 조작, 고르면 발행 창 조작(`server/browser/publish.ts`) |
 | 헤드리스 크롬 | `server/images/svg.ts` | Playwright `chromium.launch({channel:"chrome", headless:true})` | SVG → PNG |
-| 평소 크롬 | `server/browser/userChrome.ts` | `osascript`로 탭 열고 JS 실행 (macOS) | 네이버 블로그 입력 |
+| 평소 크롬 | `server/browser/userChrome.ts` | `osascript`로 탭 열고 JS 실행 (macOS) | 네이버 블로그 입력, 고르면 발행 창 조작(`server/browser/publish.ts`) |
 | 로그인 창 | `server/browser/loginWindow.ts` | Chrome 실행 파일을 `--user-data-dir=data/chrome-profile`로 직접 실행 (한 번에 한 블로그) | 앱 전용 크롬에 블로그 로그인 |
 | 워드프레스 | `server/wordpress.ts` | `fetch`로 사이트의 REST API 호출 (크롬 없음) | 임시저장·예약발행·자동발행 |
 | 자동 테스트 | `vitest.config.ts` | `npm test` (임시 데이터 폴더) | 규칙·API 검사 확인 |
@@ -70,11 +70,11 @@ flowchart TD
 ```
 
 ## 대표 요청의 경로: "딥서칭 시작"
-1. 화면 `NewJob.submit` → `POST /api/jobs` (`blog-writer:src/NewJob.tsx:81-96`).
+1. 화면 `NewJob.submit` → `POST /api/jobs` (`blog-writer:src/NewJob.tsx:92-107`).
 2. 서버가 주제(2~300자)·링크(http(s), 최대 20개)·이미지 옵션을 검증하고, 이미지 옵션을 설정에 기억한 뒤 `createJob` → `void runDraft(id)` → 201 응답 (`blog-writer:server/routes/jobs.ts:43-72`).
-3. `doDraft`: 규칙 읽기 → `deepResearch`(Claude + WebSearch/WebFetch) → 네이버 자동완성·함께 많이 찾는 수집 → `writePost`(Claude) → 분량 줄이기 → 태그 검증 → `makeImages` → `draft_ready` (`blog-writer:server/pipeline.ts:48-129`).
+3. `doDraft`: 규칙 읽기 → `deepResearch`(Claude + WebSearch/WebFetch) → 네이버 자동완성·함께 많이 찾는 수집 → `writePost`(Claude) → 분량 줄이기 → 태그 검증 → `makeImages` → `draft_ready` (`blog-writer:server/pipeline.ts:66-147`).
 4. 각 단계는 `updateJob`/`log`로 `data/jobs/<id>.json`에 바로 기록한다.
-5. 화면은 진행 중 작업이 있으면 1.5초마다 `GET /api/jobs`로 폴링한다 (`blog-writer:src/App.tsx:84-90`).
+5. 화면은 진행 중 작업이 있으면 1.5초마다 `GET /api/jobs`로 폴링한다 (`blog-writer:src/App.tsx:86-92`).
 자세한 흐름은 [[writing/flows/초안 작성 플로우]].
 
 ## 비동기 / 백그라운드 작업

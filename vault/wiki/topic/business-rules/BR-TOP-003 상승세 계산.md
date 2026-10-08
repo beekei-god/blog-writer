@@ -8,7 +8,7 @@ confidence: high
 consistency: consistent
 source:
   - blog-writer:server/datalab.ts:63-73
-  - blog-writer:shared/types.ts:292-293
+  - blog-writer:shared/types.ts:320-321
   - blog-writer:src/Recommend.tsx:37-39
   - blog-writer:tests/writer.test.ts:70-83
 entities: [TopicCandidate]

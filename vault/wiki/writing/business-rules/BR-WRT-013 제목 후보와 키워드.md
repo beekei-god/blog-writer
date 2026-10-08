@@ -33,7 +33,7 @@ updated: 2026-10-07
 | 규칙 문서 | SEO 장 | 메인1·서브2~3, 후보 3개, 25~35자 | `blog-writer:rules/default-writing-rules.md:14-17` |
 | 프롬프트(리서치) | 검색 질문·키워드 정하기 | 서브 2~3 | `blog-writer:server/research.ts:23` |
 | 프롬프트(작성) | 후보 3개, 제목=후보 중 하나 | | `blog-writer:server/writer.ts:27` |
-| 서버 검증 | 없음 | 개수·길이·제목 일치 모두 검사 안 함 | `blog-writer:server/schema.ts:20`, `:26` |
+| 서버 검증 | 없음 | 개수·길이·제목 일치 모두 검사 안 함 | `blog-writer:server/schema.ts:24`, `:30` |
 | 화면 | 후보 선택 UI | | `blog-writer:src/job/Report.tsx:14-27` |
 
 프롬프트에만 있어 `consistency: single-source`, 결과 보장이 없어 `confidence: medium`.

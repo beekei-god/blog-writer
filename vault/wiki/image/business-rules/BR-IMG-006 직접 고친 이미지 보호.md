@@ -7,12 +7,12 @@ status: active
 confidence: high
 consistency: consistent
 source:
-  - blog-writer:shared/types.ts:159-160
-  - blog-writer:src/job/PostEditor.tsx:93-109
-  - blog-writer:server/pipeline.ts:245-246
-  - blog-writer:server/pipeline.ts:271
+  - blog-writer:shared/types.ts:170-171
+  - blog-writer:src/job/PostEditor.tsx:94-110
+  - blog-writer:server/pipeline.ts:263-264
+  - blog-writer:server/pipeline.ts:286
 entities: [ImageSpec]
-updated: 2026-10-07
+updated: 2026-10-09
 ---
 # BR-IMG-006 직접 고친 이미지 보호
 
@@ -31,8 +31,8 @@ updated: 2026-10-07
 ## 구현 현황
 | 레이어 | 구현 | 근거 |
 |---|---|---|
-| 화면 | 표시·설정·해제 | `blog-writer:src/job/PostEditor.tsx:93`, `:98`, `:100-109` |
-| 서버 | 제외 | `blog-writer:server/pipeline.ts:246`, `:271` |
+| 화면 | 표시·설정·해제 | `blog-writer:src/job/PostEditor.tsx:94`, `:99`, `:101-110` |
+| 서버 | 제외 | `blog-writer:server/pipeline.ts:264`, `:286` |
 
 ## 영향받는 플로우
 [[image/flows/이미지 다시 만들기 플로우]], [[writing/flows/초안 편집과 자동 저장 플로우]]

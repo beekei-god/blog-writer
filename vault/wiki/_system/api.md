@@ -8,11 +8,11 @@ source:
   - blog-writer:server/routes/browser.ts:1-121
   - blog-writer:server/routes/usage.ts:1-35
   - blog-writer:server/routes/recommendations.ts:1-42
-  - blog-writer:server/routes/jobs.ts:1-207
-  - blog-writer:server/routes/images.ts:1-155
+  - blog-writer:server/routes/jobs.ts:1-211
+  - blog-writer:server/routes/images.ts:1-142
   - blog-writer:server/routes/util.ts:1-28
-  - blog-writer:src/api.ts:46-123
-updated: 2026-10-08
+  - blog-writer:src/api.ts:49-126
+updated: 2026-10-09
 ---
 # API
 
@@ -67,27 +67,27 @@ updated: 2026-10-08
 | 메서드 | 경로 | 하는 일 | 입력/검증 | 응답 | 호출하는 화면 | 근거 |
 |---|---|---|---|---|---|---|
 | GET | `/api/jobs` | 작업 목록 (생성일 내림차순) | | `Job[]` | `App` | `blog-writer:server/routes/jobs.ts:41` |
-| POST | `/api/jobs` | 작업 생성 + 초안 파이프라인 시작 | topic 2~300자, links http(s) URL ≤20개, images=`ImageOptionsSchema` | 201 `Job` | `NewJob` | `blog-writer:server/routes/jobs.ts:43-72` |
+| POST | `/api/jobs` | 작업 생성 + 초안 파이프라인 시작 | topic 2~300자, links http(s) URL ≤`MAX_LINKS`(20)개, images=`ImageOptionsSchema`(provider·style·thumbnailProvider·thumbnailStyle에 2026-10-09부터 `method`·`thumbnailMethod`(`api`/`chrome`, 선택) 추가. 고른 값은 설정의 이미지 기본값으로도 저장) | 201 `Job` | `NewJob` | `blog-writer:server/routes/jobs.ts:43-72` |
 | GET | `/api/jobs/:id` | 작업 하나 | | `Job` / 404 | (화면은 목록을 씀) | `blog-writer:server/routes/jobs.ts:74-81` |
 | PUT | `/api/jobs/:id/post` | 초안 저장 (자동 저장) | `PostSchema`, 진행 중이면 409. 이미지 파일·오류는 서버 값 유지, 빈 칸 있는 표 행 제거 | `Job` | `src/job/JobDetail.tsx` | `blog-writer:server/routes/jobs.ts:84-98` |
-| POST | `/api/jobs/:id/post-to-blog` | 블로그 등록 시작 | `{platform: naver/tistory/wordpress}` 필수(기본 블로그 없음), `mode: draft/schedule/publish`(기본 draft), `scheduledAt`(ISO). 그 블로그의 ID·주소 없으면 400. 워드프레스: 사이트 주소 https·예약 시각 ≥ 지금+1분·연결 정보 필요. 네이버·티스토리: `mode`가 draft가 아니면 400, 확장 설치 필요. 초안 없음 400, 진행 중 409 | 202 | `src/job/NextStep.tsx` | `blog-writer:server/routes/jobs.ts:100-143` |
-| PUT | `/api/jobs/:id/status` | 등록 이후 상태를 수기로 변경 | `{status: draft_ready/posted/published}`, 허용 전이만: posted→published·draft_ready, published→posted·draft_ready, scheduled→published·draft_ready (그 밖 400), 진행 중 409, 없으면 404 | `Job` | `src/job/NextStep.tsx` | `blog-writer:server/routes/jobs.ts:145-177` |
-| POST | `/api/jobs/:id/cancel` | 진행 중 작업 중지 | 중지할 작업 없으면 409 | 202 | `src/job/JobDetail.tsx` | `blog-writer:server/routes/jobs.ts:179-186` |
-| POST | `/api/jobs/:id/retry` | 리서치부터 다시 | 진행 중 409 | 202 | `src/job/JobDetail.tsx` | `blog-writer:server/routes/jobs.ts:188-198` |
-| DELETE | `/api/jobs/:id` | 작업과 이미지 폴더 삭제 | 진행 중 409 | 204 | `src/job/JobDetail.tsx` | `blog-writer:server/routes/jobs.ts:200-207` |
+| POST | `/api/jobs/:id/post-to-blog` | 블로그 등록 시작 | `{platform: naver/tistory/wordpress}` 필수(기본 블로그 없음), `mode: draft/schedule/publish`(기본 draft), `scheduledAt`(ISO). 그 블로그의 ID·주소 없으면 400. 워드프레스: 사이트 주소 https·예약 시각 ≥ 지금+1분(`checkSchedule`)·연결 정보 필요. 네이버·티스토리(2026-10-09부터 예약발행·자동발행 허용): `schedule`이면 `checkSchedule`(지금+1분 이상) 실패 시 400, 네이버는 분이 10의 배수가 아니면 400 "네이버 예약 시각은 10분 단위로 고를 수 있습니다.", 확장 설치 필요. 서버는 늘 임시저장 뒤 블로그 발행 창에서 발행한다(발행 창에서 멈추면 상태는 `posted` + `error`). 초안 없음 400, 진행 중 409 | 202 | `src/job/NextStep.tsx` | `blog-writer:server/routes/jobs.ts:100-152` |
+| PUT | `/api/jobs/:id/status` | 등록 이후 상태를 수기로 변경 | `{status}` = `MANUAL_STATUSES`(draft_ready/posted/published) 아니면 400. 2026-10-09부터 지금 상태가 `canSetStatus`(draft_ready/posted/scheduled/published)이고 바꿀 상태가 지금과 다르면 허용(그 밖 400 "<지금> 상태의 글은 <바꿀>(으)로 바꿀 수 없습니다."). 로그: "블로그 발행완료로 표시했습니다." / "블로그 임시저장 완료로 표시했습니다." / "초안 검토로 되돌렸습니다." 진행 중 409, 없으면 404 | `Job` | `src/job/NextStep.tsx` (`StatusPicker`) | `blog-writer:server/routes/jobs.ts:154-181` |
+| POST | `/api/jobs/:id/cancel` | 진행 중 작업 중지 | 중지할 작업 없으면 409 | 202 | `src/job/JobDetail.tsx` | `blog-writer:server/routes/jobs.ts:183-190` |
+| POST | `/api/jobs/:id/retry` | 리서치부터 다시 | 진행 중 409 | 202 | `src/job/JobDetail.tsx` | `blog-writer:server/routes/jobs.ts:192-202` |
+| DELETE | `/api/jobs/:id` | 작업과 이미지 폴더 삭제 | 진행 중 409 | 204 | `src/job/JobDetail.tsx` | `blog-writer:server/routes/jobs.ts:204-211` |
 
 ## 이미지 (`server/routes/images.ts`)
 | 메서드 | 경로 | 하는 일 | 입력/검증 | 응답 | 호출하는 화면 | 근거 |
 |---|---|---|---|---|---|---|
-| POST | `/api/jobs/:id/regenerate-images` | 이미지 여러 장 다시 만들기 (전부/실패만/썸네일 추가). 작업 전체를 잠금 (진행 중이면 409) | style·provider·thumbnail*·onlyFailed·addThumbnail, 바꾼 옵션은 job에 저장 | 202 | `src/job/JobDetail.tsx`(썸네일 만들기) | `blog-writer:server/routes/images.ts:14-67` |
-| POST | `/api/jobs/:id/images/:target/regenerate` | 이미지 한 장 다시 만들기. 다른 이미지를 한 장씩 만드는 중이면 함께 진행, 그 이미지·다른 단계가 진행 중이면 409 | provider+style 필수, AI가 지원하는 스타일만, `method`(`api`/`chrome`, 선택), target=`thumbnail`/`body-<n>`(`bodyIndexOf`) | 202 / 404 / 409 | `src/job/images.tsx` `ImageTools` | `blog-writer:server/routes/images.ts:69-107` |
-| POST | `/api/jobs/:id/images/:target` | 이미지 직접 올리기. 다른 이미지를 한 장씩 만드는 중이어도 가능, 그 이미지·다른 단계가 진행 중이면 409 | 본문은 바이너리, png/jpeg/webp/gif, ≤20MB | `{file}` | `src/job/images.tsx` `ImageTools` | `blog-writer:server/routes/images.ts:109-147` |
-| GET | `/api/images/:id/:file` | 생성된 이미지 파일 | 파일명은 `basename`으로 제한 | 파일 / 404 | 미리보기 `<img>` | `blog-writer:server/routes/images.ts:149-155` |
+| POST | `/api/jobs/:id/regenerate-images` | 이미지 여러 장 다시 만들기 (전부/실패만/썸네일 추가). 작업 전체를 잠금 (진행 중이면 409) | style·provider·thumbnail*·onlyFailed·addThumbnail, 바꾼 옵션은 job에 저장 | 202 | `src/job/JobDetail.tsx`(썸네일 만들기) | `blog-writer:server/routes/images.ts:15-68` |
+| POST | `/api/jobs/:id/images/:target/regenerate` | 이미지 한 장 다시 만들기. 다른 이미지를 한 장씩 만드는 중이면 함께 진행, 그 이미지·다른 단계가 진행 중이면 409 | provider+style 필수, AI가 지원하는 스타일만, `method`(`api`/`chrome`, 선택, 기본 `api`, 이번 한 장에만 쓰고 글에 저장하지 않음), target=`thumbnail`/`body-<n>`(자리 확인은 `imageSpecAt`) | 202 / 404 / 409 | `src/job/images.tsx` `ImageTools` | `blog-writer:server/routes/images.ts:70-107` |
+| POST | `/api/jobs/:id/images/:target` | 이미지 직접 올리기. 다른 이미지를 한 장씩 만드는 중이어도 가능, 그 이미지·다른 단계가 진행 중이면 409 | 본문은 바이너리, png/jpeg/webp/gif, ≤20MB. 기록은 생성과 같은 `recordImageFile`(오류 지움, 예전 파일은 기록 뒤 삭제) | `{file}` | `src/job/images.tsx` `ImageTools` | `blog-writer:server/routes/images.ts:109-134` |
+| GET | `/api/images/:id/:file` | 생성된 이미지 파일 | 파일명은 `basename`으로 제한(`jobImagePath`) | 파일 / 404 | 미리보기 `<img>` | `blog-writer:server/routes/images.ts:136-142` |
 
 ## 공통 처리
 - **로컬 전용**: `Host`가 localhost/127.0.0.1/[::1]이고, `Origin`이 있으면 그것도 로컬이어야 한다. 아니면 403 `forbidden`. 다른 사이트의 CSRF와 DNS 리바인딩을 막는다 (`blog-writer:server/app.ts:13-28`). 서버는 `127.0.0.1`에만 바인딩한다 (`blog-writer:server/index.ts:11`).
 - **인증 없음**: 로컬 단일 사용자 전제.
 - **본문 크기**: JSON 2MB, 이미지 업로드 20MB (`blog-writer:server/app.ts:29`, `blog-writer:server/routes/images.ts:113`).
-- **에러 형식**: `{ error: string }`. 4xx(본문 파싱 오류 등)는 "요청 형식이 올바르지 않습니다.", 500은 메시지를 그대로 (`blog-writer:server/app.ts:33-38`). 화면 `req()`는 이 메시지를 그대로 예외로 던진다 (`blog-writer:src/api.ts:46-55`).
+- **에러 형식**: `{ error: string }`. 4xx(본문 파싱 오류 등)는 "요청 형식이 올바르지 않습니다.", 500은 메시지를 그대로 (`blog-writer:server/app.ts:33-38`). 화면 `req()`는 이 메시지를 그대로 예외로 던진다 (`blog-writer:src/api.ts:49-58`).
 - **장시간 작업 패턴**: 상태를 먼저 `markBusy`로 진행 중으로 바꾸고 202를 준 뒤 `void run…()` (`blog-writer:server/routes/util.ts:12-23`). 화면이 응답 직후 목록을 읽어도 진행 중으로 보이게 하려는 것.
 - **테스트**: 입력 검증·거절 경로는 `tests/api.test.ts`가 임시 데이터 폴더에서 `createApp()`으로 확인한다 → [[_system/modules/tests]].

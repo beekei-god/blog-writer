@@ -8,7 +8,7 @@ confidence: high
 consistency: consistent
 source:
   - blog-writer:server/claude.ts:166-181
-  - blog-writer:server/usage.ts:37-43
+  - blog-writer:server/usage.ts:38-44
 entities: [UsageRecord]
 updated: 2026-10-07
 ---

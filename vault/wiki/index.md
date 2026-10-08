@@ -41,7 +41,7 @@ updated: 2026-10-08
 ## 도메인
 - [[writing/overview|writing (글 작성)]] — 작업·리서치·초안·규칙·태그. 엔티티 3, 규칙 15, 플로우 4 → [[writing/index]]
 - [[image/overview|image (이미지 생성)]] — 썸네일·본문 이미지. 엔티티 2, 규칙 14(폐기 1), 플로우 2 → [[image/index]]
-- [[publishing/overview|publishing (블로그 임시저장)]] — 입력 경로·에디터 서식. 엔티티 2, 규칙 13, 플로우 2 → [[publishing/index]]
+- [[publishing/overview|publishing (블로그 등록)]] — 입력 경로·에디터 서식, 임시저장·예약발행·자동발행(네이버·티스토리·워드프레스), 글 상태 직접 변경. 엔티티 2, 규칙 19, 플로우 3 → [[publishing/index]]
 - [[topic/overview|topic (주제 추천)]] — 뉴스·통계·데이터랩. 엔티티 2, 규칙 6, 플로우 1 → [[topic/index]]
 - [[usage/overview|usage (Claude 모델·사용량)]] — 모델 선택, 토큰·한도. 엔티티 2, 규칙 6, 플로우 1 → [[usage/index]]
 

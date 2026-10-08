@@ -6,10 +6,10 @@ aliases: [이미지, 썸네일, 본문 이미지]
 status: active
 confidence: high
 source:
-  - blog-writer:shared/types.ts:152-170
-  - blog-writer:server/schema.ts:5-17
-  - blog-writer:server/images/index.ts:34-61
-updated: 2026-10-08
+  - blog-writer:shared/types.ts:163-181
+  - blog-writer:server/schema.ts:9-21
+  - blog-writer:server/images/index.ts:34-54
+updated: 2026-10-09
 ---
 # ImageSpec (이미지)
 
@@ -26,7 +26,7 @@ updated: 2026-10-08
 | `alt` | string | 대체 텍스트 | "대체 텍스트" |
 | `file` | string? | `data/images/<jobId>/` 아래 파일명 (`^(?!\.)[\w.-]+$`) | 미리보기 이미지 |
 | `error` | string? | 실패 원문 메시지 | 첫 줄을 이미지 자리에 실패 이유로 |
-| `errorKind` | ImageErrorKind? | 실패 원인 14종 | 원인별 안내 (메시지가 없으면 원인 제목) |
+| `errorKind` | ImageErrorKind? | 실패 원인 15종 | 원인별 안내 (메시지가 없으면 원인 제목) |
 | `errorProvider` | ImageProvider? | 실패한 AI | "(Gemini)" 등 |
 
 ## 상태와 전이
@@ -43,8 +43,8 @@ stateDiagram-v2
 ```
 | 전이 | 조건 | 일어나는 곳 |
 |---|---|---|
-| → 생성됨 | 생성 성공 또는 업로드 | `blog-writer:server/images/index.ts:47-52`, `blog-writer:server/routes/images.ts:132-143` |
-| → 실패 | 생성 중 오류 (중지는 제외) | `blog-writer:server/images/index.ts:53-56`, `:95-97` |
+| → 생성됨 | 생성 성공 또는 업로드 | `blog-writer:server/images/index.ts:40-45`, `blog-writer:server/routes/images.ts:126-131` |
+| → 실패 | 생성 중 오류 (중지는 제외) | `blog-writer:server/images/index.ts:46-49`, `:86-88` |
 
 화면의 "만드는 중"은 `Job.generatingImages`(키 목록)로 표시한다. 한 장씩 동시에 다시 만들 수 있어 키를 더하고 빼며 관리한다 → [[image/business-rules/BR-IMG-014 한 장씩 다시 만들기 동시 실행]].
 

@@ -9,8 +9,8 @@ consistency: consistent
 source:
   - blog-writer:server/writer.ts:28-33
   - blog-writer:server/writer.ts:156-165
-  - blog-writer:server/writer.ts:216-258
-  - blog-writer:shared/types.ts:181-190
+  - blog-writer:server/writer.ts:219-261
+  - blog-writer:shared/types.ts:192-201
   - blog-writer:tests/writer.test.ts:50-68
 entities: [Post]
 updated: 2026-10-07
@@ -34,7 +34,7 @@ updated: 2026-10-07
 | 레이어 | 구현 | 값/내용 | 근거 |
 |---|---|---|---|
 | 프롬프트(작성) | 목록에 실제로 있는 표현만, query는 그 목록의 검색어, 글 내용과 맞는 것만 | | `blog-writer:server/writer.ts:28-33` |
-| 서버 | `dedupeTags` → `verifyTagSources` → 30개 자르기 | 부분 일치(`norm(item).includes(norm(tag))`) | `blog-writer:server/writer.ts:156-165`, `:222-251` |
+| 서버 | `dedupeTags` → `verifyTagSources` → 30개 자르기 | 부분 일치(`norm(item).includes(norm(tag))`) | `blog-writer:server/writer.ts:156-165`, `:225-254` |
 | 화면 | "태그를 고른 근거" 표 (태그·출처·확인 검색어, 확인 날짜) | | `blog-writer:src/job/Report.tsx:56-80` |
 | 테스트 | 목록에 있는 표현만 유지, 검색어 바로잡기, 스마트블록 제외, 그 밖의 출처 유지 | | `blog-writer:tests/writer.test.ts:50-68` |
 

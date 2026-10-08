@@ -7,18 +7,20 @@ status: active
 confidence: high
 consistency: single-source
 source:
-  - blog-writer:server/browser/userChrome.ts:222-339
-  - blog-writer:server/browser/userChrome.ts:461-467
-  - blog-writer:server/browser/blogPost.ts:161
-  - blog-writer:server/pipeline.ts:379-380
-  - blog-writer:server/pipeline.ts:393-394
-  - blog-writer:server/pipeline.ts:342-344
-updated: 2026-10-07
+  - blog-writer:server/browser/userChrome.ts:222-340
+  - blog-writer:server/browser/userChrome.ts:466-471
+  - blog-writer:server/browser/userChrome.ts:486-490
+  - blog-writer:server/browser/blogPost.ts:158
+  - blog-writer:server/browser/publish.ts:290
+  - blog-writer:server/pipeline.ts:386-388
+  - blog-writer:server/pipeline.ts:401-402
+  - blog-writer:server/pipeline.ts:352-354
+updated: 2026-10-09
 ---
 # BR-PUB-011 입력 결과 검증
 
 ## 규칙
-블로그에 넣은 결과가 초안과 같은 모양인지 확인하고, 다른 점은 실패로 처리하지 않고 "확인 필요" 목록으로 사용자에게 알린다. 임시저장은 그대로 한다.
+블로그에 넣은 결과가 초안과 같은 모양인지 확인하고, 다른 점은 실패로 처리하지 않고 "확인 필요" 목록으로 사용자에게 알린다. 임시저장은 그대로 한다. 단, 예약발행·자동발행을 골랐는데 다른 점이 하나라도 있으면 **발행하지 않고** 임시저장만 둔다 → [[publishing/business-rules/BR-PUB-018 발행 창 단계와 안전장치]].
 
 ## 조건과 결과 (평소 크롬·네이버)
 | 검사 | 문제 문구 |
@@ -37,11 +39,13 @@ updated: 2026-10-07
 ## 구현 현황
 | 레이어 | 구현 | 근거 |
 |---|---|---|
-| 평소 크롬 | `expectedAtoms`, `readEditor`, `verifyEditor` | `blog-writer:server/browser/userChrome.ts:227-339` |
-| Claude in Chrome | 프롬프트: 끝에 스크린샷으로 제목·본문·이미지 개수 확인, 안 된 부분은 `problems` | `blog-writer:server/browser/blogPost.ts:161`, `:168` |
-| 자동 조작 | 검증 없음 (표 붙여넣기 실패 시 목록으로 대체, alt 실패 로그) | `blog-writer:server/browser/adapters.ts:101-112` |
-| 워드프레스 API | 에디터 검증 없음. 요청한 모드와 사이트가 돌려준 글 상태가 다르면 "확인 필요: 예약발행/자동발행을 요청했지만 사이트에서는 "<상태>" 상태입니다. 사용자 권한을 확인하세요." | `blog-writer:server/pipeline.ts:342-344` |
-| 파이프라인 | 문제마다 로그 "확인 필요: …" | `blog-writer:server/pipeline.ts:380`, `:394` |
+| 평소 크롬 | `expectedAtoms`, `readEditor`, `verifyEditor` | `blog-writer:server/browser/userChrome.ts:228-340` |
+| 평소 크롬(발행) | 문제가 있으면 발행 창을 열지 않고 `PublishStepError` | `blog-writer:server/browser/userChrome.ts:486-490` |
+| Claude in Chrome | 프롬프트: 끝에 스크린샷으로 제목·본문·이미지 개수 확인, 안 된 부분은 `problems` | `blog-writer:server/browser/blogPost.ts:158`, `:167` |
+| Claude in Chrome(발행) | 프롬프트: problems가 하나라도 있으면 발행하지 말고 `saved` | `blog-writer:server/browser/publish.ts:290` |
+| 자동 조작 | 검증 없음 (표 붙여넣기 실패 시 목록으로 대체, alt 실패 로그) | `blog-writer:server/browser/adapters.ts:111-122` |
+| 워드프레스 API | 에디터 검증 없음. 요청한 모드와 사이트가 돌려준 글 상태가 다르면 "확인 필요: 예약발행/자동발행을 요청했지만 사이트에서는 "<상태>" 상태입니다. 사용자 권한을 확인하세요." | `blog-writer:server/pipeline.ts:352-354` |
+| 파이프라인 | 문제마다 로그 "확인 필요: …" | `blog-writer:server/pipeline.ts:388`, `:402` |
 
 ## 영향받는 플로우
 [[publishing/flows/블로그 임시저장 플로우]]
@@ -51,3 +55,4 @@ updated: 2026-10-07
 |---|---|---|
 | 2026-10-05 | 최초 기록 | |
 | 2026-10-07 | 워드프레스 API 경로의 상태 불일치 경고 추가 | `blog-writer:server/pipeline.ts:342-344` |
+| 2026-10-09 | 검증 결과가 발행 여부에도 쓰임: 문제가 있으면 예약발행·자동발행을 하지 않음(평소 크롬은 코드, Claude in Chrome은 프롬프트, 자동 조작은 검증 없음). 근거 줄 번호 갱신 | 커밋 65bfa3e, `blog-writer:server/browser/userChrome.ts:486-490` |

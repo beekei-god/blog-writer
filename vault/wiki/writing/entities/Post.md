@@ -6,11 +6,11 @@ aliases: [초안, 글, 본문]
 status: active
 confidence: high
 source:
-  - blog-writer:shared/types.ts:172-211
-  - blog-writer:server/schema.ts:19-41
-  - blog-writer:server/schema.ts:79-155
+  - blog-writer:shared/types.ts:183-222
+  - blog-writer:server/schema.ts:23-45
+  - blog-writer:server/schema.ts:85-161
   - blog-writer:server/writer.ts:149-175
-updated: 2026-10-07
+updated: 2026-10-09
 ---
 # Post (초안)
 

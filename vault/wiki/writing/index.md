@@ -1,12 +1,12 @@
 ---
 type: index
 domain: writing
-updated: 2026-10-08
+updated: 2026-10-09
 ---
 # writing Index
 
 ## 엔티티
-- [[writing/entities/Job]] — 작업. researching→writing→generating_images→draft_ready→posting→posted/scheduled/published / failed (상태 9개)
+- [[writing/entities/Job]] — 작업. researching→writing→generating_images→draft_ready→posting→posted/scheduled/published / failed (상태 9개, 화면 이름: 자료 조사 중 / 초안 검토 / 블로그 임시저장 중·완료 / 블로그 발행 예약 / 블로그 발행완료 등). 수기 상태 변경은 초안 검토·블로그 임시저장 완료·블로그 발행완료 중에서
 - [[writing/entities/Post]] — 초안: 제목·요약·태그·블록·작성 리포트
 - [[writing/entities/글쓰기 규칙]] — 기본/수정본, 리서치·작성 프롬프트에 그대로 들어감
 
@@ -22,16 +22,16 @@ updated: 2026-10-08
 - [[writing/business-rules/BR-WRT-009 글쓰기 규칙 적용 시점]] — 다음 작업부터, 작업마다 사본
 - [[writing/business-rules/BR-WRT-010 주제와 참고 링크 입력 검증]] — 주제 2~300자, 링크 http(s) ≤20개 (화면·서버 일치)
 - [[writing/business-rules/BR-WRT-011 작업 중복 실행과 진행 중 변경 금지]] — 실행 중 수정·삭제·재실행 409 (예외: 이미지 한 장씩 다시 만들기는 동시 진행)
-- [[writing/business-rules/BR-WRT-012 중단 시 작업 상태 복구]] — 초안 있으면 draft_ready, 없으면 failed
+- [[writing/business-rules/BR-WRT-012 중단 시 작업 상태 복구]] — 초안 있으면 draft_ready, 없으면 failed (발행 창에서 멈추면 posted + 이유)
 - [[writing/business-rules/BR-WRT-013 제목 후보와 키워드]] — 검색 질문 1, 메인 1·서브 2~3, 제목 후보 3
 - [[writing/business-rules/BR-WRT-014 리서치 출처 등급과 열람 제한]] — 공식→언론→블로그, WebFetch 최대 6개
 - [[writing/business-rules/BR-WRT-015 네이버 검색어 제안 수집 범위]] — 자동완성 ≤20 검색어, 함께 많이 찾는 ≤6
 
 ## 플로우
-- [[writing/flows/초안 작성 플로우]]
-- [[writing/flows/초안 편집과 자동 저장 플로우]]
+- [[writing/flows/초안 작성 플로우]] — 진행 단계 6개 (자료 조사 → … → 블로그 임시저장 → 블로그 발행완료)
+- [[writing/flows/초안 편집과 자동 저장 플로우]] — 글 복사 단계는 deprecated (2026-10-09 삭제)
 - [[writing/flows/작업 중지와 재시도 플로우]]
-- [[writing/flows/내 글 목록 상태 필터 플로우]] — 칩 7개 (예약됨 포함)
+- [[writing/flows/내 글 목록 상태 필터 플로우]] — 칩 5개 (전체/자료 조사 중/초안 검토/임시 저장/발행 완료, 실패는 전체에서만)
 
 ## 구현 지도
 - [[writing/implementations/blog-writer 구현]]

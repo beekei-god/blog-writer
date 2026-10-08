@@ -10,8 +10,8 @@ source:
   - blog-writer:server/claude.ts:31-37
   - blog-writer:server/claude.ts:76-77
   - blog-writer:server/claude.ts:137-138
-  - blog-writer:server/usage.ts:29-33
-updated: 2026-10-07
+  - blog-writer:server/usage.ts:31-34
+updated: 2026-10-09
 ---
 # BR-USG-002 모델 결정 순서
 
@@ -32,8 +32,8 @@ Claude 호출의 모델은 다음 순서로 정한다: ① 호출이 직접 지�
 | 레이어 | 구현 | 근거 |
 |---|---|---|
 | 서버 | `modelFor` | `blog-writer:server/claude.ts:32-37` |
-| 서버 | 기본 모델 기억 (메모리) | `blog-writer:server/claude.ts:137-138`, `blog-writer:server/usage.ts:30-33` |
-| 화면 | 기본 모델 표시 | `blog-writer:src/SettingsPanel.tsx:307`, `blog-writer:src/Usage.tsx:120-122` |
+| 서버 | 기본 모델 기억 (메모리) | `blog-writer:server/claude.ts:137-138`, `blog-writer:server/usage.ts:31-34` |
+| 화면 | 기본 모델 표시 | `blog-writer:src/SettingsPanel.tsx:303`, `blog-writer:src/Usage.tsx:120-122` |
 
 ## 예외 / 경계값
 - 기본 모델은 서버를 재시작하면 잊고, default로 한 번 호출해야 다시 알게 된다.

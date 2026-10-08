@@ -7,13 +7,14 @@ status: active
 confidence: high
 consistency: consistent
 source:
-  - blog-writer:server/browser/blogPost.ts:38-45
-  - blog-writer:server/browser/blogPost.ts:128
-  - blog-writer:server/browser/userChrome.ts:150-158
-  - blog-writer:server/browser/adapters.ts:29-34
-  - blog-writer:server/browser/adapters.ts:127-131
-  - blog-writer:server/wordpress.ts:229-234
-updated: 2026-10-07
+  - blog-writer:shared/postHtml.ts:47-48
+  - blog-writer:server/browser/blogPost.ts:38-41
+  - blog-writer:server/browser/blogPost.ts:123
+  - blog-writer:server/browser/userChrome.ts:152-156
+  - blog-writer:server/browser/adapters.ts:39-44
+  - blog-writer:server/browser/adapters.ts:137-141
+  - blog-writer:server/wordpress.ts:222-227
+updated: 2026-10-09
 ---
 # BR-PUB-008 생성되지 않은 이미지 건너뜀
 
@@ -30,10 +31,11 @@ updated: 2026-10-07
 ## 구현 현황
 | 레이어 | 구현 | 근거 |
 |---|---|---|
-| Claude in Chrome | `buildSegments` skipped | `blog-writer:server/browser/blogPost.ts:38-45`, `:128` |
-| 평소 크롬 | `segmentsOf` | `blog-writer:server/browser/userChrome.ts:150-158` |
-| 자동 조작 | `hasFile`, `imagePath` | `blog-writer:server/browser/adapters.ts:29-34`, `:127-131` |
-| 워드프레스 API | 파일 있는 이미지만 업로드, `postToBlocks`가 올리지 않은 이미지 건너뜀(같은 로그) | `blog-writer:server/wordpress.ts:277-281`, `:235-239` |
+| 공용 | 로그에 쓰는 이름 `skippedImageLabel` (alt, 없으면 prompt 앞 30자) | `blog-writer:shared/postHtml.ts:47-48` |
+| Claude in Chrome | `buildSegments` skipped | `blog-writer:server/browser/blogPost.ts:38-41`, `:123` |
+| 평소 크롬 | `segmentsOf` | `blog-writer:server/browser/userChrome.ts:152-156` |
+| 자동 조작 | `hasFile`, `imagePath` | `blog-writer:server/browser/adapters.ts:39-44`, `:137-141` |
+| 워드프레스 API | 파일 있는 이미지만 업로드, `postToBlocks`가 올리지 않은 이미지 건너뜀(같은 로그) | `blog-writer:server/wordpress.ts:270-274`, `:222-227` |
 
 ## 영향받는 플로우
 [[publishing/flows/블로그 임시저장 플로우]]
@@ -43,3 +45,4 @@ updated: 2026-10-07
 |---|---|---|
 | 2026-10-05 | 최초 기록 | |
 | 2026-10-07 | 워드프레스 크롬 경로 삭제, 워드프레스 API 경로 추가(같은 규칙) | `blog-writer:server/wordpress.ts:229-234` |
+| 2026-10-09 | 건너뛴 이미지 이름을 공용 `skippedImageLabel`로 모음(문구 같음). 근거 줄 번호 갱신 | 커밋 65bfa3e, `blog-writer:shared/postHtml.ts:47-48` |
