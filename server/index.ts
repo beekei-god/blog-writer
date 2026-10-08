@@ -4,7 +4,7 @@ import { recoverRecommendations } from "./recommend";
 import { recoverStuckJobs } from "./store";
 import { pruneUsage } from "./usage";
 
-const port = Number(process.env.PORT ?? 3001);
+const port = Number(process.env.PORT ?? 5172);
 await recoverStuckJobs();
 await recoverRecommendations();
 await pruneUsage().catch((e) => console.error("사용량 기록 정리 실패:", e));
