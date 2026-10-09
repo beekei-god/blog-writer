@@ -4,7 +4,7 @@ project: blog-writer
 system: macOS AppleScript → 평소 크롬
 confidence: high
 source:
-  - blog-writer:server/browser/userChrome.ts:1-494
+  - blog-writer:server/browser/userChrome.ts:1-490
 updated: 2026-10-09
 ---
 # macOS AppleScript로 평소 크롬 조작
@@ -28,7 +28,7 @@ Claude in Chrome이 네이버 블로그를 막을 때, macOS에서 사용자의 
 | 60초 안에 에디터 없음, 이어쓰기 글 | `editor` |
 이미지 업로드 60초 초과, 서식 적용 실패, 검증 차이는 오류가 아니라 `problems`로 모아 로그 "확인 필요"로 남긴다. 임시저장 완료를 15초 안에 확인 못 하면 오류 (`blog-writer:server/browser/userChrome.ts:473-485`).
 
-예약발행·자동발행(2026-10-09): 임시저장을 확인한 뒤, `problems`가 하나라도 있으면 발행하지 않고 `PublishStepError`("입력 결과에 확인할 점이 있어 발행하지 않고 임시저장만 했습니다")를 낸다. 없으면 `naverPublishSteps`를 같은 `runJs`로 실행한다(`PUBLISH_HELPERS`를 앞에 붙임) (`blog-writer:server/browser/userChrome.ts:486-492`) → [[_system/integrations/blog-editors]].
+예약발행·자동발행(2026-10-09): 임시저장을 확인한 뒤 `naverPublishSteps`를 같은 `runJs`로 실행한다(입력 `problems`가 있어도 발행은 진행하고, 호출한 쪽이 "확인 필요"로 로그에 남긴다. 단계가 멈추면 그 순간의 발행 창 구조를 `PublishStepError.dialog`에 담는다)(`PUBLISH_HELPERS`를 앞에 붙임) (`blog-writer:server/browser/userChrome.ts:486-487`) → [[_system/integrations/blog-editors]].
 
 ## 바깥 변화에 취약한 지점
 SmartEditor ONE 클래스(`.se-documentTitle`, `.se-component.se-text`, `.se-text-paragraph`, `.se-sectionTitle`, `iframe[id^="input_buffer"]`, `button[class*="save_btn"]`, `[class*="save_count_btn"]`), 팝업 문구("작성 중인 글"), 토스트("임시저장이 완료"). 발행 창은 화면 글자("발행"·"전체공개"·"예약")로 찾는다 — 실제 발행 창에서는 아직 시험하지 않음. macOS 전용 (`userChromeSupported`).

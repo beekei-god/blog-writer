@@ -63,7 +63,7 @@ updated: 2026-10-09
 | 서버 | `MANUAL_LOG`, `PUT /api/jobs/:id/status` | `blog-writer:server/routes/jobs.ts:154-181` |
 | 화면 | `api.setStatus`, `StatusPicker`, 표시 위치, `NextStep`의 발행완료·미선택 안내, `Progress` | `blog-writer:src/api.ts:109-111`, `blog-writer:src/job/NextStep.tsx:7-30`, `:73-121`, `blog-writer:src/job/JobDetail.tsx:194-197`, `blog-writer:src/job/Progress.tsx:5-44` |
 | 화면(목록) | 필터 칩 | `blog-writer:src/App.tsx:23-38` |
-| 스타일 | `--pub`, `--sch`, `.badge.published`, `.badge.scheduled`, `.status-picker` | `blog-writer:src/styles.css:6-7`, `:17-18`, `:95-96`, `:327` |
+| 스타일 | `--pub`, `--sch`, `.badge.published`, `.badge.scheduled`, `.status-picker` | `blog-writer:src/styles.css:6-7`, `:17-18`, `:95-96`, `:328` |
 | 테스트 | 초안 검토·임시저장 완료·발행완료 사이 이동, 예약에서 바꾸기, 같은 상태·초안 전 거절, `scheduled` 요청 거절 | `blog-writer:tests/api.test.ts:102-126` |
 
 ## 예외 / 경계값

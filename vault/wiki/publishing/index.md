@@ -27,7 +27,7 @@ updated: 2026-10-09
 - [[publishing/business-rules/BR-PUB-015 올릴 블로그는 글마다 선택]] — 기본 블로그 없음, `platform` 필수
 - [[publishing/business-rules/BR-PUB-016 워드프레스 재등록은 같은 글 갱신]] — `postId`로 갱신, 미디어 재사용
 - [[publishing/business-rules/BR-PUB-017 로그인 창은 한 블로그씩]] — 네이버·티스토리용, 다른 블로그 창이 열려 있으면 409
-- [[publishing/business-rules/BR-PUB-018 발행 창 단계와 안전장치]] — 네이버·티스토리 발행 창: 임시저장 먼저, 글자로 찾기, 예약 시각 다시 읽기, 입력 문제면 발행 안 함, 발행 버튼 전까지만 중지, 멈추면 임시저장 완료+오류 (confidence medium)
+- [[publishing/business-rules/BR-PUB-018 발행 창 단계와 안전장치]] — 네이버·티스토리 발행 창: 임시저장 먼저, 글자로 찾기, 예약 시각 다시 읽기, 입력 문제가 있어도 발행(로그에 확인 필요), 발행 버튼 전까지만 중지, 멈추면 임시저장 완료+오류+발행 창 구조 로그 (네이버 예약발행은 실제 사이트에서 확인, 나머지는 confidence medium)
 - [[publishing/business-rules/BR-PUB-019 다른 블로그에 올린 글 표시]] — 마지막으로 올린 블로그(`postingTo`)가 지금 고른 블로그일 때만 "올린 글" (워드프레스는 기록 기준, 불일치)
 
 ## 플로우

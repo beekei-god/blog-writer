@@ -120,3 +120,13 @@ updated: 2026-10-05
 - 불일치: BR-PUB-001 (설정 화면 문구 "임시저장까지만"이 남아 있음 → publishing open-questions #12), BR-PUB-019 (크롬 블로그는 `job.postingTo`, 워드프레스는 `job.wordpress`로 "이 블로그에 올렸는지"를 판단 → #15)
 - 새 open question: image #6~8, publishing #11~15, writing #9. 네이버·티스토리 발행 창 단계는 모의 발행 창으로만 확인(실제 사이트 미검증, confidence medium)
 - 분석 시점: git 65bfa3e (스냅샷 `_snapshot.json`)
+
+## [2026-10-09] update | publishing · _system (네이버 발행 창 실제 확인 반영, 입력 문제가 있어도 발행)
+- 읽은 범위: 커밋 65bfa3e..9a9c6df에서 바뀐 13개 파일 (`server/browser/publish.ts`·`adapters.ts`·`userChrome.ts`·`blogPost.ts`·`runner.ts`·`postHtml.ts`, `server/pipeline.ts`, `shared/labels.ts`·`types.ts`, `src/SettingsPanel.tsx`·`api.ts`·`styles.css`, `tests/publish.test.ts`)
+- 변경 내용: 발행 창을 "여는 버튼이 든 상자는 제외하고" 찾도록 고침(위쪽 막대를 발행 창으로 잘못 고르던 문제). 네이버는 공개 설정을 바꾸지 않음. 입력에 확인할 점이 있어도 발행하고 로그에 "확인 필요"(사용자 결정, 세 경로 공통). 발행 창 단계가 멈추면 그 순간의 발행 창 구조를 진행 로그에 남김. 로그에 블로그 이름 사용, 설정 화면 문구·낡은 주석 정리
+- 갱신(내용): publishing — BR-PUB-001(설정 문구 불일치 해소, consistency 복귀), BR-PUB-011, BR-PUB-018, 블로그 임시저장·발행 플로우, 구현 지도, index, open-questions(#11 네이버 예약발행 실제 확인·나머지 미확인, #12·#14 해결) / _system — known-issues(#24 갱신, #28 해결), modules(server-browser·tests 외 줄 수), integrations(blog-editors·chrome-applescript·claude-in-chrome·playwright-chrome), operations
+- 줄 번호 보정: 바뀐 13개 파일을 가리키는 `blog-writer:` 참조를 HEAD 기준으로 맞춤. 전체 1,489개 중 파일 길이를 넘는 것 0개 (BR-PUB-016의 `wordpress.ts` 참조 1개를 이번에 고침)
+- 불일치: 없음 (BR-PUB-001의 설정 문구 불일치 해소)
+- 새 open question: 없음. 네이버 자동발행("현재")·티스토리·Claude in Chrome 발행 경로는 실제 사이트에서 아직 확인되지 않음 (publishing #11, known-issues #24)
+- 비고: 이 갱신은 서브에이전트가 사용량 한도로 중간에 멈춘 뒤 나머지를 직접 마무리했다
+- 분석 시점: git 9a9c6df (스냅샷 `_snapshot.json`)

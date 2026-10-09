@@ -56,6 +56,6 @@ updated: 2026-10-09
 ## 변경 이력
 | 날짜 | 변경 | 근거 |
 |---|---|---|
-| 2026-10-07 | 최초 기록 | `blog-writer:server/wordpress.ts:311-326` |
+| 2026-10-07 | 최초 기록 | `blog-writer:server/wordpress.ts:307-319` |
 | 2026-10-07 | 갱신 때 자동발행이면 공개 시각 처리 추가 | `blog-writer:server/wordpress.ts:306-310` |
 | 2026-10-09 | 근거 줄 번호 갱신 (동작 변화 없음) | 커밋 65bfa3e |

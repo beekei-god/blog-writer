@@ -8,7 +8,7 @@ confidence: high
 source:
   - blog-writer:shared/types.ts:243-305
   - blog-writer:server/store.ts:85-143
-  - blog-writer:server/pipeline.ts:23-429
+  - blog-writer:server/pipeline.ts:23-432
   - blog-writer:server/routes/jobs.ts:154-181
   - blog-writer:shared/labels.ts:4-17
   - blog-writer:src/job/NextStep.tsx:11-30
@@ -90,7 +90,7 @@ stateDiagram-v2
 | → generating_images | 만들 이미지가 1개 이상 | `blog-writer:server/pipeline.ts:217-246` |
 | → draft_ready | 초안 완성, 이미지 작업 끝(성공·실패·중지 모두. 한 장씩 동시에 만드는 중이면 마지막 이미지가 끝날 때), 블로그 등록 실패·중지(크롬·워드프레스, 공용 `failStep`), 재시작 복구(초안 있음) | `blog-writer:server/pipeline.ts:132-135`, `:156-163`, `:180-189`, `:37-45`, `blog-writer:server/store.ts:131-143` |
 | → failed | 초안 없이 실패/중지, 재시작 복구(초안 없음) | `blog-writer:server/pipeline.ts:137-142`, `blog-writer:server/store.ts:135` |
-| posting → posted / scheduled / published (네이버·티스토리) | 고른 방식대로: 임시저장 → posted, 예약발행 → scheduled, 자동발행 → published. 늘 임시저장을 먼저 하고 발행 창에서 발행한다. 발행 창에서 멈추면(`PublishStepError`) posted + `error`에 이유 (2026-10-09) | `blog-writer:server/pipeline.ts:410-423` |
+| posting → posted / scheduled / published (네이버·티스토리) | 고른 방식대로: 임시저장 → posted, 예약발행 → scheduled, 자동발행 → published. 늘 임시저장을 먼저 하고 발행 창에서 발행한다. 발행 창에서 멈추면(`PublishStepError`) posted + `error`에 이유 (2026-10-09) | `blog-writer:server/pipeline.ts:411-426` |
 | posting → posted / scheduled / published (워드프레스) | 워드프레스 API가 돌려준 글 상태(`draft`/`future`/`publish`)대로 정한다. 요청한 방식과 다르면 "확인 필요" 로그 | `blog-writer:server/pipeline.ts:345-354` |
 | 글 상태 직접 변경 | 사용자가 상세 화면 "글 상태 [초안 검토 \| 블로그 임시저장 완료 \| 블로그 발행완료]"에서 고름 (`PUT /api/jobs/:id/status`). 바꿀 수 있는 글: `canSetStatus` = draft_ready·posted·scheduled·published. 고를 수 있는 상태: `MANUAL_STATUSES` = draft_ready·posted·published (scheduled로는 못 바꿈). 같은 상태로는 400. 초안 검토로 되돌릴 때만 확인 창("블로그에 이미 저장·발행된 글은 그대로 남습니다."). 앱이 블로그에 올리거나 발행하지는 않는다 | `blog-writer:server/routes/jobs.ts:154-181`, `blog-writer:shared/types.ts:272-276`, `blog-writer:src/job/NextStep.tsx:11-30` |
 | → posting (다시 올리기) | 서버는 초안만 있으면 상태와 관계없이 받는다. 화면은 블로그 발행완료 글에는 올리기 버튼을 보여 주지 않는다 | `blog-writer:server/routes/jobs.ts:100-152`, `blog-writer:src/job/NextStep.tsx:101-117` |
@@ -112,4 +112,4 @@ stateDiagram-v2
 | 2026-10-07 | 상태 `scheduled`(예약됨) 추가, 워드프레스 등록 결과로 posted/scheduled/published 결정, `wordpress` 기록 추가, 수기 전이에 scheduled → published·draft_ready 추가 | `blog-writer:shared/types.ts:218-272`, `blog-writer:server/pipeline.ts:276-310`, `blog-writer:server/routes/jobs.ts:147-151` |
 | 2026-10-07 | `postingTo` 추가, 올리는 중 라벨이 블로그에 따라 "워드프레스 등록 중"/"크롬 작성 중"으로 갈림 (워드프레스는 크롬을 쓰지 않는데 "크롬 작성 중"으로 보이던 것을 고침) | `blog-writer:shared/labels.ts:4-18`, `blog-writer:server/routes/util.ts:16-23`, `blog-writer:server/pipeline.ts:284`, `:322` |
 | 2026-10-08 | `imageRunsOnly` 추가, 진행 이미지 목록을 실행마다 더하고 빼기 (이미지 한 장씩 동시 실행) | `blog-writer:shared/types.ts:260-265`, `blog-writer:server/pipeline.ts:199-228` |
-| 2026-10-09 | 상태 화면 이름 변경(자료 조사 중 / 초안 검토 / 블로그 임시저장 중·완료 / 블로그 발행 예약 / 블로그 발행완료), 올리는 중 라벨이 블로그와 관계없이 같아짐. 네이버·티스토리도 예약발행·자동발행 결과로 scheduled·published가 되고, 발행 창에서 멈추면 posted + 오류. 수기 상태 변경을 `MANUAL_TRANSITIONS`에서 `canSetStatus`(초안 검토 이후 글) + `MANUAL_STATUSES`(초안 검토·임시저장 완료·발행완료 중 다른 상태)로 바꿈 → draft_ready → posted·published, scheduled → posted가 새로 가능 | `blog-writer:shared/labels.ts:4-17`, `blog-writer:shared/types.ts:272-276`, `blog-writer:server/routes/jobs.ts:154-181`, `blog-writer:server/pipeline.ts:410-423` |
+| 2026-10-09 | 상태 화면 이름 변경(자료 조사 중 / 초안 검토 / 블로그 임시저장 중·완료 / 블로그 발행 예약 / 블로그 발행완료), 올리는 중 라벨이 블로그와 관계없이 같아짐. 네이버·티스토리도 예약발행·자동발행 결과로 scheduled·published가 되고, 발행 창에서 멈추면 posted + 오류. 수기 상태 변경을 `MANUAL_TRANSITIONS`에서 `canSetStatus`(초안 검토 이후 글) + `MANUAL_STATUSES`(초안 검토·임시저장 완료·발행완료 중 다른 상태)로 바꿈 → draft_ready → posted·published, scheduled → posted가 새로 가능 | `blog-writer:shared/labels.ts:4-17`, `blog-writer:shared/types.ts:272-276`, `blog-writer:server/routes/jobs.ts:154-181`, `blog-writer:server/pipeline.ts:411-426` |

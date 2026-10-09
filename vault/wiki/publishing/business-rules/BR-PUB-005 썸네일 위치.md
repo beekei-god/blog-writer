@@ -7,11 +7,11 @@ status: active
 confidence: high
 consistency: consistent
 source:
-  - blog-writer:server/browser/blogPost.ts:32-35
-  - blog-writer:server/browser/blogPost.ts:68
+  - blog-writer:server/browser/blogPost.ts:33-36
+  - blog-writer:server/browser/blogPost.ts:69
   - blog-writer:server/browser/userChrome.ts:149-150
-  - blog-writer:server/browser/adapters.ts:249-253
-  - blog-writer:server/browser/adapters.ts:367-371
+  - blog-writer:server/browser/adapters.ts:252-256
+  - blog-writer:server/browser/adapters.ts:374-378
   - blog-writer:server/wordpress.ts:269-296
 entities: [블로그 설정]
 updated: 2026-10-09
@@ -31,9 +31,9 @@ updated: 2026-10-09
 ## 구현 현황
 | 레이어 | 구현 | 근거 |
 |---|---|---|
-| Claude in Chrome | 조각 맨 앞 + 네이버 안내 "제목 바로 아래, 본문 첫 줄" | `blog-writer:server/browser/blogPost.ts:32-35`, `:68` |
+| Claude in Chrome | 조각 맨 앞 + 네이버 안내 "제목 바로 아래, 본문 첫 줄" | `blog-writer:server/browser/blogPost.ts:33-36`, `:69` |
 | 평소 크롬(네이버) | 조각 맨 앞 | `blog-writer:server/browser/userChrome.ts:149-150` |
-| 자동 조작 | 네이버·티스토리 본문 첫 삽입 | `blog-writer:server/browser/adapters.ts:249-253`, `:367-371` |
+| 자동 조작 | 네이버·티스토리 본문 첫 삽입 | `blog-writer:server/browser/adapters.ts:252-256`, `:374-378` |
 | 워드프레스 API | 썸네일 업로드 → `featured_media` | `blog-writer:server/wordpress.ts:271`, `:289`, `:296` |
 
 ## 영향받는 플로우

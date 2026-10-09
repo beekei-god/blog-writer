@@ -74,4 +74,4 @@ updated: 2026-10-09
 | 예약 시각 최소 여유 | 지금 + 1분 (2026-10-09부터 네이버·티스토리 예약에도 같은 `checkSchedule`) | `blog-writer:server/wordpress.ts:248-253` | [[publishing/business-rules/BR-PUB-014 워드프레스 등록 방식과 예약 시각]] |
 | `NAVER_MINUTE_STEP` | 10 (네이버 예약 분 단위) | `blog-writer:shared/types.ts:17` | [[publishing/business-rules/BR-PUB-001 발행하지 않고 임시저장까지만]] |
 | `MAX_LINKS` | 20 (새 글 참고 링크 수) | `blog-writer:shared/types.ts:19` | [[writing/business-rules/BR-WRT-010 주제와 참고 링크 입력 검증]] |
-| 발행 창 단계 제한 시간 | 단계마다 10초(예약 날짜 20초, 발행 확인 30초), 0.5초마다 다시 확인 | `blog-writer:server/browser/publish.ts:232-258` | [[_system/integrations/blog-editors]] |
+| 발행 창 단계 제한 시간 | 단계마다 10초(예약 날짜 20초, 발행 확인 30초), 0.5초마다 다시 확인 | `blog-writer:server/browser/publish.ts:266-292` | [[_system/integrations/blog-editors]] |

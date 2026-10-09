@@ -4,8 +4,8 @@ project: blog-writer
 system: Playwright + 설치된 Google Chrome
 confidence: high
 source:
-  - blog-writer:server/browser/runner.ts:1-94
-  - blog-writer:server/browser/adapters.ts:1-399
+  - blog-writer:server/browser/runner.ts:1-99
+  - blog-writer:server/browser/adapters.ts:1-406
   - blog-writer:server/browser/mouse.ts:1-74
   - blog-writer:server/browser/loginWindow.ts:1-65
   - blog-writer:server/images/svg.ts:66-79
@@ -21,12 +21,12 @@ updated: 2026-10-09
 ## 호출 방식
 - `chromium.launchPersistentContext(CHROME_PROFILE_DIR, { channel: "chrome", headless: BW_HEADLESS==="1", viewport: null, args: ["--start-maximized", "--disable-blink-features=AutomationControlled"], ignoreDefaultArgs: ["--enable-automation", "--use-mock-keychain", "--password-store=basic"], acceptDownloads: true })` (`blog-writer:server/browser/runner.ts:54-66`). 키체인 관련 인자를 빼서 로그인 창(일반 크롬)과 같은 쿠키를 읽게 한다.
 - 같은 프로필을 두 프로세스가 열 수 없으므로: 이전 자동 조작 창을 닫고, 로그인 창이 열려 있으면 닫고 진행 (`blog-writer:server/browser/runner.ts:47-52`). 로그인 창은 자동 조작 중이면 열 수 없다 (`blog-writer:server/routes/browser.ts:93-95`).
-- 입력은 `HumanMouse`(베지어 곡선 이동, 요소 안 임의 지점 클릭)와 `keyboard.type`(글자마다 12~37ms 지연). 표는 HTML paste 이벤트, 실패하면 "• 헤더: 값 / …" 목록으로 타이핑 (`blog-writer:server/browser/adapters.ts:97-123`).
-- 작업 후 창은 열어 둔다(`keepOpen: true`) — 사용자가 확인·발행 (`blog-writer:server/browser/runner.ts:87-94`).
-- 예약발행·자동발행(2026-10-09): `postWithChrome(..., publish)`로 받은 요청을 어댑터가 임시저장 뒤 `publishIfAsked`로 처리한다. 발행 창 단계 JS를 `page.evaluate`(네이버는 에디터가 `#mainFrame` 안이면 그 프레임)로 실행한다 (`blog-writer:server/browser/adapters.ts:23-33`, `:284`, `:392`) → [[_system/integrations/blog-editors]].
+- 입력은 `HumanMouse`(베지어 곡선 이동, 요소 안 임의 지점 클릭)와 `keyboard.type`(글자마다 12~37ms 지연). 표는 HTML paste 이벤트, 실패하면 "• 헤더: 값 / …" 목록으로 타이핑 (`blog-writer:server/browser/adapters.ts:99-126`).
+- 작업 후 창은 열어 둔다(`keepOpen: true`) — 사용자가 확인·발행 (`blog-writer:server/browser/runner.ts:88-99`).
+- 예약발행·자동발행(2026-10-09): `postWithChrome(..., publish)`로 받은 요청을 어댑터가 임시저장 뒤 `publishIfAsked`로 처리한다. 발행 창 단계 JS를 `page.evaluate`(네이버는 에디터가 `#mainFrame` 안이면 그 프레임)로 실행한다 (`blog-writer:server/browser/adapters.ts:23-35`, `:287`, `:399`) → [[_system/integrations/blog-editors]].
 
 ## 실패 처리
-- 로그인 페이지로 가면 기다리지 않고 바로 오류로 멈춘다. 직접 로그인하지 않으며, 설정의 "블로그 로그인 창 열기"로 로그인한 뒤 다시 시도하게 안내한다 (`blog-writer:server/browser/adapters.ts:162-165`, 2026-10-05 수정).
+- 로그인 페이지로 가면 기다리지 않고 바로 오류로 멈춘다. 직접 로그인하지 않으며, 설정의 "블로그 로그인 창 열기"로 로그인한 뒤 다시 시도하게 안내한다 (`blog-writer:server/browser/adapters.ts:165-168`, 2026-10-05 수정).
 - 실패 시 `data/last-error.png` 스크린샷 (`blog-writer:server/browser/runner.ts:80-84`).
 - 임시저장 버튼을 못 찾으면 "직접 저장해 주세요" 오류.
 

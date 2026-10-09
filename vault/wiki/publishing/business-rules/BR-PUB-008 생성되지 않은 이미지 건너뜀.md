@@ -8,11 +8,11 @@ confidence: high
 consistency: consistent
 source:
   - blog-writer:shared/postHtml.ts:47-48
-  - blog-writer:server/browser/blogPost.ts:38-41
-  - blog-writer:server/browser/blogPost.ts:123
+  - blog-writer:server/browser/blogPost.ts:39-42
+  - blog-writer:server/browser/blogPost.ts:124
   - blog-writer:server/browser/userChrome.ts:152-156
-  - blog-writer:server/browser/adapters.ts:39-44
-  - blog-writer:server/browser/adapters.ts:137-141
+  - blog-writer:server/browser/adapters.ts:41-46
+  - blog-writer:server/browser/adapters.ts:140-144
   - blog-writer:server/wordpress.ts:222-227
 updated: 2026-10-09
 ---
@@ -32,9 +32,9 @@ updated: 2026-10-09
 | 레이어 | 구현 | 근거 |
 |---|---|---|
 | 공용 | 로그에 쓰는 이름 `skippedImageLabel` (alt, 없으면 prompt 앞 30자) | `blog-writer:shared/postHtml.ts:47-48` |
-| Claude in Chrome | `buildSegments` skipped | `blog-writer:server/browser/blogPost.ts:38-41`, `:123` |
+| Claude in Chrome | `buildSegments` skipped | `blog-writer:server/browser/blogPost.ts:39-42`, `:124` |
 | 평소 크롬 | `segmentsOf` | `blog-writer:server/browser/userChrome.ts:152-156` |
-| 자동 조작 | `hasFile`, `imagePath` | `blog-writer:server/browser/adapters.ts:39-44`, `:137-141` |
+| 자동 조작 | `hasFile`, `imagePath` | `blog-writer:server/browser/adapters.ts:41-46`, `:140-144` |
 | 워드프레스 API | 파일 있는 이미지만 업로드, `postToBlocks`가 올리지 않은 이미지 건너뜀(같은 로그) | `blog-writer:server/wordpress.ts:270-274`, `:222-227` |
 
 ## 영향받는 플로우

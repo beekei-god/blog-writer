@@ -8,9 +8,9 @@ confidence: high
 consistency: consistent
 source:
   - blog-writer:server/browser/claudeChrome.ts:104
-  - blog-writer:server/browser/blogPost.ts:205
+  - blog-writer:server/browser/blogPost.ts:206
   - blog-writer:server/browser/userChrome.ts:370-378
-  - blog-writer:server/browser/adapters.ts:162-165
+  - blog-writer:server/browser/adapters.ts:165-168
   - blog-writer:server/images/webAi.ts:243
   - blog-writer:server/wordpress.ts:92-108
 updated: 2026-10-09
@@ -32,9 +32,9 @@ updated: 2026-10-09
 | 레이어 | 구현 | 근거 |
 |---|---|---|
 | 프롬프트(공통) | 직접 로그인 금지, 멈춤 | `blog-writer:server/browser/claudeChrome.ts:104` |
-| Claude in Chrome 결과 처리 | `BlogLoginRequired` | `blog-writer:server/browser/blogPost.ts:205` |
+| Claude in Chrome 결과 처리 | `BlogLoginRequired` | `blog-writer:server/browser/blogPost.ts:206` |
 | 평소 크롬 | `UserChromeError("login")` | `blog-writer:server/browser/userChrome.ts:375` |
-| 자동 조작 | `waitForLogin`이 바로 throw | `blog-writer:server/browser/adapters.ts:162-165` |
+| 자동 조작 | `waitForLogin`이 바로 throw | `blog-writer:server/browser/adapters.ts:165-168` |
 | 워드프레스 API | 401 오류 코드 해석 | `blog-writer:server/wordpress.ts:92-108` |
 
 모든 경로가 "앱이 직접 로그인하지 않고, 로그인 화면이면 멈춘다"로 같다.
@@ -53,6 +53,6 @@ updated: 2026-10-09
 | 날짜 | 변경 | 근거 |
 |---|---|---|
 | 2026-10-05 | 최초 기록 | |
-| 2026-10-05 | 자동 조작의 5분 로그인 대기를 즉시 중단으로 변경 (consistency conflict → consistent) | `blog-writer:server/browser/adapters.ts:151-155` |
+| 2026-10-05 | 자동 조작의 5분 로그인 대기를 즉시 중단으로 변경 (consistency conflict → consistent) | `blog-writer:server/browser/adapters.ts:154-158` |
 | 2026-10-07 | 워드프레스 API 인증 실패(401) 원인별 안내 추가. 로그인 창은 네이버·티스토리용으로 한정 | `blog-writer:server/wordpress.ts:93-109` |
 | 2026-10-09 | 근거 줄 번호 갱신 (동작 변화 없음) | 커밋 65bfa3e |

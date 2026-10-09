@@ -9,9 +9,9 @@ consistency: consistent
 source:
   - blog-writer:server/browser/postHtml.ts:26-38
   - blog-writer:server/browser/userChrome.ts:188-208
-  - blog-writer:server/browser/adapters.ts:233-245
-  - blog-writer:server/browser/blogPost.ts:126-141
-  - blog-writer:server/browser/blogPost.ts:66
+  - blog-writer:server/browser/adapters.ts:236-248
+  - blog-writer:server/browser/blogPost.ts:127-142
+  - blog-writer:server/browser/blogPost.ts:67
 updated: 2026-10-09
 ---
 # BR-PUB-009 네이버 이미지 파일 이름과 크기
@@ -35,8 +35,8 @@ updated: 2026-10-09
 |---|---|---|
 | 서버 | `altFileName` | `blog-writer:server/browser/postHtml.ts:30-38` |
 | 평소 크롬 | `shrinkImage` | `blog-writer:server/browser/userChrome.ts:188-208` |
-| 자동 조작 | alt 이름 사본 | `blog-writer:server/browser/adapters.ts:233-245` |
-| Claude in Chrome | alt 이름 사본 + 안내 | `blog-writer:server/browser/blogPost.ts:126-141`, `:66` |
+| 자동 조작 | alt 이름 사본 | `blog-writer:server/browser/adapters.ts:236-248` |
+| Claude in Chrome | alt 이름 사본 + 안내 | `blog-writer:server/browser/blogPost.ts:127-142`, `:67` |
 | 워드프레스 API | `ensureMedia`의 `alt_text` | `blog-writer:server/wordpress.ts:149-171` |
 
 ## 예외 / 경계값
@@ -49,6 +49,6 @@ updated: 2026-10-09
 | 날짜 | 변경 | 근거 |
 |---|---|---|
 | 2026-10-05 | 최초 기록 | |
-| 2026-10-05 | Claude in Chrome 경로도 alt 이름 사본으로 올림 | `blog-writer:server/browser/blogPost.ts:131-146` |
+| 2026-10-05 | Claude in Chrome 경로도 alt 이름 사본으로 올림 | `blog-writer:server/browser/blogPost.ts:132-147` |
 | 2026-10-07 | 워드프레스는 크롬 에디터 대신 API로 미디어 `alt_text` 설정 | `blog-writer:server/wordpress.ts:168` |
 | 2026-10-09 | 근거 줄 번호 갱신 (동작 변화 없음) | 커밋 65bfa3e |

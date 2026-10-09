@@ -9,10 +9,10 @@ consistency: consistent
 source:
   - blog-writer:rules/default-writing-rules.md:53-66
   - blog-writer:shared/postHtml.ts:50-51
-  - blog-writer:server/browser/blogPost.ts:45-46
+  - blog-writer:server/browser/blogPost.ts:46-47
   - blog-writer:server/browser/userChrome.ts:161-168
   - blog-writer:server/browser/userChrome.ts:329-338
-  - blog-writer:server/browser/adapters.ts:133-159
+  - blog-writer:server/browser/adapters.ts:136-162
   - blog-writer:server/wordpress.ts:198-236
 entities: [블로그 설정]
 updated: 2026-10-09
@@ -36,11 +36,11 @@ updated: 2026-10-09
 | 레이어 | 구현 | 값/내용 | 근거 |
 |---|---|---|---|
 | 규칙 문서 | 6장 | 소제목 위 1줄만 | `blog-writer:rules/default-writing-rules.md:53-66` |
-| Claude in Chrome 조각 | 첫 소제목 외 `BLANK_LINE` + `<h3>` (`pasteBlockHtml(b, "h3")`) | 1줄 | `blog-writer:server/browser/blogPost.ts:19`, `:45-46` |
+| Claude in Chrome 조각 | 첫 소제목 외 `BLANK_LINE` + `<h3>` (`pasteBlockHtml(b, "h3")`) | 1줄 | `blog-writer:server/browser/blogPost.ts:20`, `:46-47` |
 | 평소 크롬(네이버) | 첫 소제목 외 `BLANK_LINE`/`&nbsp;` + `<p>`(`pasteBlockHtml(b, "p")`) 후 "소제목" 서식, 검증으로 빠진 곳 보고 | 1줄 | `blog-writer:server/browser/userChrome.ts:134`, `:161-168`, `:329-338`, `:447-464` |
 | 워드프레스 API | 블록 마크업, 빈 문단 없음, 문단·목록·소제목 간격은 테마 기본. 표는 워드프레스 전용 `wpTableHtml`(본문 폭, 넉넉한 여백) | 0줄 (블록 간격) | `blog-writer:server/wordpress.ts:198-236` |
 | 공용 | 붙여넣기 블록 HTML (소제목 태그만 경로별) | | `blog-writer:server/browser/postHtml.ts:7-20` |
-| 자동 조작(네이버·티스토리) `fillPlainBody` | 소제목 앞에만 Enter 1번 (2026-10-05 수정, 예전엔 모든 블록 사이에 추가로 넣음). 문단은 `typeLines`가 줄마다 Enter | 소제목 위 1줄 | `blog-writer:server/browser/adapters.ts:147-148` |
+| 자동 조작(네이버·티스토리) `fillPlainBody` | 소제목 앞에만 Enter 1번 (2026-10-05 수정, 예전엔 모든 블록 사이에 추가로 넣음). 문단은 `typeLines`가 줄마다 Enter | 소제목 위 1줄 | `blog-writer:server/browser/adapters.ts:150-151` |
 
 ## 예외 / 경계값
 - 자동 조작 경로는 줄마다 Enter로 끝내는 `typeLines`를 쓰므로, 에디터가 Enter를 어떻게 처리하는지에 따라 실제 빈 줄 수가 달라질 수 있다. 수정 후 실제 에디터에서 확인하지 못해 `confidence: medium`을 유지한다.
@@ -56,7 +56,7 @@ updated: 2026-10-09
 | 날짜 | 변경 | 근거 |
 |---|---|---|
 | 2026-10-05 | 최초 기록 | |
-| 2026-10-05 | 자동 조작이 블록 사이 빈 줄을 넣지 않고 소제목 위에만 한 줄 (consistency conflict → consistent) | `blog-writer:server/browser/adapters.ts:137-138` |
+| 2026-10-05 | 자동 조작이 블록 사이 빈 줄을 넣지 않고 소제목 위에만 한 줄 (consistency conflict → consistent) | `blog-writer:server/browser/adapters.ts:140-141` |
 | 2026-10-07 | 워드프레스 크롬 자동 조작(`## ` 단축키) 삭제. 워드프레스는 API 블록 마크업으로 올리며 빈 문단을 넣지 않음. 두 붙여넣기 경로의 블록 HTML을 `pasteBlockHtml`로 공용화(소제목 태그만 다름, 동작 같음) | `blog-writer:server/wordpress.ts:209-244`, `blog-writer:server/browser/postHtml.ts:7-20` |
 | 2026-10-07 | 규칙 문서에서 문단을 "2~4줄"에서 "한 가지 내용 1~3줄, 길면 문단 블록으로 나눔, 짧은 내용은 한 줄 문단"으로 바꿈. 빈 줄 규칙은 변경 없음 | `blog-writer:rules/default-writing-rules.md:18`, `:66` |
 | 2026-10-07 (정정) | 문단을 "잘게 나누기"로 바꿨던 것을 되돌림: 문단 안 문장마다 줄바꿈(`<br>`), 문단 블록 2~4줄. 워드프레스 문단·소제목 간격을 직접 지정해 보았다가 사이트의 다른 글과 달라져 지정을 없앰 | `blog-writer:rules/default-writing-rules.md:18`, `blog-writer:server/wordpress.ts:216-225` |

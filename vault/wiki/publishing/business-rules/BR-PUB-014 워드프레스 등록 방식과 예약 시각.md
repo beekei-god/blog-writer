@@ -15,8 +15,8 @@ source:
   - blog-writer:server/wordpress.ts:245-264
   - blog-writer:server/wordpress.ts:299-302
   - blog-writer:server/pipeline.ts:319-360
-  - blog-writer:server/pipeline.ts:410-414
-  - blog-writer:server/browser/publish.ts:112-115
+  - blog-writer:server/pipeline.ts:411-415
+  - blog-writer:server/browser/publish.ts:144-147
   - blog-writer:src/job/NextStep.tsx:130-328
 entities: [블로그 설정, Job]
 updated: 2026-10-09
@@ -59,8 +59,8 @@ updated: 2026-10-09
 | 공용 | `PublishMode`, `NAVER_MINUTE_STEP = 10`, `PUBLISH_MODE_LABEL` | `blog-writer:shared/types.ts:16-17`, `:256-257`, `blog-writer:shared/labels.ts:23-24` |
 | 서버(요청 검사) | `mode` 기본 `draft`, `scheduledAt` ISO, 예약이면 `checkSchedule`(모든 블로그), 네이버 10분 단위 | `blog-writer:server/routes/jobs.ts:106-147` |
 | 서버(워드프레스) | `WP_STATUS`, `checkSchedule`, 업로드 전 재확인, 자동발행 때 공개 시각 지금으로 | `blog-writer:server/wordpress.ts:245-264`, `:299-302` |
-| 서버(상태) | `doWordPressPost` 사이트 상태로, `doPost` 요청 방식으로 | `blog-writer:server/pipeline.ts:332-360`, `:410-414` |
-| 서버(발행 창) | 분 단위가 맞지 않으면 단계를 만들지 않음 (네이버 10, 티스토리 1) | `blog-writer:server/browser/publish.ts:113-115`, `:205`, `:225` |
+| 서버(상태) | `doWordPressPost` 사이트 상태로, `doPost` 요청 방식으로 | `blog-writer:server/pipeline.ts:332-360`, `:411-415` |
+| 서버(발행 창) | 분 단위가 맞지 않으면 단계를 만들지 않음 (네이버 10, 티스토리 1) | `blog-writer:server/browser/publish.ts:145-147`, `:238`, `:259` |
 | 화면 | 공용 `usePublishMode`(분 단위·1분 검사·요청 값)와 `PublishModeFields`(방식 버튼·안내·시각 칸)를 `ChromeBlogNext`와 `WordPressNext`가 같이 씀. 안내 문구는 `CHROME_MODE_HINT`/`WP_MODE_HINT` | `blog-writer:src/job/NextStep.tsx:149-158`, `:200-259`, `:273-281` |
 | 테스트 | 예약 시각 경계, 과거 시각이면 업로드 전 거절, 자동발행 공개 시각, 네이버·티스토리 과거 시각·10분 단위 | `blog-writer:tests/wordpress.test.ts:18-26`, `:124-137`, `:145-149`, `blog-writer:tests/api.test.ts:72-95`, `blog-writer:tests/publish.test.ts:14-16` |
 
