@@ -42,7 +42,7 @@ updated: 2026-10-09
 | 서버(요청 검사) | zod | prompt 2~2000자(`EDIT_PROMPT_MAX`), range 정수 ≥0, 초안·범위 검사 | `blog-writer:server/routes/edit.ts:11-31`, `blog-writer:server/editPost.ts:13` |
 | 서버(Claude 호출) | `proposeEdit` | 글쓰기 규칙(`getRules`) 포함 시스템 프롬프트, 도구 WebSearch·WebFetch, 글 전체/범위별 출력 스키마 | `blog-writer:server/editPost.ts:74-95`, `:111-156` |
 | 서버(백그라운드) | `startEdit`·`doEdit` | 시작 때 `running` 제안 기록, 끝나면 `ready`/`failed`, 중지면 제안 삭제 | `blog-writer:server/pipeline.ts:157-197` |
-| 공용 | `EditProposal`, `Job.editProposal` | 제안의 모양 → [[writing/entities/Job]] | `blog-writer:shared/types.ts:285-305`, `:324` |
+| 공용 | `EditProposal`, `Job.editProposal` | 제안의 모양 → [[writing/entities/Job]] | `blog-writer:shared/types.ts:314-334`, `:324` |
 | 프롬프트 | 시스템 프롬프트 | "요청한 부분만 고치기", 글쓰기 규칙 준수, 확인된 사실만, 분량 ≤3,000자 | `blog-writer:server/editPost.ts:81-95` |
 | 화면 | `EditByPrompt` | 선택한 블록의 처음~끝을 범위로, 비교 화면, 분량 경고 | `blog-writer:src/job/EditByPrompt.tsx:13-14`, `:110-163` |
 | 테스트 | `tests/editPost.test.ts` | 범위만 고침, 글 전체, 요청 검사, 시작→제안→적용 | `blog-writer:tests/editPost.test.ts:50-76`, `:161-223` |

@@ -8,7 +8,7 @@ confidence: high
 consistency: consistent
 source:
   - blog-writer:src/Usage.tsx:184-198
-  - blog-writer:src/App.tsx:231-239
+  - blog-writer:src/App.tsx:253-261
 entities: [PlanLimits]
 updated: 2026-10-07
 ---
@@ -30,7 +30,7 @@ updated: 2026-10-07
 ## 구현 현황
 | 레이어 | 구현 | 근거 |
 |---|---|---|
-| 화면 | `Meter`, `PlanPct` | `blog-writer:src/Usage.tsx:184-198`, `blog-writer:src/App.tsx:231-239` |
+| 화면 | `Meter`, `PlanPct` | `blog-writer:src/Usage.tsx:184-198`, `blog-writer:src/App.tsx:253-261` |
 | 서버 | 없음 (값만 저장) | |
 
 ## 예외 / 경계값

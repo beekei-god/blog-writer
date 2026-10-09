@@ -148,3 +148,13 @@ updated: 2026-10-05
 - 줄 번호 보정: 바뀐 파일을 가리키는 `blog-writer:` 참조 71곳을 diff로 새 줄 번호에 맞춤
 - 불일치: 없음. 새 open question 없음 (예약 날짜 달력은 사용자 보고로 고쳤지만 실제 사이트에서 다시 확인되지 않음)
 - 분석 시점: git 19d0364 (스냅샷 `_snapshot.json`)
+
+## [2026-10-09] update | topic · publishing · _system (키워드 탐색, 워드프레스 기본 카테고리 설정 제거)
+- 읽은 범위: 커밋 19d0364..1edb65a에서 바뀐 24개 파일 (추가 8개: `server/searchad.ts`·`explore.ts`·`trends.ts`, `server/routes/keywords.ts`, `src/Keywords.tsx`·`SearchAdSettings.tsx`, 테스트 2개 / 수정 16개 + `src/job/NextStep.tsx` 문구)
+- 변경 내용: 키워드 탐색 탭(네이버 검색광고 키워드 도구의 월간 검색량·경쟁, 입력이 없으면 구글 트렌드와 최근 추천 분야 기준), 검색광고 키 설정, 키워드 표에서 바로 주제 추천 시작, 탭 순서 변경. 워드프레스 기본 카테고리 설정(`wordpressCategoryId`)과 `/api/wordpress/categories` 삭제(올릴 때 고른 카테고리만 전송, 안 고르면 사이트 기본)
+- 생성: [[topic/business-rules/BR-TOP-007 키워드 검색량 표기와 집계]], [[topic/business-rules/BR-TOP-008 입력 없는 키워드 탐색의 기준과 오류 처리]], [[topic/business-rules/BR-TOP-009 검색광고 키 확인과 우선순위]], [[topic/entities/KeywordRow]], [[topic/flows/키워드 탐색 플로우]], [[_system/integrations/naver-searchad]], [[_system/integrations/google-trends]]
+- 갱신(내용): topic — BR-TOP-005(시작 경로만 늘고 규칙은 그대로), 주제 추천 플로우, 구현 지도, overview, index, open-questions(#5~7) / publishing — BR-PUB-020(기본 카테고리 개념 삭제, 변경 이력), 블로그 설정(`wordpressCategoryId` deprecated), 워드프레스 API 등록 플로우, BR-PUB-014, 임시저장 플로우, 구현 지도, index, open-questions(#20 신규 후 같은 날 해결) / _system — modules 8쪽, api, configuration, data-storage, architecture, overview, operations, known-issues(#34~36) / glossary, index, _registry
+- 줄 번호 보정: 바뀐 파일을 가리키는 `blog-writer:` 참조 200곳을 diff로 새 줄 번호에 맞춤
+- 불일치: 없음. 새 open question: topic #5(검색광고 API 실제 응답 미검증)·#6(구글 트렌드 RSS 미검증)·#7(입력 키워드 5개 초과 시 알림 없이 버림, 의도 확인 필요)
+- 비고: 서브에이전트 3개가 영역별로 갱신하고 메인이 용어집·index·registry·log·점검을 마무리했다
+- 분석 시점: git 1edb65a (스냅샷 `_snapshot.json`)

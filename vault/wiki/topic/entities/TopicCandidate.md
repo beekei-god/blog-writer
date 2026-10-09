@@ -6,7 +6,7 @@ aliases: [주제 후보, 추천 주제]
 status: active
 confidence: high
 source:
-  - blog-writer:shared/types.ts:338-366
+  - blog-writer:shared/types.ts:367-395
   - blog-writer:server/recommend.ts:189-204
   - blog-writer:src/Recommend.tsx:20-61
 updated: 2026-10-09
@@ -27,7 +27,7 @@ updated: 2026-10-09
 | `interest` | {level, momentum, series}? | 데이터랩 관심도 → [[topic/business-rules/BR-TOP-002 검색 관심도 환산]], [[topic/business-rules/BR-TOP-003 상승세 계산]] | "관심도 N ▲M%" + 스파크라인 |
 
 ## 상태와 전이
-없음. "이 주제로 글쓰기"를 누르면 새 글 폼에 주제와 근거 URL들(링크 칸)이 채워진다. 근거 전부를 채우는 것이 의도이며(2026-10-05 확정), 리서치는 사용자 링크를 모두 열어 비용이 커질 수 있으니 필요 없는 링크는 새 글 화면에서 지운다 (`blog-writer:src/Recommend.tsx:173`, `blog-writer:src/App.tsx:196-202`).
+없음. "이 주제로 글쓰기"를 누르면 새 글 폼에 주제와 근거 URL들(링크 칸)이 채워진다. 근거 전부를 채우는 것이 의도이며(2026-10-05 확정), 리서치는 사용자 링크를 모두 열어 비용이 커질 수 있으니 필요 없는 링크는 새 글 화면에서 지운다 (`blog-writer:src/Recommend.tsx:200`, `blog-writer:src/App.tsx:200-208`).
 
 ## 저장 위치
 `Recommendation.candidates`

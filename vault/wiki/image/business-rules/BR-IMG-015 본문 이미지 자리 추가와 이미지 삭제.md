@@ -10,11 +10,11 @@ source:
   - blog-writer:shared/types.ts:15
   - blog-writer:server/routes/images.ts:139-199
   - blog-writer:server/store.ts:81-83
-  - blog-writer:src/api.ts:109-112
+  - blog-writer:src/api.ts:127-130
   - blog-writer:src/job/JobDetail.tsx:136-149
   - blog-writer:src/job/images.tsx:235-239
   - blog-writer:src/job/PostEditor.tsx:220-239
-  - blog-writer:tests/api.test.ts:174-222
+  - blog-writer:tests/api.test.ts:192-240
 entities: [ImageSpec, ImageOptions]
 updated: 2026-10-09
 ---
@@ -60,11 +60,11 @@ updated: 2026-10-09
 | 서버 API | 자리 추가 | `blog-writer:server/routes/images.ts:139-173` |
 | 서버 API | 삭제 | `blog-writer:server/routes/images.ts:175-199` |
 | 서버 | `removeImageFile` (폴더 밖은 건드리지 않음) | `blog-writer:server/store.ts:81-83` |
-| 화면 | `api.addImage`·`api.deleteImage` | `blog-writer:src/api.ts:109-112` |
+| 화면 | `api.addImage`·`api.deleteImage` | `blog-writer:src/api.ts:127-130` |
 | 화면 | `onAdd`·`onDelete`·`locked`, 삭제 확인 | `blog-writer:src/job/JobDetail.tsx:136-149` |
 | 화면 | 삭제 버튼(`hasFile`) | `blog-writer:src/job/images.tsx:235-239` |
 | 화면 | "＋ 여기에 이미지 추가"·블록 × | `blog-writer:src/job/PostEditor.tsx:220-239` |
-| 테스트 | 자리 추가(위치·소제목 이름), 자리·개수·진행 중 검사, 삭제(썸네일·본문·파일 삭제), 없는 이미지 404 | `blog-writer:tests/api.test.ts:174-222` |
+| 테스트 | 자리 추가(위치·소제목 이름), 자리·개수·진행 중 검사, 삭제(썸네일·본문·파일 삭제), 없는 이미지 404 | `blog-writer:tests/api.test.ts:192-240` |
 
 ## 예외 / 경계값
 - 파일이 있는 이미지를 지우면 파일도 사라져 되돌릴 수 없다. 서버는 글에서 먼저 빼고 파일을 지우므로 중간에 실패해도 글이 깨진 파일을 가리키지 않는다.

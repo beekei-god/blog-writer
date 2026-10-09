@@ -8,7 +8,7 @@ source:
   - blog-writer:src/ExtensionStatus.tsx:1-70
   - blog-writer:server/routes/browser.ts:17-57
   - blog-writer:server/browser/claudeChrome.ts:40-95
-  - blog-writer:src/SettingsPanel.tsx:346-376
+  - blog-writer:src/SettingsPanel.tsx:312-342
 updated: 2026-10-09
 ---
 # Claude in Chrome 연결 확인 플로우
@@ -38,4 +38,4 @@ updated: 2026-10-09
 ## 변경 이력
 | 날짜 | 변경 | 근거 |
 |---|---|---|
-| 2026-10-09 | 근거 줄 번호 갱신 (흐름 변화 없음). 설정 카드 설명은 아직 "…글쓰기 화면을 대신 조작해 임시저장합니다"라고 적혀 있다 (예약·자동발행 추가 전 문구) | `blog-writer:src/SettingsPanel.tsx:350` |
+| 2026-10-09 | 근거 줄 번호 갱신 (흐름 변화 없음). 설정 카드 설명은 아직 "…글쓰기 화면을 대신 조작해 임시저장합니다"라고 적혀 있다 (예약·자동발행 추가 전 문구) | `blog-writer:src/SettingsPanel.tsx:316` |

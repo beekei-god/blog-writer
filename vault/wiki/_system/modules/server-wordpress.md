@@ -15,7 +15,7 @@ updated: 2026-10-09
 ## 파일
 | 파일 | 줄 | 역할 | 주요 export | 관련 페이지 |
 |---|---|---|---|---|
-| `server/wordpress.ts` | 320 | 사이트 주소 정리, 인증 요청과 오류 메시지, 연결 확인, 카테고리, 이미지 업로드·재사용, 태그 조회·생성, Gutenberg 블록 변환(표는 본문 폭·넉넉한 여백의 `wpTableHtml` — 2026-10-09부터 `shared/postHtml`의 `tableHtml`에 칸·표 스타일만 더해 만든다. `plain`·`skippedImageLabel`도 공용 것을 쓴다), 예약 시각 검사, 등록(예약했던 글을 자동발행하면 공개 시각을 지금으로) | `WordPressError`, `normalizeSite`, `wordpressSiteOf`, `testWordPress`, `listCategories`, `postToBlocks`, `checkSchedule`, `publishToWordPress` | [[publishing/flows/워드프레스 API 등록 플로우]] |
+| `server/wordpress.ts` | 320 | 사이트 주소 정리, 인증 요청과 오류 메시지, 연결 확인, 카테고리, 이미지 업로드·재사용, 태그 조회·생성, Gutenberg 블록 변환(표는 본문 폭·넉넉한 여백의 `wpTableHtml` — 2026-10-09부터 `shared/postHtml`의 `tableHtml`에 칸·표 스타일만 더해 만든다. `plain`·`skippedImageLabel`도 공용 것을 쓴다), 예약 시각 검사, 등록(예약했던 글을 자동발행하면 공개 시각을 지금으로, 카테고리는 올릴 때 고른 `category.id`만 보내고 없으면 생략 — 2026-10-09에 설정의 기본 카테고리 폴백 삭제, `blog-writer:server/wordpress.ts:300-301`) | `WordPressError`, `normalizeSite`, `wordpressSiteOf`, `testWordPress`, `listCategories`, `postToBlocks`, `checkSchedule`, `publishToWordPress` | [[publishing/flows/워드프레스 API 등록 플로우]] |
 
 ## 의존
 - 사용하는 모듈: [[_system/modules/server-core]] (`getSettings`, `jobImageDir`, `getWordPressAuth`, 중지 신호), [[_system/modules/shared]] (`postHtml`의 `esc`·`rich`·`tableHtml`, `MAX_TAGS`)

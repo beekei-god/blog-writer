@@ -7,7 +7,7 @@ status: active
 confidence: high
 consistency: consistent
 source:
-  - blog-writer:shared/types.ts:176-177
+  - blog-writer:shared/types.ts:174-175
   - blog-writer:src/job/PostEditor.tsx:94-110
   - blog-writer:server/pipeline.ts:313-314
   - blog-writer:server/pipeline.ts:336

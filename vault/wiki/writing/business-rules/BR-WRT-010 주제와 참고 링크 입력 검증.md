@@ -13,7 +13,7 @@ source:
   - blog-writer:src/NewJob.tsx:89-107
   - blog-writer:src/NewJob.tsx:139-151
   - blog-writer:src/NewJob.tsx:219-224
-  - blog-writer:tests/api.test.ts:62-68
+  - blog-writer:tests/api.test.ts:80-86
 entities: [Job]
 updated: 2026-10-09
 ---
@@ -38,13 +38,13 @@ updated: 2026-10-09
 |---|---|---|---|
 | 서버 | zod + 길이 초과 전용 문구. 링크 개수는 공용 상수 `MAX_LINKS` | topic 2~300, links ≤20 http(s) URL | `blog-writer:server/routes/jobs.ts:47-65` |
 | 화면 | 주제: 2자 이상 + `maxLength=300`. 링크: `isHttpUrl`(`^https?://` + `new URL`), `MAX_LINKS = 20`(서버와 같은 상수, `blog-writer:shared/types.ts:25`), 오류 표시와 버튼 비활성 (2026-10-05 추가) | 서버와 같은 기준 | `blog-writer:src/NewJob.tsx:26-42`, `:89-90`, `:127`, `:148-150`, `:220-223` |
-| 테스트 | 2자 미만·300자 초과·http(s) 아닌 링크의 서버 오류 문구 | | `blog-writer:tests/api.test.ts:62-68` |
+| 테스트 | 2자 미만·300자 초과·http(s) 아닌 링크의 서버 오류 문구 | | `blog-writer:tests/api.test.ts:80-86` |
 
 모든 레이어가 같은 값이다.
 
 ## 예외 / 경계값
 - 화면의 URL 판정은 서버 zod `.url()`과 완전히 같지는 않을 수 있다(브라우저 `URL` 생성자 기준). 화면이 통과시킨 링크를 서버가 거절하면 서버 메시지가 오류 배너로 나온다.
-- 주제 추천의 "이 주제로 글쓰기"는 근거 URL을 링크 칸에 채운다. 근거가 20개를 넘으면 이제 화면이 오류를 보여 준다 (`blog-writer:src/Recommend.tsx:173`).
+- 주제 추천의 "이 주제로 글쓰기"는 근거 URL을 링크 칸에 채운다. 근거가 20개를 넘으면 이제 화면이 오류를 보여 준다 (`blog-writer:src/Recommend.tsx:200`).
 
 ## 영향받는 플로우
 [[writing/flows/초안 작성 플로우]], [[topic/flows/주제 추천 플로우]]

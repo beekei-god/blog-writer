@@ -7,7 +7,7 @@ status: active
 confidence: high
 consistency: conflict
 source:
-  - blog-writer:shared/types.ts:315-316
+  - blog-writer:shared/types.ts:344-345
   - blog-writer:server/routes/util.ts:16-22
   - blog-writer:server/pipeline.ts:400-404
   - blog-writer:server/pipeline.ts:435-439
@@ -33,7 +33,7 @@ updated: 2026-10-09
 ## 구현 현황
 | 레이어 | 구현 | 근거 |
 |---|---|---|
-| 공용 | `Job.postingTo` | `blog-writer:shared/types.ts:315-316` |
+| 공용 | `Job.postingTo` | `blog-writer:shared/types.ts:344-345` |
 | 서버 | 요청 때 기록, 작업 시작 때 다시 기록 | `blog-writer:server/routes/util.ts:16-22`, `blog-writer:server/pipeline.ts:400-404`, `:372-376` |
 | 화면(네이버·티스토리) | `again = registered && (!job.postingTo \|\| job.postingTo === platform)` | `blog-writer:src/job/NextStep.tsx:157-159`, `:160-178`, `:190-191` |
 | 화면(워드프레스) | **기준이 다름**: `postingTo`가 아니라 워드프레스 기록(`job.wordpress`)이 있으면 "등록됨". 기록이 없을 때만 "다른 블로그에 올린 글입니다. 워드프레스에도 올릴 수 있습니다…" | `blog-writer:src/job/NextStep.tsx:384-401` |

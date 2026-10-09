@@ -13,7 +13,9 @@ Claude는 API 키가 아니라 이 컴퓨터에 로그인된 Claude Code CLI(`cl
 ## 주요 기능
 - 주제 → 리서치 → 초안 → 이미지 → 검토 → 올릴 블로그 선택 → 네이버·티스토리는 크롬으로 임시저장(+고르면 발행 창에서 예약발행·자동발행), 워드프레스는 API로 임시저장·예약발행·자동발행 → [[writing/overview]], [[image/overview]], [[publishing/overview]]
 - 분야를 넣으면 최근 뉴스·통계로 주제 후보 10~12개를 찾고 네이버 데이터랩 관심도로 순위를 매김 → [[topic/overview]]
-- 올릴 때 카테고리 선택(네이버·티스토리는 블로그 에디터에서 목록을 읽어 옴, 네이버 예약·자동발행은 글 내용으로 주제도 자동 선택), 본문 이미지 추가·삭제, 프롬프트로 글 고치기·내용 추가(결과를 비교해 보고 적용) → [[publishing/overview]], [[image/overview]], [[writing/overview]]
+- 올릴 때 카테고리 선택(워드프레스도 설정의 기본 카테고리 없이 올릴 때 고른 것만 사용, 2026-10-09; 네이버·티스토리는 블로그 에디터에서 목록을 읽어 옴, 네이버 예약·자동발행은 글 내용으로 주제도 자동 선택), 본문 이미지 추가·삭제, 프롬프트로 글 고치기·내용 추가(결과를 비교해 보고 적용) → [[publishing/overview]], [[image/overview]], [[writing/overview]]
+- 키워드 탐색 탭: 키워드를 넣으면 연관 키워드와 월간 검색량(PC·모바일)·경쟁 정도를 보여 주고(네이버 검색광고 키워드 도구), 비워 두면 지금 뜨는 검색어(구글 트렌드)와 최근 주제 추천의 분야를 기준으로 찾는다. 키워드에서 바로 새 글이나 주제 추천을 시작할 수 있다(2026-10-09) → [[_system/integrations/naver-searchad]], [[_system/integrations/google-trends]], [[topic/index]]
+- 화면 탭 순서: 새 글 → 키워드 탐색 → 주제 추천 → 글쓰기 규칙 → 사용량 → 설정
 - 글쓰기 규칙 편집 (다음 작업부터 적용) → [[writing/entities/글쓰기 규칙]]
 - 단계별 Claude 모델 선택, 플랜 한도·토큰 사용량 보기 → [[usage/overview]]
 
@@ -29,7 +31,8 @@ flowchart LR
   server -->|AppleScript| userchrome[평소 크롬 새 탭: 네이버]
   server -->|Playwright| appchrome[앱 전용 크롬 data/chrome-profile]
   server -->|Playwright headless| svg[SVG → PNG 렌더링]
-  server -->|fetch| naver[네이버 자동완성·함께 많이 찾는·데이터랩]
+  server -->|fetch| naver[네이버 자동완성·함께 많이 찾는·데이터랩·검색광고 키워드 도구]
+  server -->|RSS| gtrends[구글 트렌드 급상승 검색어]
   server -->|REST API| wp[워드프레스 사이트 wp-json]
 ```
 
@@ -40,5 +43,6 @@ TypeScript(ESM), Express 5, zod 4, React 19, Vite 8, Playwright-core(설치된 C
 블로그 운영자 한 명. 로컬 전용이며 API는 127.0.0.1에만 열리고 localhost가 아닌 Host/Origin은 거부한다 ([[_system/api]] 공통 처리).
 
 ## 더 읽을 곳
+- 외부 연동: [[_system/integrations/naver-searchad]], [[_system/integrations/google-trends]]
 - [[_system/architecture]], [[_system/api]], [[_system/data-storage]], [[_system/configuration]], [[_system/operations]], [[_system/known-issues]]
 - 전체 목록은 [[index]], 용어는 [[glossary]]

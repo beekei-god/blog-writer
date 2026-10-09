@@ -46,7 +46,7 @@ updated: 2026-10-09
 | 서버 | `collectTargets` | `blog-writer:server/images/index.ts:18-30` |
 | 서버 API | 두 엔드포인트 | `blog-writer:server/routes/images.ts:15-109` |
 | 서버 파이프라인 | `runImages`(작업 잠금)·`runImage`(한 장), `makeImages` 진행 표시 | `blog-writer:server/pipeline.ts:199-296` |
-| 테스트 | 이미지 키 해석(`body-x`, 경로 섞인 값은 null), 대상 없음 404 | `blog-writer:tests/shared.test.ts:83-91`, `blog-writer:tests/api.test.ts:161-165` |
+| 테스트 | 이미지 키 해석(`body-x`, 경로 섞인 값은 null), 대상 없음 404 | `blog-writer:tests/shared.test.ts:83-91`, `blog-writer:tests/api.test.ts:179-183` |
 | 화면 | 썸네일 없음 안내, 이미지별 도구("이미지 다시 생성") | `blog-writer:src/job/JobDetail.tsx:308-343`, `blog-writer:src/job/images.tsx:174-253` |
 
 ## 예외 / 경계값

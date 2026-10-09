@@ -5,7 +5,8 @@ confidence: high
 source:
   - blog-writer:package.json:6-13
   - blog-writer:server/index.ts:1-11
-  - blog-writer:server/app.ts:12-42
+  - blog-writer:server/app.ts:13-43
+  - blog-writer:server/explore.ts:1-74
   - blog-writer:server/pipeline.ts:25-66
   - blog-writer:server/pipeline.ts:149-203
   - blog-writer:server/claude.ts:58-198
@@ -33,8 +34,8 @@ updated: 2026-10-09
 - **화면** ([[_system/modules/web-app]], [[_system/modules/web-screens]], [[_system/modules/web-job]]): 입력, 진행 상황 폴링, 초안 편집·자동 저장, 복사.
 - **API 라우터** ([[_system/modules/server-routes]] `server/app.ts` + `server/routes/*.ts`): 입력 검증(zod), 상태를 먼저 "진행 중"으로 바꾼 뒤(`markBusy`) 백그라운드 작업 시작, 202 응답.
 - **파이프라인** ([[_system/modules/server-pipeline]] `server/pipeline.ts`): 작업 단위 실행·중복 방지·크롬 작업 직렬화.
-- **기능 모듈**: 리서치/작성·글 고치기·네이버 주제 고르기([[_system/modules/server-pipeline]]), 이미지([[_system/modules/server-images]]), 블로그 입력·카테고리 읽기([[_system/modules/server-browser]] 크롬, [[_system/modules/server-wordpress]] API), 추천([[_system/modules/server-recommend]]).
-- **외부 호출**: Claude CLI([[_system/modules/server-claude]]), 네이버 HTTP, 크롬.
+- **기능 모듈**: 리서치/작성·글 고치기·네이버 주제 고르기([[_system/modules/server-pipeline]]), 이미지([[_system/modules/server-images]]), 블로그 입력·카테고리 읽기([[_system/modules/server-browser]] 크롬, [[_system/modules/server-wordpress]] API), 추천·키워드 탐색([[_system/modules/server-recommend]]: `recommend.ts`, 2026-10-09부터 `explore.ts`·`searchad.ts`·`trends.ts`).
+- **외부 호출**: Claude CLI([[_system/modules/server-claude]]), 네이버 HTTP(자동완성·데이터랩·검색광고 키워드 도구), 구글 트렌드 RSS, 크롬 → [[_system/integrations/naver-searchad]], [[_system/integrations/google-trends]].
 - **저장**: 카테고리 기억 `server/categories.ts`, `server/fsutil.ts`의 원자적 쓰기 + 쓰기 줄(`server/store.ts`가 작업·설정에 사용) → [[_system/data-storage]].
 - **공용** ([[_system/modules/shared]]): 타입, 분량 계산, 붙여넣기 HTML, 이미지 오류 분류, 상태·블로그 이름. 서버와 화면이 같이 쓴다.
 
@@ -64,6 +65,9 @@ flowchart TD
   images --> store
   browser --> store
   recommend --> store
+  routes -->|/api/keywords| recommend
+  recommend -->|서명 GET| searchad((검색광고 키워드 도구))
+  recommend -->|RSS| gtrends((구글 트렌드))
   claudeM --> store
   pipeline --> shared
   images --> shared
@@ -75,7 +79,7 @@ flowchart TD
 2. 서버가 주제(2~300자)·링크(http(s), 최대 20개)·이미지 옵션을 검증하고, 이미지 옵션을 설정에 기억한 뒤 `createJob` → `void runDraft(id)` → 201 응답 (`blog-writer:server/routes/jobs.ts:44-73`).
 3. `doDraft`: 규칙 읽기 → `deepResearch`(Claude + WebSearch/WebFetch) → 네이버 자동완성·함께 많이 찾는 수집 → `writePost`(Claude) → 분량 줄이기 → 태그 검증 → `makeImages` → `draft_ready` (`blog-writer:server/pipeline.ts:68-150`).
 4. 각 단계는 `updateJob`/`log`로 `data/jobs/<id>.json`에 바로 기록한다.
-5. 화면은 진행 중 작업이 있으면 1.5초마다 `GET /api/jobs`로 폴링한다 (`blog-writer:src/App.tsx:86-92`).
+5. 화면은 진행 중 작업이 있으면 1.5초마다 `GET /api/jobs`로 폴링한다 (`blog-writer:src/App.tsx:90-96`).
 자세한 흐름은 [[writing/flows/초안 작성 플로우]].
 
 ## 대표 요청의 경로: "프롬프트로 글 고치기" (2026-10-09)
@@ -83,6 +87,14 @@ flowchart TD
 2. `startEdit`가 `job.editProposal={status:"running"}`를 먼저 기록하고 `running`에 등록한다. 그래서 만드는 동안 글 수정·블로그 올리기·이미지 작업이 409이고, 화면은 폴링한다 (`blog-writer:server/pipeline.ts:157-170`).
 3. `doEdit` → `proposeEdit`(Claude, WebSearch·WebFetch)가 고친 블록을 만들어 `ready` 제안(`before`/`after`)으로 저장한다. 글은 아직 그대로다. 실패는 `failed`, 중지는 제안 삭제 (`blog-writer:server/pipeline.ts:172-198`).
 4. 화면이 바뀐 블록만 비교해 보여 주고(`shared/blockDiff.ts`), 사용자가 `POST …/edit/apply`(범위가 그 사이 바뀌었으면 409)나 `DELETE …/edit`를 고른다 → [[_system/modules/server-pipeline]] `editPost.ts`.
+
+## 대표 요청의 경로: "키워드 탐색" (2026-10-09)
+백그라운드 작업이 아니라 요청 한 번에 끝나는 동기 호출이다(진행 상태·저장 없음).
+1. 화면 `Keywords`가 `GET /api/keywords?q=<입력>` ([[_system/api]]). 입력 검사는 200자 이하뿐, 키가 없으면 400으로 설정 안내 (`blog-writer:server/routes/keywords.ts:11-25`).
+2. `exploreKeywords`: **입력이 있으면** 키워드를 정리해(최대 5개) 검색광고 키워드 도구로 연관 키워드와 월간 검색량을 조회한다. **입력이 없으면** ① 구글 트렌드 RSS(10분 캐시)의 상위 10개 검색어와 ② 최근 완료된 주제 추천 3개의 분야·기준 키워드를 각각 5개씩 나눠 조회한다. 구글 트렌드가 실패하면 ①만 오류 덩어리로 두고 ②는 보여 준다 (`blog-writer:server/explore.ts:21-74`).
+3. 검색광고는 서명 헤더가 붙은 `GET /keywordstool`을 5개 키워드씩 부르고 합쳐 검색량 순 상위 200개를 돌려준다 ([[_system/integrations/naver-searchad]]).
+4. 화면은 표로 보여 주고 정렬·거르기는 화면에서 한다. 줄에서 "글쓰기"는 새 글 주제로(`App`이 `topic` 설정), "주제 추천받기"는 `recommendRequest`로 주제 추천 탭에서 그 키워드를 분야로 바로 시작한다 ([[_system/modules/web-app]], [[topic/index]]).
+키 저장은 `PUT /api/searchad`가 "날씨"로 실제 호출해 확인한 뒤 `data/secrets.json`에 쓴다.
 
 ## 비동기 / 백그라운드 작업
 - 장시간 작업(초안·이미지·블로그 입력·글 고치기·추천)은 HTTP 응답 후 `void` 프로미스로 돈다. 진행 상황은 job 파일의 `status`·`logs`에 쓰고 화면이 폴링한다(작업 1.5초, 추천 2초, 로그인 창 3초, 사용량 15초/60초).
@@ -92,6 +104,6 @@ flowchart TD
 - 서버 시작 시 진행 중으로 남은 작업·추천(만드는 중이던 글 고치기 제안은 failed로)을 정리하고 90일 지난 사용량 기록을 지운다 (`blog-writer:server/index.ts:7-11`).
 
 ## 오류 처리 방식
-- 라우터는 `wrap`으로 비동기 오류를 잡아 공통 핸들러로 보낸다. 4xx(본문 파싱 오류 등)는 "요청 형식이 올바르지 않습니다.", 500은 메시지를 그대로 (`blog-writer:server/routes/util.ts:6-10`, `blog-writer:server/app.ts:35-40`).
+- 라우터는 `wrap`으로 비동기 오류를 잡아 공통 핸들러로 보낸다. 4xx(본문 파싱 오류 등)는 "요청 형식이 올바르지 않습니다.", 500은 메시지를 그대로 (`blog-writer:server/routes/util.ts:6-10`, `blog-writer:server/app.ts:36-41`).
 - 파이프라인 오류는 job의 `error`와 로그에 남기고, 초안이 있으면 `draft_ready`, 없으면 `failed`로 둔다.
 - 이미지 하나의 실패는 그 이미지에만 기록하고 계속 진행한다 → [[image/business-rules/BR-IMG-007 이미지 실패 격리와 원인 분류]].

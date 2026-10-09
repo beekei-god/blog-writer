@@ -8,16 +8,16 @@ status: active
 confidence: high
 consistency: consistent
 source:
-  - blog-writer:shared/types.ts:249-282
+  - blog-writer:shared/types.ts:247-280
   - blog-writer:shared/labels.ts:4-17
   - blog-writer:server/routes/jobs.ts:163-190
-  - blog-writer:src/api.ts:130-132
+  - blog-writer:src/api.ts:147-149
   - blog-writer:src/job/NextStep.tsx:11-34
   - blog-writer:src/job/NextStep.tsx:79-127
   - blog-writer:src/job/JobDetail.tsx:207-210
   - blog-writer:src/job/Progress.tsx:5-44
-  - blog-writer:src/App.tsx:23-38
-  - blog-writer:tests/api.test.ts:134-158
+  - blog-writer:src/App.tsx:25-40
+  - blog-writer:tests/api.test.ts:152-176
 entities: [Job, 블로그 설정]
 updated: 2026-10-09
 ---
@@ -59,12 +59,12 @@ updated: 2026-10-09
 ## 구현 현황
 | 레이어 | 구현 | 근거 |
 |---|---|---|
-| 공용 | `JobStatus`, `MANUAL_STATUSES`·`ManualStatus`·`canSetStatus`, 상태 이름 `STATUS_LABEL` | `blog-writer:shared/types.ts:249-260`, `:272-276`, `blog-writer:shared/labels.ts:4-17` |
+| 공용 | `JobStatus`, `MANUAL_STATUSES`·`ManualStatus`·`canSetStatus`, 상태 이름 `STATUS_LABEL` | `blog-writer:shared/types.ts:247-258`, `:272-276`, `blog-writer:shared/labels.ts:4-17` |
 | 서버 | `MANUAL_LOG`, `PUT /api/jobs/:id/status` | `blog-writer:server/routes/jobs.ts:163-190` |
-| 화면 | `api.setStatus`, `StatusPicker`, 표시 위치, `NextStep`의 발행완료·미선택 안내, `Progress` | `blog-writer:src/api.ts:130-132`, `blog-writer:src/job/NextStep.tsx:11-34`, `:73-121`, `blog-writer:src/job/JobDetail.tsx:207-210`, `blog-writer:src/job/Progress.tsx:5-44` |
-| 화면(목록) | 필터 칩 | `blog-writer:src/App.tsx:23-38` |
+| 화면 | `api.setStatus`, `StatusPicker`, 표시 위치, `NextStep`의 발행완료·미선택 안내, `Progress` | `blog-writer:src/api.ts:147-149`, `blog-writer:src/job/NextStep.tsx:11-34`, `:73-121`, `blog-writer:src/job/JobDetail.tsx:207-210`, `blog-writer:src/job/Progress.tsx:5-44` |
+| 화면(목록) | 필터 칩 | `blog-writer:src/App.tsx:25-40` |
 | 스타일 | `--pub`, `--sch`, `.badge.published`, `.badge.scheduled`, `.status-picker` | `blog-writer:src/styles.css:6-7`, `:17-18`, `:95-96`, `:328` |
-| 테스트 | 초안 검토·임시저장 완료·발행완료 사이 이동, 예약에서 바꾸기, 같은 상태·초안 전 거절, `scheduled` 요청 거절 | `blog-writer:tests/api.test.ts:134-158` |
+| 테스트 | 초안 검토·임시저장 완료·발행완료 사이 이동, 예약에서 바꾸기, 같은 상태·초안 전 거절, `scheduled` 요청 거절 | `blog-writer:tests/api.test.ts:152-176` |
 
 ## 예외 / 경계값
 - 초안 검토 글도 바로 "블로그 임시저장 완료"·"블로그 발행완료"로 표시할 수 있다 (앱 밖에서 직접 올린 경우). 앱은 실제로 올렸는지 확인하지 않는다.
@@ -83,4 +83,4 @@ updated: 2026-10-09
 | 2026-10-05 | 최초 기록 (발행 완료 상태·표시·취소 추가) | |
 | 2026-10-05 | 수기로 초안 완료로 되돌리기 추가, 엔드포인트를 `PUT /status`로 일반화, 발행 완료 배지를 보라색으로, 이미지 재생성 시 초안 완료 복귀를 의도로 확정 | |
 | 2026-10-07 | `scheduled`(예약됨) 상태 추가: `scheduled → published/draft_ready` 수기 전이, 예약됨 배지·필터. 화면 문구에 워드프레스 경우 추가. 서버 코드는 `server/routes/jobs.ts`로 옮겨짐 | `blog-writer:server/routes/jobs.ts:155-160` |
-| 2026-10-09 | **전이 규칙 변경**: 정해진 전이 표(`MANUAL_TRANSITIONS`: posted→published/draft_ready, published→posted/draft_ready, scheduled→published/draft_ready) → `draft_ready`·`posted`·`scheduled`·`published`에서 `draft_ready`·`posted`·`published` 중 다른 상태로 자유롭게 (초안 검토→발행완료, 예약→임시저장 완료 등이 새로 가능). 화면은 안내 상자의 버튼("발행 완료로 표시/발행 완료 취소/초안 완료로 되돌리기") → 진행 단계 아래 "글 상태" 한 줄. 로그 문구 "발행 완료로 표시했습니다." 등 → "블로그 발행완료로 표시했습니다." 등. 상태 이름: 초안 완료→초안 검토, 임시저장 완료→블로그 임시저장 완료, 예약됨→블로그 발행 예약, 발행 완료→블로그 발행완료. 목록 필터를 단계별 5개로 묶음. `scheduled`가 네이버·티스토리 예약발행에서도 생김 | 커밋 65bfa3e, `blog-writer:shared/types.ts:278-282`, `blog-writer:server/routes/jobs.ts:163-190`, `blog-writer:src/job/NextStep.tsx:11-34` |
+| 2026-10-09 | **전이 규칙 변경**: 정해진 전이 표(`MANUAL_TRANSITIONS`: posted→published/draft_ready, published→posted/draft_ready, scheduled→published/draft_ready) → `draft_ready`·`posted`·`scheduled`·`published`에서 `draft_ready`·`posted`·`published` 중 다른 상태로 자유롭게 (초안 검토→발행완료, 예약→임시저장 완료 등이 새로 가능). 화면은 안내 상자의 버튼("발행 완료로 표시/발행 완료 취소/초안 완료로 되돌리기") → 진행 단계 아래 "글 상태" 한 줄. 로그 문구 "발행 완료로 표시했습니다." 등 → "블로그 발행완료로 표시했습니다." 등. 상태 이름: 초안 완료→초안 검토, 임시저장 완료→블로그 임시저장 완료, 예약됨→블로그 발행 예약, 발행 완료→블로그 발행완료. 목록 필터를 단계별 5개로 묶음. `scheduled`가 네이버·티스토리 예약발행에서도 생김 | 커밋 65bfa3e, `blog-writer:shared/types.ts:276-280`, `blog-writer:server/routes/jobs.ts:163-190`, `blog-writer:src/job/NextStep.tsx:11-34` |

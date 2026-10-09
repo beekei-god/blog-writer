@@ -9,7 +9,7 @@ confidence: high
 consistency: consistent
 source:
   - blog-writer:shared/types.ts:16-17
-  - blog-writer:shared/types.ts:262-263
+  - blog-writer:shared/types.ts:260-261
   - blog-writer:shared/labels.ts:23-24
   - blog-writer:server/routes/jobs.ts:101-161
   - blog-writer:server/wordpress.ts:245-266
@@ -62,7 +62,7 @@ updated: 2026-10-09
 | 서버(상태) | `doWordPressPost` 사이트 상태로, `doPost` 요청 방식으로 | `blog-writer:server/pipeline.ts:395-423`, `:411-415` |
 | 서버(발행 창) | 분 단위가 맞지 않으면 단계를 만들지 않음 (네이버 10, 티스토리 1) | `blog-writer:server/browser/publish.ts:186-188`, `:238`, `:259` |
 | 화면 | 공용 `usePublishMode`(분 단위·1분 검사·요청 값)와 `PublishModeFields`(방식 버튼·안내·시각 칸)를 `ChromeBlogNext`와 `WordPressNext`가 같이 씀. 안내 문구는 `CHROME_MODE_HINT`/`WP_MODE_HINT` | `blog-writer:src/job/NextStep.tsx:155-165`, `:200-259`, `:273-281` |
-| 테스트 | 예약 시각 경계, 과거 시각이면 업로드 전 거절, 자동발행 공개 시각, 네이버·티스토리 과거 시각·10분 단위 | `blog-writer:tests/wordpress.test.ts:18-26`, `:124-137`, `:145-149`, `blog-writer:tests/api.test.ts:75-98`, `blog-writer:tests/publish.test.ts:14-16` |
+| 테스트 | 예약 시각 경계, 과거 시각이면 업로드 전 거절, 자동발행 공개 시각, 네이버·티스토리 과거 시각·10분 단위 | `blog-writer:tests/wordpress.test.ts:18-26`, `:124-137`, `:145-149`, `blog-writer:tests/api.test.ts:93-116`, `blog-writer:tests/publish.test.ts:14-16` |
 
 ## 예외 / 경계값
 - 예약된 글이 예약 시각에 공개됐는지 앱은 다시 확인하지 않는다. 사용자가 "글 상태"에서 "블로그 발행완료"로 바꾼다 → [[publishing/business-rules/BR-PUB-013 발행 완료 표시]].
@@ -77,6 +77,7 @@ updated: 2026-10-09
 | 날짜 | 변경 | 근거 |
 |---|---|---|
 | 2026-10-07 | 최초 기록 (워드프레스 REST API 등록 추가) | `blog-writer:server/wordpress.ts:252-260` |
-| 2026-10-07 | 예약해 둔 글을 자동발행으로 다시 올리면 예약("예약됨")으로 남던 문제를 고침: 자동발행 때 공개 시각을 지금으로 보냄 | `blog-writer:server/wordpress.ts:309-313`, `blog-writer:tests/wordpress.test.ts:130-143` |
+| 2026-10-07 | 예약해 둔 글을 자동발행으로 다시 올리면 예약("예약됨")으로 남던 문제를 고침: 자동발행 때 공개 시각을 지금으로 보냄 | `blog-writer:server/wordpress.ts:309-313`, `blog-writer:tests/wordpress.test.ts:134-147` |
 | 2026-10-09 | **적용 범위 변경**: 워드프레스만 → 워드프레스·네이버·티스토리. 네이버·티스토리에 `schedule`/`publish`를 보내면 400이던 것 → 허용하고 같은 1분 검사, 네이버는 10분 단위 검사 추가. 화면의 방식 선택·예약 칸을 `PublishModeFields`/`usePublishMode`로 공용화. 상태 이름: 임시저장 완료/예약됨/발행 완료 → 블로그 임시저장 완료/블로그 발행 예약/블로그 발행완료 | 커밋 65bfa3e, `blog-writer:server/routes/jobs.ts:140-155`, `blog-writer:src/job/NextStep.tsx:229-354` |
 | 2026-10-09 | 요청에 선택 필드 `category` 추가 (워드프레스는 `id` 필수, 고른 카테고리가 설정 기본보다 우선). 방식·예약 시각 규칙은 그대로 → [[publishing/business-rules/BR-PUB-020 카테고리 선택]] | 커밋 b7ced30, `blog-writer:server/routes/jobs.ts:113-123` |
+| 2026-10-09 | 방식·예약 시각 규칙은 그대로. 요청 `category`의 워드프레스 처리가 "고른 `id` > 설정 기본"에서 "고른 `id`만(없으면 사이트 기본)"으로 바뀜 (설정의 기본 카테고리 제거) → [[publishing/business-rules/BR-PUB-020 카테고리 선택]] | 커밋 4ffb5eb, `blog-writer:server/wordpress.ts:300-301` |

@@ -7,12 +7,12 @@ status: active
 confidence: high
 consistency: consistent
 source:
-  - blog-writer:shared/types.ts:265-274
+  - blog-writer:shared/types.ts:263-272
   - blog-writer:server/wordpress.ts:149-171
   - blog-writer:server/wordpress.ts:255-323
   - blog-writer:server/pipeline.ts:407-412
   - blog-writer:src/job/NextStep.tsx:379-421
-  - blog-writer:tests/wordpress.test.ts:122-150
+  - blog-writer:tests/wordpress.test.ts:126-154
 entities: [Job]
 updated: 2026-10-09
 ---
@@ -36,12 +36,12 @@ updated: 2026-10-09
 ## 구현 현황
 | 레이어 | 구현 | 근거 |
 |---|---|---|
-| 공용 | `WordPressRecord`, `Job.wordpress` | `blog-writer:shared/types.ts:265-274`, `:304` |
+| 공용 | `WordPressRecord`, `Job.wordpress` | `blog-writer:shared/types.ts:263-272`, `:304` |
 | 서버 | `ensureMedia` (재사용·업로드·alt) | `blog-writer:server/wordpress.ts:149-171` |
 | 서버 | `publishToWordPress` 갱신/새 글 | `blog-writer:server/wordpress.ts:310-321` |
 | 서버 | 결과 기록 | `blog-writer:server/pipeline.ts:407-412` |
 | 화면 | `WordPressNext`의 `registered` | `blog-writer:src/job/NextStep.tsx:379-397`, `:322-324` |
-| 테스트 | 갱신·미디어 재사용, 지워진 글이면 새 글 | `blog-writer:tests/wordpress.test.ts:122-129`, `:139-143` |
+| 테스트 | 갱신·미디어 재사용, 지워진 글이면 새 글 | `blog-writer:tests/wordpress.test.ts:126-133`, `:139-143` |
 
 ## 예외 / 경계값
 - 초안 검토로 되돌리거나 다른 블로그에 올려도 `job.wordpress` 기록은 남는다. 그래서 다시 워드프레스에 올리면 같은 글을 갱신한다.

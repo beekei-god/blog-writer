@@ -32,7 +32,7 @@ updated: 2026-10-09
 | 서버 | 형식·크기·대상 검사 | `blog-writer:server/routes/images.ts:112-137` |
 | 서버 | 기록·예전 파일 삭제는 생성 결과와 같은 `recordImageFile`(`record`) | `blog-writer:server/images/index.ts:34-57` |
 | 화면 | 파일 선택 `accept` 같은 4형식 | `blog-writer:src/job/images.tsx:243` |
-| 테스트 | 형식 아님 400, 자리 없음 404 | `blog-writer:tests/api.test.ts:167-173` |
+| 테스트 | 형식 아님 400, 자리 없음 404 | `blog-writer:tests/api.test.ts:185-191` |
 
 ## 예외 / 경계값
 - 업로드에 성공하면 그 자리의 예전 이미지 파일을 지운다 (2026-10-05 변경).

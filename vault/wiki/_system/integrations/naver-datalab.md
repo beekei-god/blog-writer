@@ -5,13 +5,15 @@ system: NAVER API HUB 검색어 트렌드 (데이터랩)
 confidence: high
 source:
   - blog-writer:server/datalab.ts:1-116
-  - blog-writer:server/secrets.ts:34-52
+  - blog-writer:server/secrets.ts:38-56
   - blog-writer:server/routes/settings.ts:61-89
 updated: 2026-10-09
 ---
 # NAVER API HUB 검색어 트렌드 (데이터랩)
 
 ## 무엇에 쓰나
+(키워드 탭의 월간 검색량은 이것이 아니라 별개의 [[_system/integrations/naver-searchad]]가 맡는다. 구글 트렌드는 [[_system/integrations/google-trends]].)
+
 주제 추천 후보들의 최근 4주 검색 관심도와 상승세를 비교해 순위를 매긴다 → [[topic/business-rules/BR-TOP-004 추천 순위]].
 
 ## 호출 방식

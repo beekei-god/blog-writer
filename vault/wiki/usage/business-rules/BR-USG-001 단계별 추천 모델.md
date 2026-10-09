@@ -10,7 +10,7 @@ source:
   - blog-writer:shared/types.ts:73-92
   - blog-writer:src/labels.ts:26-58
   - blog-writer:server/store.ts:19-22
-  - blog-writer:src/SettingsPanel.tsx:290-344
+  - blog-writer:src/SettingsPanel.tsx:256-310
   - blog-writer:README.md:195-200
 updated: 2026-10-09
 ---
@@ -43,7 +43,7 @@ Claude를 부르는 다섯 단계마다 모델을 따로 고를 수 있고, 기�
 | 공용 | `STAGES`, `MODEL_CHOICES`, `RECOMMENDED_MODELS` | `blog-writer:shared/types.ts:75-92` |
 | 서버 | 기본 설정에 추천값, 단계별 병합 | `blog-writer:server/store.ts:19-22`, `:36` |
 | 서버 검증 | 단계마다 `MODEL_CHOICES` enum | `blog-writer:server/routes/settings.ts:25` |
-| 화면 | 이유·힌트·추천 배지 | `blog-writer:src/labels.ts:26-58`, `blog-writer:src/SettingsPanel.tsx:290-344` |
+| 화면 | 이유·힌트·추천 배지 | `blog-writer:src/labels.ts:26-58`, `blog-writer:src/SettingsPanel.tsx:256-310` |
 | README | 같은 내용 | `blog-writer:README.md:195-200` |
 
 ## 예외 / 경계값

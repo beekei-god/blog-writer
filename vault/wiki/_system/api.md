@@ -3,41 +3,46 @@ type: api
 project: blog-writer
 confidence: high
 source:
-  - blog-writer:server/app.ts:12-42
-  - blog-writer:server/routes/settings.ts:1-162
+  - blog-writer:server/app.ts:13-43
+  - blog-writer:server/routes/settings.ts:1-182
   - blog-writer:server/routes/browser.ts:1-121
   - blog-writer:server/routes/usage.ts:1-35
   - blog-writer:server/routes/recommendations.ts:1-42
   - blog-writer:server/routes/jobs.ts:1-220
   - blog-writer:server/routes/images.ts:1-207
-  - blog-writer:server/routes/categories.ts:1-69
+  - blog-writer:server/routes/categories.ts:1-67
+  - blog-writer:server/routes/keywords.ts:1-25
   - blog-writer:server/routes/edit.ts:1-68
   - blog-writer:server/routes/util.ts:1-28
-  - blog-writer:src/api.ts:56-147
+  - blog-writer:src/api.ts:68-164
+  - blog-writer:server/explore.ts:1-74
 updated: 2026-10-09
 ---
 # API
 
-엔드포인트는 주제별 라우터 파일 8개(`server/routes/*.ts`)에 나뉘어 있고, `server/app.ts`의 `createApp()`이 공통 처리와 함께 묶는다 → [[_system/modules/server-routes]]. 화면은 `src/api.ts`의 `api` 객체로만 부른다.
+엔드포인트는 주제별 라우터 파일 9개(`server/routes/*.ts`)에 나뉘어 있고, `server/app.ts`의 `createApp()`이 공통 처리와 함께 묶는다 → [[_system/modules/server-routes]]. 화면은 `src/api.ts`의 `api` 객체로만 부른다.
 
 ## 설정·규칙·키 (`server/routes/settings.ts`)
 | 메서드 | 경로 | 하는 일 | 입력/검증 | 응답 | 호출하는 화면 | 근거 |
 |---|---|---|---|---|---|---|
 | GET | `/api/settings` | 설정 읽기 (기본값 병합, 예전 `platform`/`blogId` 값은 블로그별 칸으로 옮김) | | `Settings` | `NewJob`, `SettingsPanel`, `App` | `blog-writer:server/routes/settings.ts:37` |
-| PUT | `/api/settings` | 설정 저장 | `SettingsSchema`: `naverBlogId`·`tistoryBlogId`(≤200자, 영문/숫자/_/-), `wordpressUrl`(≤200자, https 주소 형식), `wordpressCategoryId`(양의 정수), images=`ImageOptionsSchema`, models=단계별 enum | 200 `Settings` / 400 | `SettingsPanel`(카드마다 자기 칸만 바꿔 저장) | `blog-writer:server/routes/settings.ts:17-47` |
+| PUT | `/api/settings` | 설정 저장 | `SettingsSchema`: `naverBlogId`·`tistoryBlogId`(≤200자, 영문/숫자/_/-), `wordpressUrl`(≤200자, https 주소 형식), images=`ImageOptionsSchema`, models=단계별 enum | 200 `Settings` / 400 | `SettingsPanel`(카드마다 자기 칸만 바꿔 저장) | `blog-writer:server/routes/settings.ts:18-47` |
 | GET | `/api/rules` | 글쓰기 규칙 (수정본 없으면 기본) | | `{content,isDefault,updatedAt}` | `RulesEditor` | `blog-writer:server/routes/settings.ts:50` |
 | PUT | `/api/rules` | 규칙 저장 | content 1~50,000자(trim), 끝에 줄바꿈 추가 | `Rules` / 400 | `RulesEditor` | `blog-writer:server/routes/settings.ts:51-58` |
 | POST | `/api/rules/reset` | 수정본 삭제 → 기본 규칙 | | `Rules` | `RulesEditor` | `blog-writer:server/routes/settings.ts:59` |
 | GET | `/api/datalab` | 데이터랩 키 설정 여부 (값은 안 줌, Client ID 앞 4자만) | | `{configured, clientIdHint}` | `SettingsPanel`, `Recommend` | `blog-writer:server/routes/settings.ts:62-68` |
 | PUT | `/api/datalab` | 키 확인 호출 후 저장 | clientId·clientSecret 필수 | 200 / 400(검증·확인 실패 메시지) | `SettingsPanel` | `blog-writer:server/routes/settings.ts:69-82` |
 | DELETE | `/api/datalab` | 파일의 키 삭제 (환경변수 키는 남음) | | `{configured}` | `SettingsPanel` | `blog-writer:server/routes/settings.ts:83-89` |
-| GET | `/api/image-api` | 이미지 API 키 연결 상태 (값은 안 줌) | | `{gemini, chatgpt}` 각각 `{configured, hint(앞 6자), fromEnv}` | `ImageApiSettings`, `src/job/images.tsx` | `blog-writer:server/routes/settings.ts:100` |
-| PUT | `/api/image-api/:ai` | 키 확인(모델 목록 조회) 후 저장. 한도 부족 응답이어도 키는 맞는 것으로 봄 | ai=`gemini`/`chatgpt`(아니면 404), key 1~500자 | 상태 / 400(확인 실패 메시지) | `ImageApiSettings` | `blog-writer:server/routes/settings.ts:101-116` |
-| DELETE | `/api/image-api/:ai` | 파일의 키 삭제 (환경변수 키는 남음) | ai=`gemini`/`chatgpt` | 상태 | `ImageApiSettings` | `blog-writer:server/routes/settings.ts:117-125` |
-| GET | `/api/wordpress` | 워드프레스 연결 여부 (Application Password는 돌려주지 않음) | | `{configured, username}` | `SettingsPanel`, `NextStep` | `blog-writer:server/routes/settings.ts:128-131`, `blog-writer:server/routes/util.ts:25-28` |
-| PUT | `/api/wordpress` | 사이트에 연결 확인(`users/me`) 후 사용자명·Application Password 저장 | 둘 다 1~200자 필수, 확인 실패면 400(원인별 메시지) | `{configured, username}` | `SettingsPanel` | `blog-writer:server/routes/settings.ts:132-145` |
-| DELETE | `/api/wordpress` | 연결 정보 삭제 (예전 WordPress.com 값도 함께 지움) | | `{configured:false}` | `SettingsPanel` | `blog-writer:server/routes/settings.ts:146-152` |
-| GET | `/api/wordpress/categories` | 사이트 카테고리 목록 (최대 100개) | 연결·주소 문제는 400 | `{id,name}[]` | `SettingsPanel` | `blog-writer:server/routes/settings.ts:153-162` |
+| GET | `/api/image-api` | 이미지 API 키 연결 상태 (값은 안 줌) | | `{gemini, chatgpt}` 각각 `{configured, hint(앞 6자), fromEnv}` | `ImageApiSettings`, `src/job/images.tsx` | `blog-writer:server/routes/settings.ts:130` |
+| PUT | `/api/image-api/:ai` | 키 확인(모델 목록 조회) 후 저장. 한도 부족 응답이어도 키는 맞는 것으로 봄 | ai=`gemini`/`chatgpt`(아니면 404), key 1~500자 | 상태 / 400(확인 실패 메시지) | `ImageApiSettings` | `blog-writer:server/routes/settings.ts:131-146` |
+| DELETE | `/api/image-api/:ai` | 파일의 키 삭제 (환경변수 키는 남음) | ai=`gemini`/`chatgpt` | 상태 | `ImageApiSettings` | `blog-writer:server/routes/settings.ts:147-155` |
+| GET | `/api/wordpress` | 워드프레스 연결 여부 (Application Password는 돌려주지 않음) | | `{configured, username}` | `SettingsPanel`, `NextStep` | `blog-writer:server/routes/settings.ts:158-161`, `blog-writer:server/routes/util.ts:25-28` |
+| PUT | `/api/wordpress` | 사이트에 연결 확인(`users/me`) 후 사용자명·Application Password 저장 | 둘 다 1~200자 필수, 확인 실패면 400(원인별 메시지) | `{configured, username}` | `SettingsPanel` | `blog-writer:server/routes/settings.ts:162-175` |
+| DELETE | `/api/wordpress` | 연결 정보 삭제 (예전 WordPress.com 값도 함께 지움) | | `{configured:false}` | `SettingsPanel` | `blog-writer:server/routes/settings.ts:176-182` |
+| GET | `/api/searchad` | 네이버 검색광고 키 설정 여부 (값은 안 줌, 고객 ID 앞 3자만) → [[_system/integrations/naver-searchad]] | | `{configured, customerIdHint, fromEnv}` | `SearchAdSettings`, `Keywords` | `blog-writer:server/routes/settings.ts:91-96` |
+| PUT | `/api/searchad` | 키워드 도구를 "날씨"로 한 번 호출해 확인한 뒤 저장 | customerId(≤40자)·apiKey·secretKey(≤200자) 모두 필수 → 아니면 400 "고객 ID, API 키, 비밀 키를 모두 입력하세요.", 확인 실패도 400(원인 메시지) | 상태 | `SearchAdSettings` | `blog-writer:server/routes/settings.ts:97-112` |
+| DELETE | `/api/searchad` | 파일의 키 삭제 (환경변수 키는 남음) | | 상태 | `SearchAdSettings` | `blog-writer:server/routes/settings.ts:113-119` |
+| ~~GET~~ | ~~`/api/wordpress/categories`~~ | **deprecated (2026-10-09, 4ffb5eb에서 삭제)**: 설정 화면의 기본 카테고리 선택용이었다. 지금은 없다(404). 글 화면용 목록은 `GET /api/categories/wordpress` | | | (없음) | `blog-writer:tests/api.test.ts:62-78` |
 
 ## 크롬·확장·로그인 창 (`server/routes/browser.ts`)
 | 메서드 | 경로 | 하는 일 | 입력/검증 | 응답 | 호출하는 화면 | 근거 |
@@ -91,8 +96,15 @@ updated: 2026-10-09
 ## 카테고리 (`server/routes/categories.ts`)
 | 메서드 | 경로 | 하는 일 | 입력/검증 | 응답 | 호출하는 화면 | 근거 |
 |---|---|---|---|---|---|---|
-| GET | `/api/categories/:platform` | 올릴 블로그의 카테고리 목록과 마지막으로 고른 카테고리(`last`). 워드프레스는 사이트에서 바로 읽고(`listCategories`), 이 블로그에서 고른 적이 없으면 설정의 기본 카테고리(`wordpressCategoryId`)를 처음 값으로 돌려줌. 네이버·티스토리는 `data/categories.json`에 저장된 목록(그 블로그 ID의 것만, 없으면 빈 배열) | `platform`이 naver/tistory/wordpress가 아니면 404 "알 수 없는 블로그입니다.". 워드프레스 연결·주소 문제는 400(`WordPressError`), 그 밖의 읽기 실패는 502 | 200 `{categories: {id?,name}[], fetchedAt?, last?}` | `src/job/NextStep.tsx` `useCategories` | `blog-writer:server/routes/categories.ts:21-43` |
-| POST | `/api/categories/:platform/refresh` | **네이버·티스토리만.** 블로그 에디터를 열어 카테고리 이름 목록을 읽고 `data/categories.json`에 저장(글은 저장하지 않음). 브라우저 큐(`enqueueBrowser`)에 들어가 다른 크롬 작업과 순서대로 실행 | `platform`이 naver/tistory 아니면 404 "네이버·티스토리에서만 목록을 불러옵니다.", 블로그 ID가 없으면 400("먼저 설정에서 … 블로그 ID를 입력하세요."), **네이버는 macOS가 아니면 400**(평소 크롬 AppleScript 필요). 읽기 실패는 502 "카테고리 목록을 불러오지 못했습니다: <원인>" 뒤에 `CategoryError.dialog`가 있으면 "화면 구조 (문제 확인용, 글 본문은 빠짐)"을 최대 3,000자 붙임 | 200 `{categories: {name}[], fetchedAt, last?}` | `NextStep`의 "목록 불러오기" 버튼 | `blog-writer:server/routes/categories.ts:45-69` |
+| GET | `/api/categories/:platform` | 올릴 블로그의 카테고리 목록과 마지막으로 고른 카테고리(`last`). 워드프레스는 사이트에서 바로 읽고(`listCategories`), `last`는 이 블로그에서 마지막으로 고른 값(없으면 생략. 2026-10-09 전에는 설정의 기본 카테고리가 처음 값이었음). 네이버·티스토리는 `data/categories.json`에 저장된 목록(그 블로그 ID의 것만, 없으면 빈 배열) | `platform`이 naver/tistory/wordpress가 아니면 404 "알 수 없는 블로그입니다.". 워드프레스 연결·주소 문제는 400(`WordPressError`), 그 밖의 읽기 실패는 502 | 200 `{categories: {id?,name}[], fetchedAt?, last?}` | `src/job/NextStep.tsx` `useCategories` | `blog-writer:server/routes/categories.ts:21-39` |
+| POST | `/api/categories/:platform/refresh` | **네이버·티스토리만.** 블로그 에디터를 열어 카테고리 이름 목록을 읽고 `data/categories.json`에 저장(글은 저장하지 않음). 브라우저 큐(`enqueueBrowser`)에 들어가 다른 크롬 작업과 순서대로 실행 | `platform`이 naver/tistory 아니면 404 "네이버·티스토리에서만 목록을 불러옵니다.", 블로그 ID가 없으면 400("먼저 설정에서 … 블로그 ID를 입력하세요."), **네이버는 macOS가 아니면 400**(평소 크롬 AppleScript 필요). 읽기 실패는 502 "카테고리 목록을 불러오지 못했습니다: <원인>" 뒤에 `CategoryError.dialog`가 있으면 "화면 구조 (문제 확인용, 글 본문은 빠짐)"을 최대 3,000자 붙임 | 200 `{categories: {name}[], fetchedAt, last?}` | `NextStep`의 "목록 불러오기" 버튼 | `blog-writer:server/routes/categories.ts:43-67` |
+
+## 키워드 탐색 (`server/routes/keywords.ts`)
+네이버 검색광고 키워드 도구([[_system/integrations/naver-searchad]])와 구글 트렌드([[_system/integrations/google-trends]])로 월간 검색량을 찾는다. 키 설정 API(`/api/searchad`)는 위 "설정·규칙·키" 표.
+
+| 메서드 | 경로 | 하는 일 | 입력/검증 | 응답 | 호출하는 화면 | 근거 |
+|---|---|---|---|---|---|---|
+| GET | `/api/keywords?q=` | `exploreKeywords(q)`: 입력이 있으면 그 키워드(쉼표·줄바꿈·가운뎃점·슬래시로 나눔, 공백 제거, 중복 제거, **최대 5개**)의 연관 키워드와 월간 검색량. 입력이 없으면 "지금 뜨는 검색어"(구글 트렌드 상위 10개)와 "최근 주제 추천의 분야"(완료된 최근 3개 추천의 기준 키워드·분야, 최대 5개) 두 덩어리를 각각 찾음. 결과는 검색량 큰 순 상위 200개 | `q`는 trim 후 200자 이하, 비워도 됨(아니면 400). 검색광고 키가 없으면 400 "먼저 설정에서 네이버 검색광고 API 키를 연결하세요.". 키 오류·호출 한도(`SearchAdError`)는 400, 그 밖의 실패는 502 | 200 `{sections: KeywordSection[]}` (`id` input·trending·recommendation, `rows: KeywordRow[]`, 덩어리별 `error?`) | `Keywords` | `blog-writer:server/routes/keywords.ts:11-25`, `blog-writer:server/explore.ts:21-74` |
 
 ## 프롬프트로 글 고치기 (`server/routes/edit.ts`)
 제안은 `job.editProposal`에 저장된다 → [[_system/data-storage]]. 규칙과 흐름: [[writing/business-rules/BR-WRT-016 프롬프트로 글 고치기]], [[writing/business-rules/BR-WRT-017 고친 결과 적용 조건과 잠금]], [[writing/flows/프롬프트로 글 고치기 플로우]].
@@ -104,9 +116,9 @@ updated: 2026-10-09
 | DELETE | `/api/jobs/:id/edit` | 제안 버리기(`editProposal` 삭제). 만드는 중이면 먼저 "중지"로 멈춰야 함 | 작업 없음 404, 진행 중 409 "만드는 중입니다. 중지한 뒤에 버려 주세요." | 200 `Job` | `EditByPrompt` | `blog-writer:server/routes/edit.ts:58-68` |
 
 ## 공통 처리
-- **로컬 전용**: `Host`가 localhost/127.0.0.1/[::1]이고, `Origin`이 있으면 그것도 로컬이어야 한다. 아니면 403 `forbidden`. 다른 사이트의 CSRF와 DNS 리바인딩을 막는다 (`blog-writer:server/app.ts:15-30`). 서버는 `127.0.0.1`에만 바인딩한다 (`blog-writer:server/index.ts:11`).
+- **로컬 전용**: `Host`가 localhost/127.0.0.1/[::1]이고, `Origin`이 있으면 그것도 로컬이어야 한다. 아니면 403 `forbidden`. 다른 사이트의 CSRF와 DNS 리바인딩을 막는다 (`blog-writer:server/app.ts:16-31`). 서버는 `127.0.0.1`에만 바인딩한다 (`blog-writer:server/index.ts:11`).
 - **인증 없음**: 로컬 단일 사용자 전제.
-- **본문 크기**: JSON 2MB, 이미지 업로드 20MB (`blog-writer:server/app.ts:31`, `blog-writer:server/routes/images.ts:116`).
-- **에러 형식**: `{ error: string }`. 4xx(본문 파싱 오류 등)는 "요청 형식이 올바르지 않습니다.", 500은 메시지를 그대로 (`blog-writer:server/app.ts:35-40`). 화면 `req()`는 이 메시지를 그대로 예외로 던진다 (`blog-writer:src/api.ts:56-65`).
+- **본문 크기**: JSON 2MB, 이미지 업로드 20MB (`blog-writer:server/app.ts:32`, `blog-writer:server/routes/images.ts:116`).
+- **에러 형식**: `{ error: string }`. 4xx(본문 파싱 오류 등)는 "요청 형식이 올바르지 않습니다.", 500은 메시지를 그대로 (`blog-writer:server/app.ts:36-41`). 화면 `req()`는 이 메시지를 그대로 예외로 던진다 (`blog-writer:src/api.ts:68-77`).
 - **장시간 작업 패턴**: 상태를 먼저 `markBusy`로 진행 중으로 바꾸고 202를 준 뒤 `void run…()` (`blog-writer:server/routes/util.ts:12-23`). 화면이 응답 직후 목록을 읽어도 진행 중으로 보이게 하려는 것.
 - **테스트**: 입력 검증·거절 경로는 `tests/api.test.ts`가 임시 데이터 폴더에서 `createApp()`으로 확인한다 → [[_system/modules/tests]].

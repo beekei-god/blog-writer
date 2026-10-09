@@ -33,7 +33,7 @@ Claude 호출의 모델은 다음 순서로 정한다: ① 호출이 직접 지�
 |---|---|---|
 | 서버 | `modelFor` | `blog-writer:server/claude.ts:32-37` |
 | 서버 | 기본 모델 기억 (메모리) | `blog-writer:server/claude.ts:137-138`, `blog-writer:server/usage.ts:31-34` |
-| 화면 | 기본 모델 표시 | `blog-writer:src/SettingsPanel.tsx:303`, `blog-writer:src/Usage.tsx:120-122` |
+| 화면 | 기본 모델 표시 | `blog-writer:src/SettingsPanel.tsx:269`, `blog-writer:src/Usage.tsx:120-122` |
 
 ## 예외 / 경계값
 - 기본 모델은 서버를 재시작하면 잊고, default로 한 번 호출해야 다시 알게 된다.

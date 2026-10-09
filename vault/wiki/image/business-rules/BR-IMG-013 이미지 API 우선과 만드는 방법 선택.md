@@ -14,8 +14,8 @@ source:
   - blog-writer:server/images/index.ts:110-123
   - blog-writer:server/images/api.ts:25-40
   - blog-writer:server/images/api.ts:71-131
-  - blog-writer:server/secrets.ts:70-86
-  - blog-writer:server/routes/settings.ts:91-125
+  - blog-writer:server/secrets.ts:97-113
+  - blog-writer:server/routes/settings.ts:121-155
   - blog-writer:server/routes/images.ts:83-107
   - blog-writer:server/pipeline.ts:222-256
   - blog-writer:server/pipeline.ts:351-363
@@ -71,7 +71,7 @@ Gemini·ChatGPT 이미지는 **만드는 방법**(`api` | `chrome`)을 썸네일
 | 서버 | 대상마다 `methodFor`로 API·크롬 선택 | `blog-writer:server/images/index.ts:110-123` |
 | 서버 | API 호출·오류 분류, 받은 이미지 저장 `saveImageFile`(크롬 URL 회수도 같이 씀) | `blog-writer:server/images/api.ts:25-120` |
 | 서버 | 크롬 큐는 실제로 크롬을 쓸 대상이 있을 때만 | `blog-writer:server/pipeline.ts:351-363` |
-| 서버 | 키 저장·확인 | `blog-writer:server/secrets.ts:70-86`, `blog-writer:server/routes/settings.ts:91-125`, `blog-writer:server/images/api.ts:122-131` |
+| 서버 | 키 저장·확인 | `blog-writer:server/secrets.ts:97-113`, `blog-writer:server/routes/settings.ts:121-155`, `blog-writer:server/images/api.ts:122-131` |
 | 화면 | 새 글 쓰기 방법 고르기(썸네일·본문 따로) | `blog-writer:src/NewJob.tsx:62-86`, `:229-274` |
 | 화면 | 공용 `MethodPicker`·`shownMethod`·`hasImageApi`·`noImageApiReason` | `blog-writer:src/job/images.tsx:49-57`, `:113-147` |
 | 화면 | 이미지 다시 생성 창(버튼 하나) | `blog-writer:src/job/images.tsx:174-217` |

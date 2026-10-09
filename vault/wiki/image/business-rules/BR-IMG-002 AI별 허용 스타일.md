@@ -44,7 +44,7 @@ Claude(SVG)는 플랫 일러스트만 그릴 수 있다. 지브리풍·실사·�
 | 서버 검증 | `ImageOptionsSchema.refine` 2개, 한 장 다시 만들기 검사 | `blog-writer:server/schema.ts:61-68`, `blog-writer:server/routes/images.ts:92-94` |
 | 공용 | `fitStyle`: AI를 바꿀 때 못 그리는 화풍이면 그 AI의 첫 화풍으로 (새 글 폼·초안 화면·`aiFor`가 같이 씀) | `blog-writer:shared/types.ts:58-60` |
 | 화면 | AI를 바꾸면 `fitStyle` 적용(새 글 쓰기 `AiRows`, 이미지 다시 생성 창, "썸네일이 없습니다"의 `AiPicker`), 공용 `StylePicker`가 불가 스타일 버튼을 비활성(툴팁 "Gemini 또는 ChatGPT에서 고를 수 있습니다") | `blog-writer:src/NewJob.tsx:175`, `:204`, `blog-writer:src/job/images.tsx:59-80`, `:108`, `:185` |
-| 테스트 | `fitStyle`, 한 장 다시 만들기 불가 조합 400 | `blog-writer:tests/shared.test.ts:66-69`, `blog-writer:tests/api.test.ts:161-165` |
+| 테스트 | `fitStyle`, 한 장 다시 만들기 불가 조합 400 | `blog-writer:tests/shared.test.ts:66-69`, `blog-writer:tests/api.test.ts:179-183` |
 | 프롬프트 | 화풍 지시문(작성 `STYLE_GUIDE`, 웹 AI `STYLE_PROMPT`) | `blog-writer:server/writer.ts:35-43`, `blog-writer:server/images/styles.ts:7-15` |
 
 ## 예외 / 경계값

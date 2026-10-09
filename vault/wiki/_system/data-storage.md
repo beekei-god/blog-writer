@@ -8,9 +8,9 @@ source:
   - blog-writer:server/usage.ts:1-91
   - blog-writer:server/recommend.ts:13-68
   - blog-writer:server/rules.ts:1-42
-  - blog-writer:server/secrets.ts:1-68
+  - blog-writer:server/secrets.ts:1-113
   - blog-writer:server/browser/blockedSites.ts:1-37
-  - blog-writer:shared/types.ts:142-384
+  - blog-writer:shared/types.ts:142-413
 updated: 2026-10-09
 ---
 # 데이터 저장
@@ -22,9 +22,9 @@ DB는 없다. 모두 프로젝트 루트의 `data/` 아래 로컬 파일이다. 
 |---|---|---|---|---|---|
 | 작업(Job) | `data/jobs/<uuid>.json` | JSON, 작업 하나 | `createJob`, `updateJob`, `log`, `deleteJob` | `getJob`, `listJobs` | 사용자가 삭제할 때까지 |
 | 생성·업로드 이미지 | `data/images/<jobId>/<thumbnail|body-n>-<timestamp>.<ext>`, 업로드는 `<target>-upload-<timestamp>.<ext>` | PNG/JPG/WEBP/GIF | `images/index.ts generateImages`, `routes/images.ts` 업로드 | `/api/images`, 블로그 입력, 워드프레스 업로드 | 작업 삭제 시 폴더째 삭제. 다시 만들거나 올리면 새 파일을 저장한 뒤 예전 파일을 지움(실패해 참조가 사라진 경우는 남음) |
-| 설정 | `data/settings.json` | JSON `Settings` (블로그별 `naverBlogId`·`tistoryBlogId`·`wordpressUrl`·`wordpressCategoryId`, `images`, `models`) | `saveSettings` | `getSettings` (예전 `platform`/`blogId` 옮김) | |
+| 설정 | `data/settings.json` | JSON `Settings` (블로그별 `naverBlogId`·`tistoryBlogId`·`wordpressUrl`, `images`, `models`. 2026-10-09에 `wordpressCategoryId` 삭제) | `saveSettings` | `getSettings` (예전 `platform`/`blogId` 옮김, 예전 `wordpressCategoryId`·`mouseSpeed`는 읽을 때 버림 — 파일에는 다음 저장 때 사라짐) | |
 | 글쓰기 규칙 수정본 | `data/writing-rules.md` | 마크다운 | `saveRules` (원자적 쓰기) | `getRules` | 초기화 시 삭제 |
-| 비밀 정보 | `data/secrets.json` | JSON `{naverClientId?, naverClientSecret?, wpUsername?, wpAppPassword?, geminiApiKey?, openaiApiKey?}` 0600 (예전 `wpcomToken`·`wpcomUsername`은 워드프레스 저장·삭제 때 지움) | `saveNaverKeys`, `saveWordPressAuth`, `saveImageApiKey` (기존 내용을 읽어 자기 항목만 바꿈) | `getNaverKeys`, `getWordPressAuth`, `getImageApiKey` | 항목별 삭제 |
+| 비밀 정보 | `data/secrets.json` | JSON `{naverClientId?, naverClientSecret?, wpUsername?, wpAppPassword?, geminiApiKey?, openaiApiKey?, searchAdCustomerId?, searchAdApiKey?, searchAdSecretKey?}` 0600 (예전 `wpcomToken`·`wpcomUsername`은 워드프레스 저장·삭제 때 지움) | `saveNaverKeys`, `saveWordPressAuth`, `saveImageApiKey`, `saveSearchAdKeys` (기존 내용을 읽어 자기 항목만 바꿈) | `getNaverKeys`, `getWordPressAuth`, `getImageApiKey`, `getSearchAdKeys` | 항목별 삭제 |
 | 주제 추천 | `data/recommendations/<uuid>.json` | JSON `Recommendation` | `startRecommendation`(처음 파일은 바로 씀), `update`(원자적) | `listRecommendations` | 사용자가 삭제할 때까지 |
 | Claude 호출 기록 | `data/usage.jsonl` | 줄마다 JSON `UsageRecord` | `recordUsage` (append) | `readRecords` | **90일** (서버 시작 시 정리) |
 | 플랜 한도 | `data/plan-limits.json` | JSON `PlanLimits` (마지막 값만) | `savePlanLimits` (원자적) | `readPlan` | 덮어씀 |
@@ -43,16 +43,16 @@ DB는 없다. 모두 프로젝트 루트의 `data/` 아래 로컬 파일이다. 
 
 ## 스키마
 ### Job (`data/jobs/*.json`)
-`id`, `topic`, `links?`, `status`(researching/writing/generating_images/draft_ready/posting/posted/scheduled/published/failed — `scheduled`·`published`는 2026-10-09부터 네이버·티스토리 예약발행·자동발행에서도 앱이 정한다), `imageOptions`(2026-10-09부터 `method?`·`thumbnailMethod?` 포함), `postingTo?`(마지막으로 올린 블로그), `generatingImages?`, `regeneratingImages?`, `imageRunsOnly?`, `createdAt`, `updatedAt`, `researchNotes?`, `rulesSnapshot?`, `sources[]`({title,url,kind?}), `post?`, `logs[]`({at,message}), `error?`, `wordpress?`(워드프레스에 올린 글: `postId`, `link`, `mode`, `scheduledAt?`, `mediaIds?` 파일 이름→`{id,url}`), `editProposal?`(2026-10-09, 프롬프트로 글 고치기 제안 → 아래 EditProposal) (`blog-writer:shared/types.ts:266-336`). 의미는 [[writing/entities/Job]].
+`id`, `topic`, `links?`, `status`(researching/writing/generating_images/draft_ready/posting/posted/scheduled/published/failed — `scheduled`·`published`는 2026-10-09부터 네이버·티스토리 예약발행·자동발행에서도 앱이 정한다), `imageOptions`(2026-10-09부터 `method?`·`thumbnailMethod?` 포함), `postingTo?`(마지막으로 올린 블로그), `generatingImages?`, `regeneratingImages?`, `imageRunsOnly?`, `createdAt`, `updatedAt`, `researchNotes?`, `rulesSnapshot?`, `sources[]`({title,url,kind?}), `post?`, `logs[]`({at,message}), `error?`, `wordpress?`(워드프레스에 올린 글: `postId`, `link`, `mode`, `scheduledAt?`, `mediaIds?` 파일 이름→`{id,url}`), `editProposal?`(2026-10-09, 프롬프트로 글 고치기 제안 → 아래 EditProposal) (`blog-writer:shared/types.ts:264-365`). 의미는 [[writing/entities/Job]].
 
 ### EditProposal (`job.editProposal`, 2026-10-09)
-프롬프트로 글을 고치는 중이거나 결과를 적용하기 전인 제안. 글(`post`)은 "적용"하기 전까지 바뀌지 않는다. `prompt`(수정 요청), `range?`(`{start,end}` 고칠 블록 범위, 처음·끝 포함, 없으면 글 전체), `status`(`running`/`ready`/`failed`), `createdAt`, `error?`, `ready`일 때 `before`·`after`(범위의 원래 블록과 고친 블록, 이미지 블록은 원래 이미지 그대로), 글 전체일 때 `title?`·`summary?`, `note?`(무엇을 고쳤는지), `charsBefore?`·`charsAfter?`(본문 글자 수) (`blog-writer:shared/types.ts:284-306`). 수명: `startEdit`가 `running`으로 기록 → `ready`/`failed`, 중지하면 삭제, 적용·버리기에서 삭제, 새 초안(`doDraft`)이 오면 삭제, 서버 재시작 때 `running`이면 `failed`(`recoverStuckJobs`) (`blog-writer:server/pipeline.ts:157-203`, `blog-writer:server/store.ts:130-149`). 서버 재시작과 상관없이 `ready` 제안은 남는다.
+프롬프트로 글을 고치는 중이거나 결과를 적용하기 전인 제안. 글(`post`)은 "적용"하기 전까지 바뀌지 않는다. `prompt`(수정 요청), `range?`(`{start,end}` 고칠 블록 범위, 처음·끝 포함, 없으면 글 전체), `status`(`running`/`ready`/`failed`), `createdAt`, `error?`, `ready`일 때 `before`·`after`(범위의 원래 블록과 고친 블록, 이미지 블록은 원래 이미지 그대로), 글 전체일 때 `title?`·`summary?`, `note?`(무엇을 고쳤는지), `charsBefore?`·`charsAfter?`(본문 글자 수) (`blog-writer:shared/types.ts:313-335`). 수명: `startEdit`가 `running`으로 기록 → `ready`/`failed`, 중지하면 삭제, 적용·버리기에서 삭제, 새 초안(`doDraft`)이 오면 삭제, 서버 재시작 때 `running`이면 `failed`(`recoverStuckJobs`) (`blog-writer:server/pipeline.ts:157-203`, `blog-writer:server/store.ts:130-149`). 서버 재시작과 상관없이 `ready` 제안은 남는다.
 
 ### Post (job.post)
-`title`, `summary`, `tags[]`, 리포트 필드(`searchQuestion`, `mainKeyword`, `subKeywords`, `titleCandidates`, `tagDetails`, `tagsCheckedAt`, `omittedItems`), `thumbnail?`(ImageSpec), `blocks[]`(heading/paragraph/list/quote/table/image) (`blog-writer:shared/types.ts:169-228`). 의미는 [[writing/entities/Post]], 이미지는 [[image/entities/ImageSpec]].
+`title`, `summary`, `tags[]`, 리포트 필드(`searchQuestion`, `mainKeyword`, `subKeywords`, `titleCandidates`, `tagDetails`, `tagsCheckedAt`, `omittedItems`), `thumbnail?`(ImageSpec), `blocks[]`(heading/paragraph/list/quote/table/image) (`blog-writer:shared/types.ts:167-226`). 의미는 [[writing/entities/Post]], 이미지는 [[image/entities/ImageSpec]].
 
 ### Recommendation
-`id`, `field`, `status`(running/done/failed), `anchorKeyword?`, `datalab`(ok/not_configured/failed/pending), `period?`, `candidates[]`, `logs[]`, `error?` (`blog-writer:shared/types.ts:368-384`). [[topic/entities/Recommendation]].
+`id`, `field`, `status`(running/done/failed), `anchorKeyword?`, `datalab`(ok/not_configured/failed/pending), `period?`, `candidates[]`, `logs[]`, `error?` (`blog-writer:shared/types.ts:397-413`). [[topic/entities/Recommendation]].
 
 ### UsageRecord (`usage.jsonl` 한 줄)
 `at`, `stage`, `jobId?`, `callId?`, `model`, `input`, `output`, `cacheRead`, `cacheWrite`, `costUSD` (`blog-writer:server/usage.ts:16-29`). [[usage/entities/UsageRecord]].

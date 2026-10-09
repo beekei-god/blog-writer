@@ -8,8 +8,8 @@ confidence: high
 consistency: consistent
 source:
   - blog-writer:server/recommend.ts:200-245
-  - blog-writer:src/Recommend.tsx:115-117
-  - blog-writer:src/Recommend.tsx:155-178
+  - blog-writer:src/Recommend.tsx:142-144
+  - blog-writer:src/Recommend.tsx:182-205
 entities: [Recommendation, TopicCandidate]
 updated: 2026-10-07
 ---
@@ -30,7 +30,7 @@ updated: 2026-10-07
 | 레이어 | 구현 | 근거 |
 |---|---|---|
 | 서버 | 정렬 조건 | `blog-writer:server/recommend.ts:229-236` |
-| 화면 | 순번·안내 | `blog-writer:src/Recommend.tsx:155-178`, `:115-117` |
+| 화면 | 순번·안내 | `blog-writer:src/Recommend.tsx:182-205`, `:115-117` |
 
 ## 영향받는 플로우
 [[topic/flows/주제 추천 플로우]]

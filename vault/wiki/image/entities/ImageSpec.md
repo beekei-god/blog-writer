@@ -6,7 +6,7 @@ aliases: [이미지, 썸네일, 본문 이미지]
 status: active
 confidence: high
 source:
-  - blog-writer:shared/types.ts:169-187
+  - blog-writer:shared/types.ts:167-185
   - blog-writer:server/schema.ts:9-21
   - blog-writer:server/images/index.ts:34-54
 updated: 2026-10-09
