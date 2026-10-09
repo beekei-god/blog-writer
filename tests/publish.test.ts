@@ -80,6 +80,23 @@ describe("단계 실행", () => {
     expect(PUBLISH_DUMP_JS).not.toMatch(/\.offsetParent/);
     expect(PUBLISH_HELPERS).toContain("getClientRects");
   });
+  it("달력은 구조로 찾고, 가려져 있으면 스크롤해서 보이게 하며, 실제 마우스처럼 누른다", () => {
+    for (const name of ["press", "reveal", "calendarBox", "dayCells"]) expect(PUBLISH_HELPERS).toContain(`const ${name} =`);
+    expect(PUBLISH_HELPERS).toContain("scrollIntoView");
+    expect(PUBLISH_HELPERS).toContain("scrollTop");
+    for (const t of ["pointerdown", "mousedown", "mouseup", "click"]) expect(PUBLISH_HELPERS).toContain(`'${t}'`);
+    const date = naverPublishSteps({ mode: "schedule", scheduledAt: "2026-11-30T05:20:00.000Z" }).find((x) => x.name === "예약 날짜 입력")!;
+    expect(date.js).toContain("reveal(cal)");
+    expect(date.js).toContain("press(day)");
+    expect(date.js).not.toContain("day.click()");
+  });
+  it("도우미 안의 정규식 이스케이프가 템플릿 문자열을 거쳐도 남아 있다 (\\d가 d가 되면 숫자를 못 찾는다)", () => {
+    expect(PUBLISH_HELPERS).toContain("/^\\d{1,2}$/");
+    expect(PUBLISH_HELPERS).toContain("/\\d{4}\\D{1,3}\\d{1,2}/");
+    const date = naverPublishSteps({ mode: "schedule", scheduledAt: "2026-11-30T05:20:00.000Z" }).find((x) => x.name === "예약 날짜 입력")!;
+    expect(date.js).toContain("/^\\d{1,2}$/");
+    expect(date.js).not.toMatch(/\/\^d\{1,2\}\$\//);
+  });
   it("화면 구조를 읽는 스크립트는 문법이 맞고 글 본문(편집 영역)은 건너뛴다", () => {
     expect(() => new Function(PUBLISH_DUMP_JS)).not.toThrow();
     expect(PUBLISH_DUMP_JS).toContain('[contenteditable="true"]');

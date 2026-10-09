@@ -36,8 +36,11 @@ const catControl = (R) => {
   }
   return btn ? { btn } : null;
 };
-/* 화면에 보이는 짧은 글자들 (목록이 뜨기 전후를 비교해 새로 나타난 항목을 찾는다) */
-const leafTexts = () => new Set([...document.querySelectorAll(LISTY)].filter((e) => vis(e) && !e.children.length && !e.closest(NOT_EDITOR)).map((e) => text(e)).filter((t) => t && t.length <= 40));
+/* 화면에 보이는 가장 안쪽 요소들. 칸을 누르기 전에 표시(data-bw-seen)를 남겨 두면, 누른 뒤 표시 없는 요소가 새로 나타난 목록 항목이다.
+   글자로 비교하면 안 된다: 칸이 현재 선택값(보통 첫 항목)을 그대로 보여 주므로 첫 항목의 글자가 이미 화면에 있다. */
+const leaves = () => [...document.querySelectorAll(LISTY)].filter((e) => vis(e) && !e.children.length && !e.closest(NOT_EDITOR));
+const markSeen = () => { for (const e of leaves()) e.setAttribute('data-bw-seen', '1'); };
+const newLeafTexts = () => leaves().filter((e) => !e.hasAttribute('data-bw-seen')).map((e) => text(e)).filter((t) => t && t.length <= 40);
 `;
 
 const CATEGORY_HELPERS = helpers("/카테고리|category/i");
@@ -52,7 +55,7 @@ ${rootCheck(rootJs)}
 const c = catControl(R);
 if (!c) return 'ERR:카테고리 칸을 찾지 못했습니다';
 if (c.sel) return true;
-window.__bwCatBefore = [...leafTexts()];
+markSeen();
 c.btn.click();
 return true;`;
 
@@ -61,8 +64,7 @@ const readJs = (rootJs: string) => `${CATEGORY_HELPERS}
 ${rootCheck(rootJs)}
 const c = catControl(R);
 if (c && c.sel) return [...c.sel.options].map((o) => text(o)).filter(Boolean);
-const before = new Set(window.__bwCatBefore || []);
-const now = [...leafTexts()].filter((t) => !before.has(t));
+const now = newLeafTexts();
 return now.length ? now : false;`;
 
 const closeJs = `for (const t of [document, document.body]) t.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', keyCode: 27, bubbles: true })); return true;`;
@@ -137,7 +139,7 @@ if (c && c.sel) {
 }
 if (!window.__bwCatOpen) {
   if (!c) return 'ERR:${kind} 칸을 찾지 못했습니다';
-  window.__bwCatBefore = [...leafTexts()];
+  markSeen();
   window.__bwCatTries = 0;
   c.btn.click();
   window.__bwCatOpen = Date.now();
@@ -147,9 +149,8 @@ const cand = [...document.querySelectorAll(LISTY)].filter((e) => vis(e) && !e.cl
 const item = cand.find((e) => !cand.some((o) => o !== e && e.contains(o)));
 if (!item) {
   // 목록이 떴는데(새로 나타난 글자가 있는데) 몇 번을 봐도 그 이름이 없으면 목록에 없는 것이다.
-  const before = new Set(window.__bwCatBefore || []);
   window.__bwCatTries = (window.__bwCatTries || 0) + 1;
-  if (window.__bwCatTries > 4 && [...leafTexts()].some((t) => !before.has(t))) { window.__bwCatOpen = 0; return 'ERR:${kind} "' + want + '"이(가) 목록에 없습니다'; }
+  if (window.__bwCatTries > 4 && newLeafTexts().length) { window.__bwCatOpen = 0; return 'ERR:${kind} "' + want + '"이(가) 목록에 없습니다'; }
   return false;
 }
 item.click();

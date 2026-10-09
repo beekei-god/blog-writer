@@ -96,6 +96,13 @@ describe("카테고리 읽기·고르기 코드", () => {
     expect(uses[1]).toBeGreaterThan(js.indexOf("popup()) return wait(24"));
     expect(js).toContain("발행 창으로 돌아오지 않았습니다");
   });
+  it("새로 나타난 목록은 글자가 아니라 요소로 가려낸다 (칸이 현재 선택값을 보여 줘서 첫 항목의 글자가 이미 화면에 있다)", () => {
+    const read = selectCategorySteps("x", "document")[0].js;
+    expect(read).toContain("markSeen()");
+    expect(read).toContain("data-bw-seen");
+    expect(read).not.toContain("__bwCatBefore");
+    expect(read).not.toContain("leafTexts");
+  });
   it("필수 단계는 여전히 멈춘다", async () => {
     await expect(runPublishSteps([{ name: "필수", js: "x" }], async () => "ERR:없음", () => {}, 1, [])).rejects.toThrow("필수");
   });

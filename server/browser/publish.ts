@@ -117,6 +117,38 @@ const pick = (root, re) => {
   target.click();
   return input ? input.checked : true;
 };
+/* 실제 마우스처럼 누른다: 누르는 순간(mousedown)에만 반응하는 달력·목록이 있어 click 하나만 보내면 안 된다 */
+const press = (el) => {
+  const r = el.getBoundingClientRect();
+  const o = { bubbles: true, cancelable: true, view: window, clientX: r.left + r.width / 2, clientY: r.top + r.height / 2, button: 0 };
+  for (const t of ['pointerdown', 'mousedown', 'pointerup', 'mouseup', 'click']) el.dispatchEvent(t.startsWith('pointer') ? new PointerEvent(t, o) : new MouseEvent(t, o));
+};
+/* 요소가 화면 밖에 있으면 스크롤해서 보이게 한다. 발행 창 안의 스크롤 영역이 있으면 그 영역을 아래로 내린다 */
+const reveal = (el) => {
+  if (el.scrollIntoView) el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  for (let p = el.parentElement; p; p = p.parentElement) {
+    if (!(p.scrollHeight > p.clientHeight + 4) || !/(auto|scroll)/.test(getComputedStyle(p).overflowY)) continue;
+    const pr = p.getBoundingClientRect(), er = el.getBoundingClientRect();
+    if (er.bottom > pr.bottom) p.scrollTop += er.bottom - pr.bottom + 8;
+    else if (er.top < pr.top) p.scrollTop -= pr.top - er.top + 8;
+  }
+};
+/* 달력: 알려진 클래스 이름으로 찾고, 없으면 구조로 찾는다 (날짜 숫자 1~31 요소가 28개 이상 모인 가장 작은 보이는 상자) */
+const dayCells = (box) => [...box.querySelectorAll('button, a, td, li, span, div')].filter((e) => vis(e) && !e.children.length && /^\\d{1,2}$/.test(text(e)) && +text(e) >= 1 && +text(e) <= 31);
+const calendarBox = (L) => {
+  const D = L.ownerDocument;
+  const known = [...D.querySelectorAll('[class*="calendar"], [class*="datepicker"], [class*="DatePicker"], [role=grid]')].find((e) => vis(e) && dayCells(e).length >= 28);
+  /* 날짜 격자만 잡으면 월 제목과 이전·다음 버튼이 든 윗부분이 빠지므로, 월 제목("2026.10")이 보일 때까지 윗 상자로 올라간다 */
+  const withHeader = (box) => {
+    let b = box;
+    for (let i = 0; i < 3 && b && !/\\d{4}\\D{1,3}\\d{1,2}/.test(text(b)) && b.parentElement && text(b.parentElement).length < 600; i++) b = b.parentElement;
+    return b || box;
+  };
+  if (known) return withHeader(known);
+  const boxes = [...D.querySelectorAll('div, section, table, ul, [role=dialog]')].filter((e) => vis(e) && dayCells(e).length >= 28);
+  boxes.sort((a, b) => dayCells(a).length - dayCells(b).length || text(a).length - text(b).length);
+  return boxes[0] ? withHeader(boxes[0]) : null;
+};
 /* React가 바뀐 값을 알아채도록 원래 setter로 넣고 이벤트를 보낸다 */
 const setValue = (el, v) => {
   const proto = el.tagName === 'SELECT' ? HTMLSelectElement.prototype : HTMLInputElement.prototype;
@@ -158,27 +190,34 @@ function scheduleSteps(iso: string, minuteStep: number): PublishStep[] {
   return [
     {
       name: "예약 날짜 입력",
-      timeoutMs: 20_000,
+      timeoutMs: 25_000,
       js: `
 const L = layer(); if (!L) ${err("발행 창이 닫혔습니다")}
 const w = ${want};
 const inp = dateField(L); if (!inp) ${err("예약 날짜 칸을 찾지 못했습니다")}
 const cur = nums(inp.value);
-if (cur[0] === w.y && cur[1] === w.m && cur[2] === w.d) return true;
-if (!inp.readOnly) { setValue(inp, w.y + '-' + String(w.m).padStart(2, '0') + '-' + String(w.d).padStart(2, '0')); const v = nums(inp.value); if (v[0] === w.y && v[1] === w.m && v[2] === w.d) return true; }
-/* 읽기 전용 날짜 칸은 달력으로 고른다 */
-const cal = [...L.ownerDocument.querySelectorAll('[class*="calendar"], [class*="datepicker"], [class*="DatePicker"], [role=grid]')].find(vis);
-if (!cal) { inp.click(); return false; }
+if (cur[0] === w.y && cur[1] === w.m && cur[2] === w.d) { window.__bwCal = null; return true; }
+if (!inp.readOnly) { setValue(inp, w.y + '-' + String(w.m).padStart(2, '0') + '-' + String(w.d).padStart(2, '0')); const v = nums(inp.value); if (v[0] === w.y && v[1] === w.m && v[2] === w.d) { window.__bwCal = null; return true; } }
+/* 읽기 전용 날짜 칸은 달력으로 고른다. 달력이 안 보이면 칸을 눌러 열고(너무 자주 눌러 닫히지 않게 몇 번 기다린 뒤에만 다시 누른다) */
+const st = window.__bwCal || (window.__bwCal = { wait: 0 });
+const cal = calendarBox(L);
+if (!cal) { if (st.wait++ % 6 === 0) { reveal(inp); press(inp); } return false; }
+reveal(cal); /* 달력이 스크롤 영역 아래에 열려 가려지면 아래로 내려서 보이게 한다 */
 const head = nums((text(cal).match(/\\d{4}\\D{1,3}\\d{1,2}/) || [''])[0]);
 if (head.length >= 2 && head[0] * 12 + head[1] < w.y * 12 + w.m) {
-  const next = [...cal.querySelectorAll('button, a')].find((b) => vis(b) && /다음|next/i.test(text(b) + ' ' + (b.className || '') + ' ' + (b.getAttribute('aria-label') || '')));
+  const next = [...cal.querySelectorAll('button, a, [role=button], span, div')].find((b) => vis(b) && !/^\\d{1,2}$/.test(text(b)) &&
+    (/^(다음|다음\\s*달|›|>|»)$/.test(text(b)) || /next|다음/i.test((b.className || '') + ' ' + (b.getAttribute('aria-label') || ''))) && !b.matches(OPENER));
   if (!next) ${err("달력에서 다음 달로 넘기지 못했습니다")}
-  next.click(); return false;
+  reveal(next); press(next); return false;
 }
 if (head.length >= 2 && head[0] * 12 + head[1] > w.y * 12 + w.m) ${err("달력이 예약할 달보다 뒤에 있습니다")}
-const day = [...cal.querySelectorAll('button, a, td')].find((e) => vis(e) && text(e) === String(w.d) && !/disable|other|prev|next|dimmed/i.test((e.className || '') + ' ' + ((e.parentElement && e.parentElement.className) || '')) && !e.disabled);
+/* 예약할 날: 이전·다음 달 날짜와 고를 수 없는 날은 뺀다. 클래스로 가릴 수 없으면 위치로 가린다 (22일 이후는 앞쪽에 이전 달 끝 날짜가 있어 마지막 것이 이번 달, 그 밖에는 첫 것이 이번 달) */
+const all = dayCells(cal).filter((e) => +text(e) === w.d);
+const ok = all.filter((e) => !/disable|other|outside|out-|-out|_out|prev|next|dimmed/i.test((e.className || '') + ' ' + ((e.parentElement && e.parentElement.className) || '')) && !e.disabled && e.getAttribute('aria-disabled') !== 'true');
+const pool = ok.length ? ok : all.filter((e) => !e.disabled && e.getAttribute('aria-disabled') !== 'true');
+const day = pool.length ? (w.d >= 22 ? pool[pool.length - 1] : pool[0]) : null;
 if (!day) ${err("달력에서 예약 날짜를 고를 수 없습니다 (지난 날짜이거나 고를 수 없는 날짜)")}
-day.click(); return false;`,
+reveal(day); press(day); return false;`,
     },
     {
       name: "예약 시각 입력",
