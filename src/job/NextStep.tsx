@@ -322,7 +322,7 @@ function CategoryField({ cats, platform, mode }: { cats: ReturnType<typeof useCa
               ? "네이버는 발행 창에서만 카테고리를 고를 수 있어, 임시저장에는 적용되지 않습니다."
               : fromEditor
                 ? "에디터에서 같은 이름을 찾아 고릅니다. 못 찾으면 기본 카테고리로 올리고 진행 로그에 \"확인 필요\"로 남깁니다."
-                : "이 글에만 적용됩니다. 처음 값은 마지막으로 고른 카테고리, 없으면 설정의 기본 카테고리입니다."}
+                : "이 글에만 적용됩니다. 처음 값은 마지막으로 고른 카테고리, 없으면 비워 두며, 고르지 않으면 사이트의 기본 카테고리로 올라갑니다."}
       </span>
       {platform === "naver" && mode !== "draft" && <span className="hint small">네이버 주제는 글 내용을 보고 자동으로 고릅니다.</span>}
       {cats.error && <pre className="error small category-error">{cats.error}</pre>}
