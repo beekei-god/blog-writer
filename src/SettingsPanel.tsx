@@ -4,6 +4,7 @@ import { api, type DatalabStatus, type WordPressStatus } from "./api";
 import { BlockedSites } from "./BlockedSites";
 import { ExtensionStatus } from "./ExtensionStatus";
 import { ImageApiSettings } from "./ImageApiSettings";
+import { SearchAdSettings } from "./SearchAdSettings";
 import { errorText, MODEL_CHOICE_LABEL, MODEL_REASON, prettyModel, STAGE_HINT, STAGE_LABEL } from "./labels";
 import { PLATFORM_LABEL } from "../shared/labels";
 
@@ -27,7 +28,7 @@ type SettingsGroup = "naver" | "tistory" | "wordpress" | "models";
 const SETTINGS_FIELDS: Record<SettingsGroup, (keyof Settings)[]> = {
   naver: ["naverBlogId"],
   tistory: ["tistoryBlogId"],
-  wordpress: ["wordpressUrl", "wordpressCategoryId"],
+  wordpress: ["wordpressUrl"],
   models: ["models"],
 };
 
@@ -47,26 +48,6 @@ export function SettingsPanel({ onSaved, defaultModel }: { onSaved: (s: Settings
   const [wpPass, setWpPass] = useState("");
   const [wpMsg, setWpMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [wpChecking, setWpChecking] = useState(false);
-  const [categories, setCategories] = useState<{ id: number; name: string }[] | null>(null);
-  const [catMsg, setCatMsg] = useState("");
-
-  // 워드프레스가 연결되어 있으면 카테고리 목록을 불러온다 (저장된 사이트 주소가 바뀌면 다시)
-  const wpSite = saved?.wordpressUrl;
-  useEffect(() => {
-    if (!wp?.configured || !wpSite) {
-      setCategories(null);
-      return;
-    }
-    setCatMsg("");
-    api
-      .getWordPressCategories()
-      .then(setCategories)
-      .catch((e) => {
-        setCategories(null);
-        setCatMsg(errorText(e));
-      });
-  }, [wp?.configured, wpSite]);
-
   useEffect(() => {
     api
       .getSettings()
@@ -236,24 +217,7 @@ export function SettingsPanel({ onSaved, defaultModel }: { onSaved: (s: Settings
           {wpMsg && <span className={wpMsg.ok ? "ok-text" : "error"}>{wpMsg.text}</span>}
         </div>
         {wp?.configured && (
-          <label className="field">
-            <span className="field-label">카테고리</span>
-            <select
-              className="inline-select"
-              value={s.wordpressCategoryId ?? ""}
-              disabled={!categories}
-              onChange={(e) => setS({ ...s, wordpressCategoryId: e.target.value ? Number(e.target.value) : undefined })}
-            >
-              <option value="">사이트 기본 카테고리</option>
-              {categories?.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-            <span className="hint small">고른 뒤 위의 "저장"을 눌러야 적용됩니다. 태그는 글마다 이름으로 찾고, 없으면 만듭니다.</span>
-            {catMsg && <span className="error small">{catMsg}</span>}
-          </label>
+          <p className="hint small">카테고리는 글을 올릴 때마다 글 화면에서 고릅니다. 태그는 글마다 이름으로 찾고, 없으면 만듭니다.</p>
         )}
       </section>
 
@@ -284,6 +248,8 @@ export function SettingsPanel({ onSaved, defaultModel }: { onSaved: (s: Settings
           {keyMsg && <span className={keyMsg.ok ? "ok-text" : "error"}>{keyMsg.text}</span>}
         </div>
       </section>
+
+      <SearchAdSettings />
 
       <ImageApiSettings />
 

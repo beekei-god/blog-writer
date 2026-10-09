@@ -1,8 +1,20 @@
-import type { BlogCategory, ImageMethod, ImageOptions, ImageProvider, ImageStyle, Job, ManualStatus, Platform, Post, PublishMode, Recommendation, Settings, TokenTotals, UsageSummary } from "../shared/types";
+import type { BlogCategory, ImageMethod, KeywordSection, ImageOptions, ImageProvider, ImageStyle, Job, ManualStatus, Platform, Post, PublishMode, Recommendation, Settings, TokenTotals, UsageSummary } from "../shared/types";
 
 export interface DatalabStatus {
   configured: boolean;
   clientIdHint: string | null;
+}
+
+export interface SearchAdStatus {
+  configured: boolean;
+  customerIdHint: string | null;
+  /** .env의 키를 쓰는 중 (화면에서 지워도 남는다) */
+  fromEnv: boolean;
+}
+
+export interface KeywordResult {
+  /** 입력한 키워드의 결과 한 덩어리, 또는 입력이 없을 때 지금 뜨는 검색어·최근 주제 추천 분야의 결과 */
+  sections: KeywordSection[];
 }
 
 export interface ImageApiKeyStatus {
@@ -71,6 +83,12 @@ export const api = {
   getJob: (id: string) => req<Job>(`/api/jobs/${id}`),
   createJob: (topic: string, images: ImageOptions, links: string[]) =>
     req<Job>("/api/jobs", { method: "POST", body: JSON.stringify({ topic, images, links }) }),
+  getSearchAd: () => req<SearchAdStatus>("/api/searchad"),
+  saveSearchAd: (customerId: string, apiKey: string, secretKey: string) =>
+    req<SearchAdStatus>("/api/searchad", { method: "PUT", body: JSON.stringify({ customerId, apiKey, secretKey }) }),
+  deleteSearchAd: () => req<SearchAdStatus>("/api/searchad", { method: "DELETE" }),
+  /** 키워드 탐색: 입력한 키워드(쉼표로 최대 5개)와 연관 키워드의 월간 검색량. 비워 두면 지금 뜨는 검색어와 최근 주제 추천의 분야를 기준으로 찾는다 */
+  exploreKeywords: (q: string) => req<KeywordResult>(`/api/keywords?q=${encodeURIComponent(q)}`),
   getDatalab: () => req<DatalabStatus>("/api/datalab"),
   saveDatalab: (clientId: string, clientSecret: string) =>
     req<DatalabStatus>("/api/datalab", { method: "PUT", body: JSON.stringify({ clientId, clientSecret }) }),
@@ -126,7 +144,6 @@ export const api = {
   getCategories: (platform: Platform) => req<CategoryList>(`/api/categories/${platform}`),
   /** 네이버·티스토리: 블로그 에디터에서 카테고리 목록을 읽어 온다 (글은 저장하지 않는다) */
   refreshCategories: (platform: Platform) => req<CategoryList>(`/api/categories/${platform}/refresh`, { method: "POST" }),
-  getWordPressCategories: () => req<{ id: number; name: string }[]>("/api/wordpress/categories"),
   /** 임시저장 이후 상태를 직접 바꾼다: 블로그 발행완료 표시/취소, 초안 검토로 되돌리기 */
   setStatus: (id: string, status: ManualStatus) =>
     req<Job>(`/api/jobs/${id}/status`, { method: "PUT", body: JSON.stringify({ status }) }),

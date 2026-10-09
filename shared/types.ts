@@ -150,8 +150,6 @@ export interface Settings {
   models: StageModels;
   /** 워드프레스 사이트 주소 (https://...). 네이버·티스토리 설정과 따로 두어, 기본 블로그가 달라도 글마다 워드프레스에 올릴 수 있다 */
   wordpressUrl?: string;
-  /** 워드프레스 API로 올릴 때 글을 넣을 카테고리 ID (없으면 사이트 기본 카테고리) */
-  wordpressCategoryId?: number;
 }
 
 /** 블로그별로 따로 저장한 연결 값: 네이버·티스토리는 블로그 ID, 워드프레스는 사이트 주소. 없으면 "" */
@@ -280,6 +278,37 @@ export const MANUAL_STATUSES = ["draft_ready", "posted", "published"] as const;
 export type ManualStatus = (typeof MANUAL_STATUSES)[number];
 /** 이 상태(초안 검토 이후)의 글만 상태를 직접 바꿀 수 있다 */
 export const canSetStatus = (status: JobStatus) => (["draft_ready", "posted", "scheduled", "published"] as JobStatus[]).includes(status);
+
+/** 키워드 탐색 결과 한 줄 (네이버 검색광고 키워드 도구). 월간 검색량이 10 미만이면 값은 5로 두고 `lowPc`·`lowMobile`로 표시한다 */
+export interface KeywordRow {
+  keyword: string;
+  /** 월간 검색량 (PC + 모바일) */
+  total: number;
+  pc: number;
+  mobile: number;
+  /** 검색량이 "< 10"으로만 나온 쪽 (실제 값은 0~9) */
+  lowPc: boolean;
+  lowMobile: boolean;
+  /** 경쟁 정도 (광고 입찰 경쟁): 낮음·중간·높음 */
+  competition: "낮음" | "중간" | "높음" | "알 수 없음";
+  /** 입력한 키워드 자신인지 (연관 키워드가 아니라) */
+  seed: boolean;
+  /** 지금 뜨는 검색어(구글 트렌드)에 있는 키워드면 그 대략의 검색 규모 ("200+") */
+  trend?: string;
+}
+
+/** 키워드 탐색 결과 한 덩어리: 입력한 키워드, 또는 입력이 없을 때의 기준(지금 뜨는 검색어, 최근 주제 추천의 분야) */
+export interface KeywordSection {
+  id: "input" | "trending" | "recommendation";
+  title: string;
+  /** 무엇을 기준으로 찾았는지 한 줄 */
+  note?: string;
+  /** 실제로 조회한 키워드 (공백 제거, 중복 제거) */
+  seeds: string[];
+  rows: KeywordRow[];
+  /** 이 덩어리를 만들지 못한 이유 (다른 덩어리는 그대로 보여 준다) */
+  error?: string;
+}
 
 /** 프롬프트로 글을 고치는 제안. 고친 결과를 "적용"하기 전까지 글은 바뀌지 않는다 */
 export interface EditProposal {

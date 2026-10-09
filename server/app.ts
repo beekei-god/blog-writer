@@ -4,6 +4,7 @@ import { router as categoriesRouter } from "./routes/categories";
 import { router as editRouter } from "./routes/edit";
 import { router as imagesRouter } from "./routes/images";
 import { router as jobsRouter } from "./routes/jobs";
+import { router as keywordsRouter } from "./routes/keywords";
 import { router as recommendationsRouter } from "./routes/recommendations";
 import { router as settingsRouter } from "./routes/settings";
 import { router as usageRouter } from "./routes/usage";
@@ -30,7 +31,7 @@ export function createApp() {
   });
   app.use(express.json({ limit: "2mb" }));
 
-  for (const router of [settingsRouter, browserRouter, usageRouter, recommendationsRouter, jobsRouter, imagesRouter, categoriesRouter, editRouter]) app.use(router);
+  for (const router of [settingsRouter, browserRouter, usageRouter, recommendationsRouter, jobsRouter, imagesRouter, categoriesRouter, editRouter, keywordsRouter]) app.use(router);
 
   app.use(((err, _req, res, _next) => {
     // JSON 파싱 오류 등 body-parser 오류는 4xx 상태를 그대로 돌려준다.

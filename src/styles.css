@@ -325,6 +325,18 @@ details > summary:hover { color: var(--text); }
 .failed-mark { font-size: 11px; color: var(--danger); font-weight: normal; }
 .image-actions { display: flex; gap: 8px; margin-left: auto; align-items: center; flex-wrap: wrap; }
 .image-actions.open { margin-left: 0; width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); flex-direction: column; align-items: stretch; gap: 10px; }
+.keyword-filters { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+.keyword-table-wrap { overflow-x: auto; }
+.keyword-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.keyword-table th, .keyword-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.keyword-table th .link { font-weight: 600; color: var(--text); }
+.keyword-table tr.seed td { background: var(--accent-soft); }
+.keyword-table td:nth-child(2) { position: relative; min-width: 150px; }
+.keyword-table td:nth-child(2) b { position: relative; }
+.vol-bar { position: absolute; left: 0; top: 4px; bottom: 4px; max-width: 100%; background: var(--accent-soft); border-radius: 4px; }
+.keyword-table .row-actions { display: flex; gap: 6px; }
+.keyword-table .comp-0 { color: var(--ok); }
+.keyword-table .comp-2 { color: var(--danger); }
 .edit-card { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); padding: 10px 14px; margin: 0 0 16px; }
 .edit-card > summary { cursor: pointer; font-weight: 600; font-size: 14px; }
 .edit-card[open] > summary { margin-bottom: 10px; }

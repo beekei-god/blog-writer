@@ -6,9 +6,10 @@ import { testDatalab } from "../datalab";
 import { getRules, resetRules, saveRules } from "../rules";
 import { ImageOptionsSchema } from "../schema";
 import { testImageApiKey } from "../images/api";
-import { getImageApiKey, getNaverKeys, saveImageApiKey, saveNaverKeys, saveWordPressAuth } from "../secrets";
+import { getImageApiKey, getNaverKeys, getSearchAdKeys, saveImageApiKey, saveNaverKeys, saveSearchAdKeys, saveWordPressAuth } from "../secrets";
+import { testSearchAd } from "../searchad";
 import { getSettings, saveSettings } from "../store";
-import { listCategories, testWordPress, WordPressError } from "../wordpress";
+import { testWordPress } from "../wordpress";
 import { wordpressStatus, wrap } from "./util";
 
 /** 설정, 글쓰기 규칙, 데이터랩 키, 이미지 API 키, 워드프레스 연결 */
@@ -21,7 +22,6 @@ const SettingsSchema = z
     tistoryBlogId: z.string().trim().max(200).optional(),
     images: ImageOptionsSchema,
     wordpressUrl: z.string().trim().max(200).optional(),
-    wordpressCategoryId: z.number().int().positive().optional(),
     models: z.object(Object.fromEntries(STAGES.map((s) => [s, z.enum(MODEL_CHOICES)])) as Record<Stage, z.ZodEnum<{ [K in ModelChoice]: K }>>),
   })
   .superRefine((v, ctx) => {
@@ -88,6 +88,36 @@ router.delete(
   }),
 );
 
+// ───── 네이버 검색광고 API 키 (키워드 탐색. 값은 돌려주지 않고 설정 여부와 고객 ID 앞부분만 알려 준다) ─────
+const searchAdStatus = async () => {
+  const k = await getSearchAdKeys();
+  return { configured: !!k, customerIdHint: k ? `${k.customerId.slice(0, 3)}…` : null, fromEnv: !!k?.fromEnv };
+};
+router.get("/api/searchad", wrap(async (_req, res) => res.json(await searchAdStatus())));
+router.put(
+  "/api/searchad",
+  wrap(async (req, res) => {
+    const parsed = z
+      .object({ customerId: z.string().trim().min(1).max(40), apiKey: z.string().trim().min(1).max(200), secretKey: z.string().trim().min(1).max(200) })
+      .safeParse(req.body);
+    if (!parsed.success) return void res.status(400).json({ error: "고객 ID, API 키, 비밀 키를 모두 입력하세요." });
+    try {
+      await testSearchAd(parsed.data);
+    } catch (e) {
+      return void res.status(400).json({ error: errorText(e) });
+    }
+    await saveSearchAdKeys(parsed.data);
+    res.json(await searchAdStatus());
+  }),
+);
+router.delete(
+  "/api/searchad",
+  wrap(async (_req, res) => {
+    await saveSearchAdKeys(null);
+    res.json(await searchAdStatus());
+  }),
+);
+
 // ───── 이미지 API 키 (Gemini, OpenAI. 값은 돌려주지 않고 설정 여부만 알려 준다) ─────
 const IMAGE_APIS = ["gemini", "chatgpt"] as const;
 const keyStatus = async (ai: (typeof IMAGE_APIS)[number]) => {
@@ -148,15 +178,5 @@ router.delete(
   wrap(async (_req, res) => {
     await saveWordPressAuth(null);
     res.json(await wordpressStatus());
-  }),
-);
-router.get(
-  "/api/wordpress/categories",
-  wrap(async (_req, res) => {
-    try {
-      res.json(await listCategories());
-    } catch (e) {
-      res.status(e instanceof WordPressError ? 400 : 500).json({ error: errorText(e) });
-    }
   }),
 );

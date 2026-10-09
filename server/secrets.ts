@@ -8,6 +8,7 @@ import { DATA_DIR } from "./store";
  * - 네이버 클라우드 플랫폼 API HUB 키 (데이터랩)
  * - 워드프레스 사용자명과 Application Password
  * - 이미지 API 키 (Gemini, OpenAI)
+ * - 네이버 검색광고 API 키 (키워드 도구: 월간 검색량)
  * 한 파일에 같이 두므로, 저장할 때는 항상 기존 내용을 읽어 합친 뒤 자기 항목만 바꾼다.
  */
 const FILE = path.join(DATA_DIR, "secrets.json");
@@ -22,6 +23,9 @@ type SecretsFile = {
   wpcomUsername?: string;
   geminiApiKey?: string;
   openaiApiKey?: string;
+  searchAdCustomerId?: string;
+  searchAdApiKey?: string;
+  searchAdSecretKey?: string;
 };
 
 const readAll = () => readJson<SecretsFile>(FILE, {});
@@ -48,6 +52,29 @@ export async function getNaverKeys(): Promise<NaverKeys | null> {
 export function saveNaverKeys(keys: NaverKeys | null) {
   return update(({ naverClientId: _a, naverClientSecret: _b, ...rest }) =>
     keys ? { ...rest, naverClientId: keys.clientId, naverClientSecret: keys.clientSecret } : rest,
+  );
+}
+
+/** 네이버 검색광고 API 키 (검색광고 계정의 "API 사용 관리"에서 받는다. 개발자센터·NCP 키와 다르다) */
+export interface SearchAdKeys {
+  customerId: string;
+  apiKey: string;
+  secretKey: string;
+}
+
+/** 환경변수 SEARCHAD_CUSTOMER_ID·SEARCHAD_API_KEY·SEARCHAD_SECRET_KEY가 셋 다 있으면 파일보다 우선 */
+export async function getSearchAdKeys(): Promise<(SearchAdKeys & { fromEnv: boolean }) | null> {
+  const { SEARCHAD_CUSTOMER_ID: c, SEARCHAD_API_KEY: a, SEARCHAD_SECRET_KEY: k } = process.env;
+  if (c && a && k) return { customerId: c, apiKey: a, secretKey: k, fromEnv: true };
+  const s = await readAll();
+  return s.searchAdCustomerId && s.searchAdApiKey && s.searchAdSecretKey
+    ? { customerId: s.searchAdCustomerId, apiKey: s.searchAdApiKey, secretKey: s.searchAdSecretKey, fromEnv: false }
+    : null;
+}
+
+export function saveSearchAdKeys(keys: SearchAdKeys | null) {
+  return update(({ searchAdCustomerId: _a, searchAdApiKey: _b, searchAdSecretKey: _c, ...rest }) =>
+    keys ? { ...rest, searchAdCustomerId: keys.customerId, searchAdApiKey: keys.apiKey, searchAdSecretKey: keys.secretKey } : rest,
   );
 }
 

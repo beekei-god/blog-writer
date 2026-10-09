@@ -65,6 +65,7 @@ npm run dev     # 서버(5172)와 화면(5173)을 함께 실행
 | `CLAUDE_BIN` | `claude` 실행 파일 경로 (PATH에 없을 때) |
 | `CHROME_PATH` | 크롬 실행 파일 경로 (자동으로 못 찾을 때) |
 | `NAVER_CLIENT_ID` / `NAVER_CLIENT_SECRET` | 네이버 검색어 트렌드 키 (설정 화면에서 넣어도 됩니다) |
+| `SEARCHAD_CUSTOMER_ID` / `SEARCHAD_API_KEY` / `SEARCHAD_SECRET_KEY` | 네이버 검색광고 API 키 (키워드 탐색의 월간 검색량. 설정 화면에서 넣어도 됩니다) |
 
 ## 3. 처음 한 번 하는 설정
 

@@ -5,7 +5,7 @@ import type { Server } from "node:http";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createApp } from "../server/app";
 import { saveCategoryList, saveLastCategory } from "../server/categories";
-import { createJob, getJob, getSettings, jobImageDir, saveSettings, updateJob } from "../server/store";
+import { createJob, DATA_DIR, getJob, getSettings, jobImageDir, saveSettings, updateJob } from "../server/store";
 
 // 요청이 거절되는 경로만 확인한다. Claude·크롬을 실제로 띄우는 요청(새 글 시작, 블로그 등록 시작 등)은 보내지 않는다.
 let server: Server;
@@ -56,6 +56,24 @@ describe("설정", () => {
     const ok = await call("PUT", "/api/settings", { ...(await valid()), naverBlogId: "nid", wordpressUrl: "wp.example" });
     expect(ok.status).toBe(200);
     expect((await getSettings()).naverBlogId).toBe("nid");
+  });
+});
+
+describe("워드프레스 기본 카테고리 설정은 없어졌다", () => {
+  it("예전에 저장된 값은 읽을 때 버리고, 저장 요청에 들어와도 걸러낸다", async () => {
+    const file = path.join(DATA_DIR, "settings.json");
+    const current = await getSettings();
+    await fs.writeFile(file, JSON.stringify({ ...current, wordpressUrl: "wp.example", wordpressCategoryId: 5 }));
+    expect(await getSettings()).not.toHaveProperty("wordpressCategoryId");
+    expect((await getSettings()).wordpressUrl).toBe("wp.example");
+    const put = await call("PUT", "/api/settings", { images: IMAGES, models: current.models, wordpressUrl: "wp.example", wordpressCategoryId: 9 });
+    expect(put.status).toBe(200);
+    expect(JSON.parse(await fs.readFile(file, "utf8"))).not.toHaveProperty("wordpressCategoryId");
+    expect((await call("GET", "/api/settings")).body).not.toHaveProperty("wordpressCategoryId");
+  });
+  it("설정 화면용 카테고리 목록 API는 없고, 글 화면용 목록만 있다", async () => {
+    expect((await fetch(`${base}/api/wordpress/categories`)).status).toBe(404);
+    expect((await fetch(`${base}/api/categories/wordpress`)).status).not.toBe(404);
   });
 });
 

@@ -27,8 +27,8 @@ const enqueue = keyedQueue();
 export async function getSettings(): Promise<Settings> {
   try {
     const raw = await fs.readFile(SETTINGS_FILE, "utf8");
-    // 예전 설정(마우스 속도)은 버린다. 예전의 기본 블로그(platform)와 blogId는 아래에서 블로그별 값으로 옮기고 버린다.
-    const { mouseSpeed: _old, platform: legacyPlatform, blogId: legacyBlogId, ...stored } = JSON.parse(raw);
+    // 예전 설정(마우스 속도, 워드프레스 기본 카테고리)은 버린다. 예전의 기본 블로그(platform)와 blogId는 아래에서 블로그별 값으로 옮기고 버린다.
+    const { mouseSpeed: _old, wordpressCategoryId: _cat, platform: legacyPlatform, blogId: legacyBlogId, ...stored } = JSON.parse(raw);
     const merged: Settings = {
       ...DEFAULT_SETTINGS,
       ...stored,

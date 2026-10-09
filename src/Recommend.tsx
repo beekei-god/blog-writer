@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Recommendation, TopicCandidate } from "../shared/types";
 import { api } from "./api";
 import { errorText } from "./labels";
@@ -60,7 +60,21 @@ function CandidateCard({ c, rank, datalabOk, onUse }: { c: TopicCandidate; rank:
   );
 }
 
-export function Recommend({ onUseTopic }: { onUseTopic: (topic: string, links: string[]) => void }) {
+/** 다른 화면(키워드 탐색)에서 넘어온 추천 요청: field로 바로 시작한다. nonce는 요청마다 달라 같은 요청을 두 번 시작하지 않게 한다 */
+export interface RecommendRequest {
+  field: string;
+  nonce: number;
+}
+
+export function Recommend({
+  onUseTopic,
+  request,
+  onRequestHandled,
+}: {
+  onUseTopic: (topic: string, links: string[]) => void;
+  request?: RecommendRequest | null;
+  onRequestHandled?: () => void;
+}) {
   const [field, setField] = useState("");
   const [recs, setRecs] = useState<Recommendation[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -89,17 +103,30 @@ export function Recommend({ onUseTopic }: { onUseTopic: (topic: string, links: s
 
   const selected = recs.find((r) => r.id === selectedId) ?? recs[0];
 
-  async function start(e: React.FormEvent) {
-    e.preventDefault();
+  async function begin(f: string) {
     setError("");
     try {
-      const r = await api.startRecommendation(field.trim());
+      const r = await api.startRecommendation(f);
       setSelectedId(r.id);
       await refresh();
     } catch (err) {
       setError(errorText(err));
     }
   }
+  const start = (e: React.FormEvent) => {
+    e.preventDefault();
+    void begin(field.trim());
+  };
+
+  // 키워드 탐색에서 "주제 추천받기"로 넘어온 경우: 그 키워드를 분야에 넣고 바로 시작한다 (진행 중이면 서버가 거절하고 그 문구를 보여 준다).
+  const handled = useRef<number | null>(null);
+  useEffect(() => {
+    if (!request || handled.current === request.nonce) return;
+    handled.current = request.nonce;
+    setField(request.field);
+    onRequestHandled?.();
+    void begin(request.field);
+  }, [request]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="detail recommend">

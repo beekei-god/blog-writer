@@ -5,15 +5,17 @@ import { JobDetail } from "./job/JobDetail";
 import { errorText, statusLabel } from "./labels";
 import { canLeave } from "./leaveGuard";
 import { NewJob } from "./NewJob";
-import { Recommend } from "./Recommend";
+import { Keywords } from "./Keywords";
+import { Recommend, type RecommendRequest } from "./Recommend";
 import { RulesEditor } from "./RulesEditor";
 import { SettingsPanel } from "./SettingsPanel";
 import { Usage } from "./Usage";
 
-type View = "new" | "job" | "recommend" | "rules" | "usage" | "settings";
+type View = "new" | "job" | "recommend" | "keywords" | "rules" | "usage" | "settings";
 
 const TABS: { view: View; label: string }[] = [
   { view: "new", label: "새 글" },
+  { view: "keywords", label: "키워드 탐색" },
   { view: "recommend", label: "주제 추천" },
   { view: "rules", label: "글쓰기 규칙" },
   { view: "usage", label: "사용량" },
@@ -50,6 +52,8 @@ export function App() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [view, setView] = useState<View>("new");
   const [topic, setTopic] = useState("");
+  // 키워드 탐색에서 넘어온 주제 추천 요청 (주제 추천 화면이 받아 시작하면 비운다)
+  const [recommendRequest, setRecommendRequest] = useState<RecommendRequest | null>(null);
   const [linksText, setLinksText] = useState("");
   const [settings, setSettings] = useState<Settings | null>(null);
   const [error, setError] = useState("");
@@ -194,12 +198,30 @@ export function App() {
           )}
           {view === "recommend" && (
             <Recommend
+              request={recommendRequest}
+              onRequestHandled={() => setRecommendRequest(null)}
               onUseTopic={(t, links) => {
                 if (!canLeave()) return;
                 setTopic(t);
                 setLinksText(links.join("\n"));
                 setView("new");
               }}
+            />
+          )}
+          {view === "keywords" && (
+            <Keywords
+              onUseKeyword={(k) => {
+                if (!canLeave()) return;
+                setTopic(k);
+                setLinksText("");
+                setView("new");
+              }}
+              onRecommend={(k) => {
+                if (!canLeave()) return;
+                setRecommendRequest({ field: k, nonce: Date.now() });
+                setView("recommend");
+              }}
+              onOpenSettings={() => go("settings")}
             />
           )}
           {view === "rules" && <RulesEditor />}

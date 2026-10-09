@@ -29,9 +29,7 @@ router.get(
     if (p === "wordpress") {
       try {
         const categories = await listCategories();
-        // 이 블로그에서 고른 적이 없으면 설정의 기본 카테고리를 처음 값으로 쓴다.
-        const initial = last ?? categories.find((c) => c.id === settings.wordpressCategoryId);
-        return void res.json({ categories, last: initial } satisfies CategoryList);
+        return void res.json({ categories, last } satisfies CategoryList);
       } catch (e) {
         return void res.status(e instanceof WordPressError ? 400 : 502).json({ error: errorText(e) });
       }

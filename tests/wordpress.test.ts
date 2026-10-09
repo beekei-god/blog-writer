@@ -81,7 +81,7 @@ const post: Post = {
 };
 
 beforeAll(async () => {
-  await saveSettings({ ...(await getSettings()), wordpressUrl: "wp.example", wordpressCategoryId: 5 });
+  await saveSettings({ ...(await getSettings()), wordpressUrl: "wp.example" });
   await saveWordPressAuth({ username: "editor", appPassword: "abcd efgh" });
   await fs.mkdir(jobImageDir(JOB), { recursive: true });
   for (const f of ["thumbnail-1.png", "body-1-1.png"]) await fs.writeFile(path.join(jobImageDir(JOB), f), "png");
@@ -103,7 +103,7 @@ describe("워드프레스 등록 (가짜 사이트)", () => {
   it("이미지·태그를 올리고 예약 글을 만든다", async () => {
     fakeWordPress(standard);
     const at = new Date(Date.now() + 3600_000).toISOString();
-    const r = await publishToWordPress(post, JOB, await getSettings(), "schedule", at, undefined, () => {});
+    const r = await publishToWordPress(post, JOB, await getSettings(), "schedule", at, undefined, () => {}, { id: 5, name: "공지" });
     expect(r).toMatchObject({ postId: 100, mode: "schedule", scheduledAt: at, wpStatus: "future" });
     const created = calls.find((c) => c.method === "POST" && c.url.endsWith("/wp-json/wp/v2/posts"))!;
     expect(created.body).toMatchObject({ title: "제목", excerpt: "요약", status: "future", tags: [9, 3], categories: [5], featured_media: 10, date_gmt: at.slice(0, 19) });
@@ -112,11 +112,15 @@ describe("워드프레스 등록 (가짜 사이트)", () => {
     expect(Object.keys(r.mediaIds!)).toEqual(["thumbnail-1.png", "body-1-1.png"]);
   });
 
-  it("글에서 고른 카테고리가 설정의 기본 카테고리보다 우선한다", async () => {
+  it("카테고리는 올릴 때 고른 것만 보내고, 고르지 않으면 보내지 않는다 (사이트의 기본 카테고리)", async () => {
     fakeWordPress(standard);
     await publishToWordPress(post, JOB, await getSettings(), "draft", undefined, undefined, () => {}, { id: 7, name: "여행" });
-    const created = calls.find((c) => c.method === "POST" && c.url.endsWith("/wp-json/wp/v2/posts"))!;
-    expect(created.body).toMatchObject({ categories: [7] });
+    const chosen = calls.find((c) => c.method === "POST" && c.url.endsWith("/wp-json/wp/v2/posts"))!;
+    expect(chosen.body).toMatchObject({ categories: [7] });
+    fakeWordPress(standard);
+    await publishToWordPress(post, JOB, await getSettings(), "draft", undefined, undefined, () => {});
+    const none = calls.find((c) => c.method === "POST" && c.url.endsWith("/wp-json/wp/v2/posts"))!;
+    expect(none.body).not.toHaveProperty("categories");
   });
 
   it("이미 올린 글은 갱신하고, 올린 이미지는 다시 올리지 않는다", async () => {
