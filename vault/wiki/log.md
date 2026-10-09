@@ -130,3 +130,13 @@ updated: 2026-10-05
 - 새 open question: 없음. 네이버 자동발행("현재")·티스토리·Claude in Chrome 발행 경로는 실제 사이트에서 아직 확인되지 않음 (publishing #11, known-issues #24)
 - 비고: 이 갱신은 서브에이전트가 사용량 한도로 중간에 멈춘 뒤 나머지를 직접 마무리했다
 - 분석 시점: git 9a9c6df (스냅샷 `_snapshot.json`)
+
+## [2026-10-09] update | publishing · image · writing · _system (카테고리·네이버 주제, 이미지 추가·삭제, 썸네일 방법, 프롬프트로 글 고치기)
+- 읽은 범위: 커밋 9a9c6df..b7ced30에서 바뀐 36개 파일 (추가 11개: `server/categories.ts`·`editPost.ts`·`naverTopic.ts`, `server/browser/category.ts`, `server/routes/categories.ts`·`edit.ts`, `shared/blockDiff.ts`, `src/job/EditByPrompt.tsx`, 테스트 3개 / 수정 25개)
+- 변경 내용: 올릴 때마다 카테고리 선택(워드프레스 ID, 네이버·티스토리 이름, 마지막 선택 기억, 목록은 블로그 에디터에서 읽어 옴), 네이버 주제를 Claude가 글 내용으로 골라 발행 창 주제 팝업에서 선택. 본문 이미지 자리 추가와 이미지 삭제(파일 포함), 썸네일이 없을 때 만드는 방법(API/크롬) 선택. 프롬프트로 글 고치기(제안을 비교해 보고 적용). 발행 창의 보이는 요소 판별을 `getClientRects`로 바꿔 고정 위치 팝업을 봄
+- 생성: [[publishing/business-rules/BR-PUB-020 카테고리 선택]], [[publishing/business-rules/BR-PUB-021 네이버 주제 자동 선택]], [[publishing/flows/카테고리 목록 불러오기 플로우]], [[image/business-rules/BR-IMG-015 본문 이미지 자리 추가와 이미지 삭제]], [[writing/business-rules/BR-WRT-016 프롬프트로 글 고치기]], [[writing/business-rules/BR-WRT-017 고친 결과 적용 조건과 잠금]], [[writing/business-rules/BR-WRT-018 고칠 때 이미지는 그대로]], [[writing/flows/프롬프트로 글 고치기 플로우]]
+- 갱신(내용): publishing — BR-PUB-018, 임시저장·발행 플로우, 워드프레스 API 등록 플로우, 블로그 설정, 구현 지도 / image — BR-IMG-001·003·006·009·013, ImageSpec, ImageOptions, 두 플로우, 구현 지도 / writing — Job(`editProposal`), BR-WRT-012, 초안 편집과 자동 저장 플로우, 작업 중지와 재시도 플로우, 구현 지도 / _system — modules, api, data-storage, configuration, architecture, integrations 6쪽, known-issues(#29~33), operations / glossary, index, _registry
+- 줄 번호 보정: 바뀐 25개 파일을 가리키는 `blog-writer:` 참조 645곳을 diff로 새 줄 번호에 맞춤. 파일 길이를 넘는 참조 0개
+- 불일치: 없음. 새 open question: publishing #16~19, image #9~10, writing #10~13 (카테고리·주제 에디터 구조는 실제 사이트 미검증, 글 고치기 결과 품질 미확인)
+- 비고: 서브에이전트 4개가 영역별로 갱신하고 메인이 용어집·index·registry·log·점검을 마무리했다
+- 분석 시점: git b7ced30 (스냅샷 `_snapshot.json`)

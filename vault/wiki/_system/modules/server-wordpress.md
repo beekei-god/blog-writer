@@ -4,7 +4,7 @@ project: blog-writer
 module: server-wordpress
 paths: [server/wordpress.ts]
 source:
-  - blog-writer:server/wordpress.ts:1-320
+  - blog-writer:server/wordpress.ts:1-323
 updated: 2026-10-09
 ---
 # server-wordpress 모듈
@@ -23,4 +23,4 @@ updated: 2026-10-09
 
 ## 주의할 점
 - 업로드할 이미지가 하나라도 실패하면 글 등록 전체가 실패한다 (어떤 이미지인지 메시지에 표시).
-- 예약 시각 검사(`checkSchedule`)는 라우터와 등록 함수 양쪽에서 한다. 라우터에서 400으로 먼저 막고, 등록 직전에도 다시 확인한다 (`blog-writer:server/routes/jobs.ts:121-128`, `blog-writer:server/wordpress.ts:264`). 2026-10-09부터 네이버·티스토리 예약발행도 라우터에서 같은 `checkSchedule`을 쓴다 (`blog-writer:server/routes/jobs.ts:133-143`).
+- 예약 시각 검사(`checkSchedule`)는 라우터와 등록 함수 양쪽에서 한다. 라우터에서 400으로 먼저 막고, 등록 직전에도 다시 확인한다 (`blog-writer:server/routes/jobs.ts:129-136`, `blog-writer:server/wordpress.ts:266`). 2026-10-09부터 네이버·티스토리 예약발행도 라우터에서 같은 `checkSchedule`을 쓴다 (`blog-writer:server/routes/jobs.ts:141-151`).

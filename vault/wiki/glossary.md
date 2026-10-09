@@ -73,3 +73,7 @@ updated: 2026-10-09
 | 관심도 환산 | 관심도·상승세 | `interestStat` | `interest.{level, momentum, series}` | 기준 키워드 평균을 100으로 한 검색 관심도와 최근 7일 증감 | [[topic/business-rules/BR-TOP-002 검색 관심도 환산]] |
 | 추천 중지 | "중지" | `POST /api/recommendations/:id/cancel`, `cancelJob` | `status: "failed"` | 진행 중인 주제 추천을 멈춤 | [[topic/business-rules/BR-TOP-005 추천 동시 실행과 입력 제한]] |
 | 자동 테스트 | — | `npm test`, `vitest` | `tests/**` | 규칙과 API 검사를 확인하는 테스트 | [[_system/modules/tests]] |
+| 카테고리 선택 | "카테고리", "목록 불러오기", "블로그 기본 카테고리" | `BlogCategory`, `CategoryField`, `selectCategorySteps`, `data/categories.json` | `category: {id?, name}` | 올릴 때마다 글 화면에서 고르는 블로그 카테고리. 워드프레스는 사이트 목록·ID, 네이버·티스토리는 에디터에서 읽은 이름 | [[publishing/business-rules/BR-PUB-020 카테고리 선택]] |
+| 네이버 주제 | "주제", "네이버 주제는 글 내용을 보고 자동으로 고릅니다." | `pickNaverTopic`, `selectTopicSteps`, `NAVER_TOPICS` | `topic` (PublishRequest) | 네이버 블로그에만 있는 분류. 예약·자동발행 때 Claude가 글 내용으로 정해 발행 창의 주제 팝업에서 고른다 | [[publishing/business-rules/BR-PUB-021 네이버 주제 자동 선택]] |
+| 프롬프트로 글 고치기 | "프롬프트로 글 고치기 · 내용 추가", "적용", "요청을 고쳐서 다시 만들기" | `startEdit`, `proposeEdit`, `applyProposal`, `EditByPrompt` | `job.editProposal` (`running`/`ready`/`failed`) | 수정 요청대로 Claude가 글 전체나 선택한 블록을 고치거나 더하고, 바뀐 부분을 비교해 본 뒤 적용 | [[writing/business-rules/BR-WRT-016 프롬프트로 글 고치기]] |
+| 이미지 추가·삭제 | "＋ 여기에 이미지 추가", "이미지 삭제" | `POST /api/jobs/:id/images`, `DELETE /api/jobs/:id/images/:target`, `ImageToolsProps.onAdd/onDelete` | 파일 없는 `image` 블록 | 본문에 이미지 자리를 더하거나(최대 6장) 이미지를 파일과 함께 지움 | [[image/business-rules/BR-IMG-015 본문 이미지 자리 추가와 이미지 삭제]] |

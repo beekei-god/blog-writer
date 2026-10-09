@@ -7,9 +7,9 @@ status: active
 confidence: high
 consistency: consistent
 source:
-  - blog-writer:shared/types.ts:35-65
-  - blog-writer:server/pipeline.ts:202-206
-  - blog-writer:server/pipeline.ts:272-279
+  - blog-writer:shared/types.ts:41-71
+  - blog-writer:server/pipeline.ts:252-256
+  - blog-writer:server/pipeline.ts:322-329
   - blog-writer:src/NewJob.tsx:62-86
   - blog-writer:src/NewJob.tsx:154-215
   - blog-writer:src/NewJob.tsx:229-274
@@ -37,15 +37,17 @@ updated: 2026-10-09
 ## 화면 순서
 새 글 쓰기 "이미지" 카드는 썸네일 묶음(켜기/끄기 → 설정)과 본문 이미지 묶음(장수 → 설정)으로 나뉜다. 각 묶음의 설정은 **스타일 → 만드는 곳(AI) → 만드는 방법(API|크롬, Gemini·ChatGPT만)** 순서다. 썸네일을 끄면 썸네일 설정이, 본문 이미지가 0장이면 본문 설정이 숨겨진다.
 
+- "썸네일이 없습니다" → "썸네일 만들기"에서 고른 AI·화풍·방법도 `thumbnailProvider`·`thumbnailStyle`·`thumbnailMethod`로 저장되어 이후 썸네일 결정에 쓰인다 → [[image/business-rules/BR-IMG-009 다시 만들기 범위]].
+
 ## 구현 현황
 | 레이어 | 구현 | 근거 |
 |---|---|---|
-| 공용 | `aiFor`·`methodFor` (서버·화면 같이 씀). 화풍 맞추기는 `fitStyle` | `blog-writer:shared/types.ts:52-65` |
-| 서버 | 실행 옵션, 기획 그룹 | `blog-writer:server/pipeline.ts:202-206`, `:272-279` |
+| 공용 | `aiFor`·`methodFor` (서버·화면 같이 씀). 화풍 맞추기는 `fitStyle` | `blog-writer:shared/types.ts:58-71` |
+| 서버 | 실행 옵션, 기획 그룹 | `blog-writer:server/pipeline.ts:252-256`, `:272-279` |
 | 화면 | 저장값 읽기·`touched`, 썸네일/본문 따로 바꾸기, 같은지 비교 | `blog-writer:src/NewJob.tsx:55-86` |
 | 화면 | 썸네일·본문 묶음, "본문 이미지와 같게 하기", `AiRows`(스타일→AI→방법) | `blog-writer:src/NewJob.tsx:154-215`, `:229-274` |
-| 화면 | 초안 화면의 이미지 도구 기본값 | `blog-writer:src/job/JobDetail.tsx:126-132` |
-| 테스트 | 썸네일 설정이 없을 때 본문 설정을 따름, 방법 기본값 | `blog-writer:tests/shared.test.ts:68-80` |
+| 화면 | 초안 화면의 이미지 도구 기본값 | `blog-writer:src/job/JobDetail.tsx:120-126` |
+| 테스트 | 썸네일 설정이 없을 때 본문 설정을 따름, 방법 기본값 | `blog-writer:tests/shared.test.ts:70-82` |
 
 ## 예외 / 경계값
 - 저장된 예전 작업에 썸네일 값이 없으면 실행 시 `aiFor`·`methodFor`가 본문 값을 쓴다. 새 글 쓰기 화면만 값을 채워서 보낸다.
@@ -58,5 +60,6 @@ updated: 2026-10-09
 | 날짜 | 변경 | 근거 |
 |---|---|---|
 | 2026-10-05 | 최초 기록 | |
-| 2026-10-07 | 리팩터링: 스타일 맞추기를 공용 `fitStyle` 하나로 합침 (예전에는 `aiFor`·새 글 폼·초안 화면에 같은 식이 따로 있었음). 동작 변화 없음 | `blog-writer:shared/types.ts:52-61` |
+| 2026-10-07 | 리팩터링: 스타일 맞추기를 공용 `fitStyle` 하나로 합침 (예전에는 `aiFor`·새 글 폼·초안 화면에 같은 식이 따로 있었음). 동작 변화 없음 | `blog-writer:shared/types.ts:58-67` |
 | 2026-10-09 | 새 글 쓰기: 썸네일이 본문 설정을 "따라가는" 모드 삭제 → 썸네일·본문 설정 완전히 독립. 설정 순서 AI→스타일 → 스타일→AI→방법. 썸네일 만드는 방법(`thumbnailMethod`, 없으면 본문 `method`) 추가. "본문 이미지와 같게 하기"가 방법까지 맞춤. 저장값이 늦게 와도 사용자가 바꾼 값 유지 | 커밋 7a8a0ea, 65bfa3e, `blog-writer:src/NewJob.tsx:55-86` |
+| 2026-10-09 | "썸네일이 없습니다"의 "썸네일 만들기"에서 고른 AI·화풍·방법도 `thumbnailProvider`·`thumbnailStyle`·`thumbnailMethod`로 저장되어 이후 썸네일 결정에 쓰임 | 커밋 b7ced30 |

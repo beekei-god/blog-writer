@@ -8,7 +8,7 @@ confidence: high
 consistency: consistent
 source:
   - blog-writer:server/routes/settings.ts:17-35
-  - blog-writer:server/routes/jobs.ts:116-120
+  - blog-writer:server/routes/jobs.ts:124-128
   - blog-writer:server/routes/browser.ts:104-105
   - blog-writer:server/wordpress.ts:26-31
   - blog-writer:src/SettingsPanel.tsx:12-23
@@ -33,7 +33,7 @@ updated: 2026-10-09
 | 레이어 | 구현 | 근거 |
 |---|---|---|
 | 서버(설정 저장) | `SettingsSchema.superRefine` 블로그별 검사 | `blog-writer:server/routes/settings.ts:17-35` |
-| 서버(올리기) | 고른 블로그의 값이 비면 400 | `blog-writer:server/routes/jobs.ts:116-120` |
+| 서버(올리기) | 고른 블로그의 값이 비면 400 | `blog-writer:server/routes/jobs.ts:124-128` |
 | 서버(로그인 창) | 블로그 ID가 비면 400 | `blog-writer:server/routes/browser.ts:104-105` |
 | 서버(사용) | 글쓰기 URL·로그인 URL, 워드프레스 주소 정리 | `blog-writer:server/browser/postHtml.ts:22-24`, `blog-writer:server/routes/browser.ts:79-82`, `blog-writer:server/wordpress.ts:26-31` |
 | 화면 | 블로그별 라벨·예시·도움말, 형식 검사 없음 (서버 메시지 표시) | `blog-writer:src/SettingsPanel.tsx:12-23`, `:172-258` |

@@ -9,7 +9,7 @@ consistency: single-source
 source:
   - blog-writer:server/naver.ts:25-37
   - blog-writer:server/naver.ts:80-89
-  - blog-writer:server/pipeline.ts:100-110
+  - blog-writer:server/pipeline.ts:102-112
   - blog-writer:server/writer.ts:127-131
 entities: [Post]
 updated: 2026-10-07
@@ -32,7 +32,7 @@ updated: 2026-10-07
 | 레이어 | 구현 | 근거 |
 |---|---|---|
 | 서버 | `expandQueries`, `collectAutocomplete`, `collectNaverSuggestions` | `blog-writer:server/naver.ts:25-37`, `:80-89` |
-| 서버(파이프라인) | 키워드 = [main, ...sub] | `blog-writer:server/pipeline.ts:101-103` |
+| 서버(파이프라인) | 키워드 = [main, ...sub] | `blog-writer:server/pipeline.ts:103-105` |
 | 프롬프트(작성) | 수집 목록 전달 | `blog-writer:server/writer.ts:127-131` |
 
 ## 예외 / 경계값

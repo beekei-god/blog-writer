@@ -7,7 +7,7 @@ status: active
 confidence: medium
 consistency: consistent
 source:
-  - blog-writer:server/pipeline.ts:261-299
+  - blog-writer:server/pipeline.ts:311-349
   - blog-writer:server/images/plan.ts:1-113
   - blog-writer:server/writer.ts:53-63
 updated: 2026-10-09
@@ -34,14 +34,14 @@ entities: [ImageSpec]
 |---|---|---|
 | 프롬프트(작성) | 처음 쓸 때 basis 먼저, 범용 이미지 금지, 일관성 | `blog-writer:server/writer.ts:53-63` |
 | 프롬프트(기획) | 위 규칙 | `blog-writer:server/images/plan.ts:86-100` |
-| 서버 | 그룹별 기획 호출과 반영 | `blog-writer:server/pipeline.ts:261-299` |
-| 스키마 | basis를 prompt보다 먼저 쓰게 순서 배치 | `blog-writer:server/schema.ts:143-147` |
+| 서버 | 그룹별 기획 호출과 반영 | `blog-writer:server/pipeline.ts:311-349` |
+| 스키마 | basis를 prompt보다 먼저 쓰게 순서 배치 | `blog-writer:server/schema.ts:146-150` |
 
 범용 이미지 금지·섹션 연관성은 프롬프트 지시라 `confidence: medium`.
 
 ## 예외 / 경계값
 - 기획은 `images` 단계 모델을 쓰고 effort low, 4분 제한.
-- 썸네일 추가 시 기본 장면("블로그 글 '제목'의 대표 썸네일. 핵심 내용: 요약…")은 기획이 실패할 때만 쓰인다 (`blog-writer:server/routes/images.ts:39-46`).
+- 썸네일 추가 시 기본 장면("블로그 글 '제목'의 대표 썸네일. 핵심 내용: 요약…")은 기획이 실패할 때만 쓰인다 (`blog-writer:server/routes/images.ts:41-48`).
 
 ## 영향받는 플로우
 [[image/flows/이미지 생성 플로우]]

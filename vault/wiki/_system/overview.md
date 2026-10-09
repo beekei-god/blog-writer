@@ -13,6 +13,7 @@ Claude는 API 키가 아니라 이 컴퓨터에 로그인된 Claude Code CLI(`cl
 ## 주요 기능
 - 주제 → 리서치 → 초안 → 이미지 → 검토 → 올릴 블로그 선택 → 네이버·티스토리는 크롬으로 임시저장(+고르면 발행 창에서 예약발행·자동발행), 워드프레스는 API로 임시저장·예약발행·자동발행 → [[writing/overview]], [[image/overview]], [[publishing/overview]]
 - 분야를 넣으면 최근 뉴스·통계로 주제 후보 10~12개를 찾고 네이버 데이터랩 관심도로 순위를 매김 → [[topic/overview]]
+- 올릴 때 카테고리 선택(네이버·티스토리는 블로그 에디터에서 목록을 읽어 옴, 네이버 예약·자동발행은 글 내용으로 주제도 자동 선택), 본문 이미지 추가·삭제, 프롬프트로 글 고치기·내용 추가(결과를 비교해 보고 적용) → [[publishing/overview]], [[image/overview]], [[writing/overview]]
 - 글쓰기 규칙 편집 (다음 작업부터 적용) → [[writing/entities/글쓰기 규칙]]
 - 단계별 Claude 모델 선택, 플랜 한도·토큰 사용량 보기 → [[usage/overview]]
 

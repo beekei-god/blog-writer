@@ -22,8 +22,9 @@ updated: 2026-10-09
 - [[image/business-rules/BR-IMG-010 직접 올리기 형식과 크기]] — png/jpg/webp/gif ≤20MB
 - [[image/business-rules/BR-IMG-011 SVG 안전 검증과 크기]] — 스크립트·외부 참조 금지, 1200×630/675
 - [[image/business-rules/BR-IMG-012 실패 후 다른 AI 추천]] — **폐기(2026-10-08)**: 위쪽 실패 안내와 함께 삭제
-- [[image/business-rules/BR-IMG-013 이미지 API 우선과 만드는 방법 선택]] — 썸네일·본문 따로 API/크롬 선택(새 글 쓰기·다시 생성 창), 키 없으면 크롬, 실패해도 자동 전환 없음
+- [[image/business-rules/BR-IMG-013 이미지 API 우선과 만드는 방법 선택]] — 썸네일·본문 따로 API/크롬 선택(새 글 쓰기·다시 생성 창·"썸네일 만들기"), 키 없으면 크롬, 실패해도 자동 전환 없음
 - [[image/business-rules/BR-IMG-014 한 장씩 다시 만들기 동시 실행]] — 이미지 여러 장 동시에, 크롬은 큐에서 하나씩
+- [[image/business-rules/BR-IMG-015 본문 이미지 자리 추가와 이미지 삭제]] — 글 안에서 이미지 자리 추가(최대 6장)·삭제(파일도 삭제), 작업 중이면 409
 
 ## 플로우
 - [[image/flows/이미지 생성 플로우]]

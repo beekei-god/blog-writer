@@ -7,12 +7,12 @@ status: active
 confidence: high
 consistency: consistent
 source:
-  - blog-writer:shared/types.ts:132-161
-  - blog-writer:server/routes/jobs.ts:106-120
-  - blog-writer:server/pipeline.ts:319-329
-  - blog-writer:src/job/JobDetail.tsx:102-111
-  - blog-writer:src/job/JobDetail.tsx:223-243
-  - blog-writer:src/job/NextStep.tsx:73-95
+  - blog-writer:shared/types.ts:138-167
+  - blog-writer:server/routes/jobs.ts:107-128
+  - blog-writer:server/pipeline.ts:369-392
+  - blog-writer:src/job/JobDetail.tsx:104-113
+  - blog-writer:src/job/JobDetail.tsx:236-256
+  - blog-writer:src/job/NextStep.tsx:79-101
   - blog-writer:src/App.tsx:101-107
   - blog-writer:src/SettingsPanel.tsx:172-196
 entities: [블로그 설정, Job]
@@ -39,11 +39,11 @@ updated: 2026-10-09
 ## 구현 현황
 | 레이어 | 구현 | 근거 |
 |---|---|---|
-| 공용 | 블로그별 필드, `blogIdOf`, `settingsFor` | `blog-writer:shared/types.ts:132-161` |
-| 서버 | `platform` 필수, 블로그별 값 확인 | `blog-writer:server/routes/jobs.ts:106-120` |
-| 서버 | 고른 블로그로 경로 분기, 고른 블로그의 설정으로 입력 | `blog-writer:server/pipeline.ts:319-329`, `:371` |
-| 화면 | `destPick`, 올릴 곳 선택(`destPicker`) | `blog-writer:src/job/JobDetail.tsx:102-111`, `:223-243` |
-| 화면 | 고르기 전 안내 | `blog-writer:src/job/NextStep.tsx:73-95` |
+| 공용 | 블로그별 필드, `blogIdOf`, `settingsFor` | `blog-writer:shared/types.ts:138-167` |
+| 서버 | `platform` 필수, 블로그별 값 확인 | `blog-writer:server/routes/jobs.ts:107-128` |
+| 서버 | 고른 블로그로 경로 분기, 고른 블로그의 설정으로 입력 | `blog-writer:server/pipeline.ts:369-392`, `:371` |
+| 화면 | `destPick`, 올릴 곳 선택(`destPicker`) | `blog-writer:src/job/JobDetail.tsx:104-113`, `:223-243` |
+| 화면 | 고르기 전 안내 | `blog-writer:src/job/NextStep.tsx:79-101` |
 | 화면 | 블로그별 연결 여부 `ready` | `blog-writer:src/App.tsx:101-107` |
 | 화면(설정) | 블로그별 카드, 카드마다 자기 값만 저장 | `blog-writer:src/SettingsPanel.tsx:27-32`, `:86-101`, `:172-258` |
 
@@ -57,5 +57,5 @@ updated: 2026-10-09
 ## 변경 이력
 | 날짜 | 변경 | 근거 |
 |---|---|---|
-| 2026-10-07 | 최초 기록. 예전에는 설정의 기본 블로그(`platform`) 하나에만 올렸다 | `blog-writer:server/routes/jobs.ts:106-120` |
+| 2026-10-07 | 최초 기록. 예전에는 설정의 기본 블로그(`platform`) 하나에만 올렸다 | `blog-writer:server/routes/jobs.ts:107-128` |
 | 2026-10-09 | 규칙 변화 없음. 상태 이름 변경 반영, 다른 블로그에 올린 글 표시(BR-PUB-019) 연결, 근거 줄 번호 갱신 | 커밋 65bfa3e |

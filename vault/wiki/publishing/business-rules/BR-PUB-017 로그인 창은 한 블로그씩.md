@@ -11,7 +11,7 @@ source:
   - blog-writer:server/routes/browser.ts:79-121
   - blog-writer:src/LoginWindow.tsx:10-76
   - blog-writer:src/BlockedSites.tsx:59-60
-  - blog-writer:tests/api.test.ts:147-153
+  - blog-writer:tests/api.test.ts:228-234
 entities: [블로그 설정]
 updated: 2026-10-09
 ---
@@ -40,7 +40,7 @@ updated: 2026-10-09
 | 서버(API) | 검사 순서: 자동 조작 → 블로그 값 → 열린 창 → 블로그 ID → 열기 | `blog-writer:server/routes/browser.ts:90-114` |
 | 화면 | `LoginWindow` (블로그별, 3초마다 상태 확인) | `blog-writer:src/LoginWindow.tsx:10-76` |
 | 화면(설정) | 네이버·티스토리 로그인 창 버튼 | `blog-writer:src/BlockedSites.tsx:59-60` |
-| 테스트 | 워드프레스 거절, 블로그 ID 없음 | `blog-writer:tests/api.test.ts:147-153` |
+| 테스트 | 워드프레스 거절, 블로그 ID 없음 | `blog-writer:tests/api.test.ts:228-234` |
 
 ## 예외 / 경계값
 - 서버가 다시 시작되면 열린 창의 기록을 잃는다(창은 남아 있어도 `open: false`).

@@ -5,8 +5,9 @@ confidence: high
 source:
   - blog-writer:package.json:6-13
   - blog-writer:server/index.ts:1-11
-  - blog-writer:server/app.ts:10-40
-  - blog-writer:server/pipeline.ts:23-64
+  - blog-writer:server/app.ts:12-42
+  - blog-writer:server/pipeline.ts:25-66
+  - blog-writer:server/pipeline.ts:149-203
   - blog-writer:server/claude.ts:58-198
   - blog-writer:vite.config.ts:1-10
 updated: 2026-10-09
@@ -32,9 +33,9 @@ updated: 2026-10-09
 - **화면** ([[_system/modules/web-app]], [[_system/modules/web-screens]], [[_system/modules/web-job]]): 입력, 진행 상황 폴링, 초안 편집·자동 저장, 복사.
 - **API 라우터** ([[_system/modules/server-routes]] `server/app.ts` + `server/routes/*.ts`): 입력 검증(zod), 상태를 먼저 "진행 중"으로 바꾼 뒤(`markBusy`) 백그라운드 작업 시작, 202 응답.
 - **파이프라인** ([[_system/modules/server-pipeline]] `server/pipeline.ts`): 작업 단위 실행·중복 방지·크롬 작업 직렬화.
-- **기능 모듈**: 리서치/작성([[_system/modules/server-pipeline]]), 이미지([[_system/modules/server-images]]), 블로그 입력([[_system/modules/server-browser]] 크롬, [[_system/modules/server-wordpress]] API), 추천([[_system/modules/server-recommend]]).
+- **기능 모듈**: 리서치/작성·글 고치기·네이버 주제 고르기([[_system/modules/server-pipeline]]), 이미지([[_system/modules/server-images]]), 블로그 입력·카테고리 읽기([[_system/modules/server-browser]] 크롬, [[_system/modules/server-wordpress]] API), 추천([[_system/modules/server-recommend]]).
 - **외부 호출**: Claude CLI([[_system/modules/server-claude]]), 네이버 HTTP, 크롬.
-- **저장**: `server/fsutil.ts`의 원자적 쓰기 + 쓰기 줄(`server/store.ts`가 작업·설정에 사용) → [[_system/data-storage]].
+- **저장**: 카테고리 기억 `server/categories.ts`, `server/fsutil.ts`의 원자적 쓰기 + 쓰기 줄(`server/store.ts`가 작업·설정에 사용) → [[_system/data-storage]].
 - **공용** ([[_system/modules/shared]]): 타입, 분량 계산, 붙여넣기 HTML, 이미지 오류 분류, 상태·블로그 이름. 서버와 화면이 같이 쓴다.
 
 ## 모듈 의존
@@ -71,20 +72,26 @@ flowchart TD
 
 ## 대표 요청의 경로: "딥서칭 시작"
 1. 화면 `NewJob.submit` → `POST /api/jobs` (`blog-writer:src/NewJob.tsx:92-107`).
-2. 서버가 주제(2~300자)·링크(http(s), 최대 20개)·이미지 옵션을 검증하고, 이미지 옵션을 설정에 기억한 뒤 `createJob` → `void runDraft(id)` → 201 응답 (`blog-writer:server/routes/jobs.ts:43-72`).
-3. `doDraft`: 규칙 읽기 → `deepResearch`(Claude + WebSearch/WebFetch) → 네이버 자동완성·함께 많이 찾는 수집 → `writePost`(Claude) → 분량 줄이기 → 태그 검증 → `makeImages` → `draft_ready` (`blog-writer:server/pipeline.ts:66-147`).
+2. 서버가 주제(2~300자)·링크(http(s), 최대 20개)·이미지 옵션을 검증하고, 이미지 옵션을 설정에 기억한 뒤 `createJob` → `void runDraft(id)` → 201 응답 (`blog-writer:server/routes/jobs.ts:44-73`).
+3. `doDraft`: 규칙 읽기 → `deepResearch`(Claude + WebSearch/WebFetch) → 네이버 자동완성·함께 많이 찾는 수집 → `writePost`(Claude) → 분량 줄이기 → 태그 검증 → `makeImages` → `draft_ready` (`blog-writer:server/pipeline.ts:68-150`).
 4. 각 단계는 `updateJob`/`log`로 `data/jobs/<id>.json`에 바로 기록한다.
 5. 화면은 진행 중 작업이 있으면 1.5초마다 `GET /api/jobs`로 폴링한다 (`blog-writer:src/App.tsx:86-92`).
 자세한 흐름은 [[writing/flows/초안 작성 플로우]].
 
+## 대표 요청의 경로: "프롬프트로 글 고치기" (2026-10-09)
+1. 화면 `EditByPrompt`(글 전체 또는 편집 화면에서 고른 블록 범위) → `POST /api/jobs/:id/edit` ([[_system/api]]).
+2. `startEdit`가 `job.editProposal={status:"running"}`를 먼저 기록하고 `running`에 등록한다. 그래서 만드는 동안 글 수정·블로그 올리기·이미지 작업이 409이고, 화면은 폴링한다 (`blog-writer:server/pipeline.ts:157-170`).
+3. `doEdit` → `proposeEdit`(Claude, WebSearch·WebFetch)가 고친 블록을 만들어 `ready` 제안(`before`/`after`)으로 저장한다. 글은 아직 그대로다. 실패는 `failed`, 중지는 제안 삭제 (`blog-writer:server/pipeline.ts:172-198`).
+4. 화면이 바뀐 블록만 비교해 보여 주고(`shared/blockDiff.ts`), 사용자가 `POST …/edit/apply`(범위가 그 사이 바뀌었으면 409)나 `DELETE …/edit`를 고른다 → [[_system/modules/server-pipeline]] `editPost.ts`.
+
 ## 비동기 / 백그라운드 작업
-- 장시간 작업(초안·이미지·블로그 입력·추천)은 HTTP 응답 후 `void` 프로미스로 돈다. 진행 상황은 job 파일의 `status`·`logs`에 쓰고 화면이 폴링한다(작업 1.5초, 추천 2초, 로그인 창 3초, 사용량 15초/60초).
+- 장시간 작업(초안·이미지·블로그 입력·글 고치기·추천)은 HTTP 응답 후 `void` 프로미스로 돈다. 진행 상황은 job 파일의 `status`·`logs`에 쓰고 화면이 폴링한다(작업 1.5초, 추천 2초, 로그인 창 3초, 사용량 15초/60초).
 - 같은 작업은 동시에 한 번만 (`running` Set) → [[writing/business-rules/BR-WRT-011 작업 중복 실행과 진행 중 변경 금지]].
-- 크롬을 쓰는 작업(네이버·티스토리 입력, Gemini/ChatGPT 이미지)은 전역 줄 `enqueueBrowser`(`serialQueue`)로 하나씩. 워드프레스 API 등록은 크롬을 쓰지 않아 이 줄을 거치지 않는다 → [[publishing/business-rules/BR-PUB-004 크롬 작업 직렬화]].
+- 크롬을 쓰는 작업(네이버·티스토리 입력, 카테고리 목록 불러오기, Gemini/ChatGPT 이미지)은 전역 줄 `enqueueBrowser`(`serialQueue`)로 하나씩. 워드프레스 API 등록은 크롬을 쓰지 않아 이 줄을 거치지 않는다 → [[publishing/business-rules/BR-PUB-004 크롬 작업 직렬화]].
 - 중지: 작업마다 AbortController를 두고 AsyncLocalStorage로 신호를 전달, `runClaude`가 자식 프로세스를 SIGTERM (`blog-writer:server/cancel.ts:1-39`, `blog-writer:server/claude.ts:91-96`).
-- 서버 시작 시 진행 중으로 남은 작업·추천을 정리하고 90일 지난 사용량 기록을 지운다 (`blog-writer:server/index.ts:7-11`).
+- 서버 시작 시 진행 중으로 남은 작업·추천(만드는 중이던 글 고치기 제안은 failed로)을 정리하고 90일 지난 사용량 기록을 지운다 (`blog-writer:server/index.ts:7-11`).
 
 ## 오류 처리 방식
-- 라우터는 `wrap`으로 비동기 오류를 잡아 공통 핸들러로 보낸다. 4xx(본문 파싱 오류 등)는 "요청 형식이 올바르지 않습니다.", 500은 메시지를 그대로 (`blog-writer:server/routes/util.ts:6-10`, `blog-writer:server/app.ts:33-38`).
+- 라우터는 `wrap`으로 비동기 오류를 잡아 공통 핸들러로 보낸다. 4xx(본문 파싱 오류 등)는 "요청 형식이 올바르지 않습니다.", 500은 메시지를 그대로 (`blog-writer:server/routes/util.ts:6-10`, `blog-writer:server/app.ts:35-40`).
 - 파이프라인 오류는 job의 `error`와 로그에 남기고, 초안이 있으면 `draft_ready`, 없으면 `failed`로 둔다.
 - 이미지 하나의 실패는 그 이미지에만 기록하고 계속 진행한다 → [[image/business-rules/BR-IMG-007 이미지 실패 격리와 원인 분류]].

@@ -10,7 +10,7 @@ source:
   - blog-writer:server/images/index.ts:59-124
   - blog-writer:server/images/errors.ts:1-15
   - blog-writer:shared/imageErrors.ts:1-118
-  - blog-writer:server/pipeline.ts:314-316
+  - blog-writer:server/pipeline.ts:364-366
   - blog-writer:src/job/images.tsx:9-38
   - blog-writer:server/images/webAi.ts:243-266
   - blog-writer:server/images/api.ts:25-40
@@ -64,7 +64,7 @@ updated: 2026-10-09
 | 서버 | 웹 AI `failed` + 파일 없음 → 메시지가 사이트 오류면 `site_error`, 아니면 `ui_changed` | `blog-writer:server/images/webAi.ts:255-259` |
 | 프롬프트(웹 AI) | "사이트가 '문제가 발생했습니다' 같은 오류 안내를 보였으면 message에 그 문구를 그대로" | `blog-writer:server/images/webAi.ts:210` |
 | 화면 | 이미지 자리에 실패 이유·안내, 재분류(`unknown`, 예전 `ui_changed` 사이트 오류) | `blog-writer:src/job/images.tsx:9-38` |
-| 테스트 | 메시지별 분류(사이트 오류 문구 2건 포함), 웹 AI `failed`여도 받아진 파일 회수·사이트 오류면 `site_error`·없으면 `ui_changed`, API 오류별 원인(limit·refused·api_error) | `blog-writer:tests/shared.test.ts:110-123`, `blog-writer:tests/webAi.test.ts:20-52`, `blog-writer:tests/imageApi.test.ts` |
+| 테스트 | 메시지별 분류(사이트 오류 문구 2건 포함), 웹 AI `failed`여도 받아진 파일 회수·사이트 오류면 `site_error`·없으면 `ui_changed`, API 오류별 원인(limit·refused·api_error) | `blog-writer:tests/shared.test.ts:112-125`, `blog-writer:tests/webAi.test.ts:20-52`, `blog-writer:tests/imageApi.test.ts` |
 
 ## 예외 / 경계값
 - 이미지 대신 글로 답한 경우는 Claude가 판단한 status(`refused`/`limit`)로 구분한다. 쓰이지 않던 `classifyReply`는 2026-10-05 삭제했다.

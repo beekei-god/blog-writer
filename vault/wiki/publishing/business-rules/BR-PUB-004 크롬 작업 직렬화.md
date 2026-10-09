@@ -7,9 +7,9 @@ status: active
 confidence: high
 consistency: consistent
 source:
-  - blog-writer:server/pipeline.ts:23-25
-  - blog-writer:server/pipeline.ts:301-313
-  - blog-writer:server/pipeline.ts:319-329
+  - blog-writer:server/pipeline.ts:25-27
+  - blog-writer:server/pipeline.ts:351-363
+  - blog-writer:server/pipeline.ts:369-392
   - blog-writer:server/browser/runner.ts:21-52
   - blog-writer:server/routes/browser.ts:90-114
   - blog-writer:server/fsutil.ts:32-39
@@ -38,9 +38,9 @@ updated: 2026-10-09
 | 레이어 | 구현 | 근거 |
 |---|---|---|
 | 공용 | `serialQueue` (앞 작업이 실패해도 다음 작업 실행) | `blog-writer:server/fsutil.ts:32-39` |
-| 서버 | `enqueueBrowser = serialQueue()` | `blog-writer:server/pipeline.ts:23-25` |
-| 서버 | 블로그 입력 분기 (워드프레스 제외) | `blog-writer:server/pipeline.ts:324-327` |
-| 서버 | 이미지 분기 (크롬을 실제로 쓸 때만) | `blog-writer:server/pipeline.ts:301-313` |
+| 서버 | `enqueueBrowser = serialQueue()` | `blog-writer:server/pipeline.ts:25-27` |
+| 서버 | 블로그 입력 분기 (워드프레스 제외) | `blog-writer:server/pipeline.ts:374-377` |
+| 서버 | 이미지 분기 (크롬을 실제로 쓸 때만) | `blog-writer:server/pipeline.ts:351-363` |
 | 서버 | 프로필 충돌 방지 | `blog-writer:server/browser/runner.ts:46-52`, `blog-writer:server/routes/browser.ts:93-95`, `:106` |
 
 ## 예외 / 경계값
@@ -54,6 +54,6 @@ updated: 2026-10-09
 | 날짜 | 변경 | 근거 |
 |---|---|---|
 | 2026-10-05 | 최초 기록 | |
-| 2026-10-07 | 워드프레스 등록은 크롬 큐를 거치지 않음. 큐 구현이 공용 `serialQueue`로 바뀜(동작 같음) | `blog-writer:server/pipeline.ts:265-269`, `blog-writer:server/fsutil.ts:20-28` |
-| 2026-10-08 | 이미지는 실제로 크롬에서 만들 때만 큐에 넣음. 이미지 API로 만드는 Gemini·ChatGPT 이미지는 큐 없이 진행 | `blog-writer:server/pipeline.ts:286-298`, 커밋 38ae96c |
-| 2026-10-09 | 규칙 변화 없음. 네이버·티스토리 발행 창 단계도 같은 큐 차례 안에서 실행됨을 적음. 근거 줄 번호 갱신 | 커밋 65bfa3e, `blog-writer:server/pipeline.ts:319-329` |
+| 2026-10-07 | 워드프레스 등록은 크롬 큐를 거치지 않음. 큐 구현이 공용 `serialQueue`로 바뀜(동작 같음) | `blog-writer:server/pipeline.ts:315-319`, `blog-writer:server/fsutil.ts:20-28` |
+| 2026-10-08 | 이미지는 실제로 크롬에서 만들 때만 큐에 넣음. 이미지 API로 만드는 Gemini·ChatGPT 이미지는 큐 없이 진행 | `blog-writer:server/pipeline.ts:336-348`, 커밋 38ae96c |
+| 2026-10-09 | 규칙 변화 없음. 네이버·티스토리 발행 창 단계도 같은 큐 차례 안에서 실행됨을 적음. 근거 줄 번호 갱신 | 커밋 65bfa3e, `blog-writer:server/pipeline.ts:369-392` |

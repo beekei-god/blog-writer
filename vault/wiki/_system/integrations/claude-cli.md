@@ -10,8 +10,10 @@ source:
   - blog-writer:server/images/plan.ts:67-113
   - blog-writer:server/images/svg.ts:8-63
   - blog-writer:server/images/webAi.ts:192-236
-  - blog-writer:server/browser/blogPost.ts:180-215
+  - blog-writer:server/browser/blogPost.ts:183-218
   - blog-writer:server/recommend.ts:69-196
+  - blog-writer:server/editPost.ts:15-207
+  - blog-writer:server/naverTopic.ts:1-63
   - blog-writer:server/routes/browser.ts:33-47
   - blog-writer:server/routes/usage.ts:19-27
 updated: 2026-10-09
@@ -50,6 +52,8 @@ updated: 2026-10-09
 | writing (줄이기) | `server/writer.ts:188-204` | 없음 | medium / 10분 | 사실·숫자·출처는 그대로 두고 2,500자 안팎으로 줄여 같은 JSON으로. 뺀 내용은 omittedItems에 | `POST_JSON_SCHEMA` | [[writing/business-rules/BR-WRT-001 본문 분량 상한]] |
 | images (기획) | `server/images/plan.ts:86-106` | 없음 | low / 4분 | 이미지가 놓인 섹션의 구체 내용이 보이게 prompt를 쓰고, 글자는 headline에만, 본문에 있는 사실로만, 썸네일 8~16자·본문 4~20자, key마다 하나 | `{images[{key,headline,basis,prompt}]}` | [[image/business-rules/BR-IMG-004 본문 기반 이미지 기획]] |
 | images (SVG) | `server/images/svg.ts:8-63` | 없음 | low / 5분 | 단일 SVG, viewBox 지정, flat, 스크립트·외부 참조 금지, 문구는 한 글자도 바꾸지 말고 크게 | `{svg}` | [[image/business-rules/BR-IMG-011 SVG 안전 검증과 크기]] |
+| writing (네이버 주제) | `server/naverTopic.ts:39-60` | 없음 | low / 2분 | 글의 제목·요약·태그(15개)·소제목(12개)을 보고, 고정 주제 목록(대분류 4개·32개 이름) 중 글 내용에 가장 알맞은 하나만 고르게 함. 목록에 없는 이름 금지. 실패·목록 밖 답이면 null(주제 없이 올림), 중지는 전파. 예약·자동발행으로 네이버에 올릴 때만 호출 | `{topic}` (JSON 스키마 enum) | [[_system/modules/server-pipeline]], [[_system/integrations/blog-editors]] |
+| writing (글 고치기) | `server/editPost.ts:143-157` | WebSearch, WebFetch | medium / 20분 | 글쓰기 규칙+고치는 방법 시스템 프롬프트, 수정 요청, 글(제목·요약·블록)을 줌. 글 전체면 제목·요약·모든 블록을, 범위면 그 범위를 대체할 블록만(앞뒤 2~3블록은 읽기 전용 문맥) 돌려줌. 이미지 블록은 `img-N` ref로만 보이고 앱이 원래 이미지를 되돌려 붙임. 열람 최대 4개, 분량 상한 안내. 웹 검색·읽기는 진행 로그에 남김 | JSON 스키마(전체 `whole`: title·summary·blocks·note / 범위: blocks·note) | [[_system/modules/server-pipeline]], [[_system/api]] |
 | browser (이미지) | `server/images/webAi.ts:209-251` | Claude in Chrome | low / 10분 | 새 탭에서 Gemini/ChatGPT 열기, 입력 스크립트 그대로 실행, 완료까지 JS로 대기, 다운로드 스크립트 실행, 탭 닫기 | `{status, imageUrl, downloadClicked, replyText, message}` | [[_system/integrations/gemini-chatgpt-web]] |
 | browser (블로그) | `server/browser/blogPost.ts:144-191` | Claude in Chrome + `--add-dir` 이미지 폴더 | medium / 45분 | 임시저장까지(임시저장만이면 발행 금지, 예약·자동이면 `publishPrompt` 발행 절차만 예외), 조각 순서대로 paste/file_upload, 대체 텍스트, 플랫폼 안내, 탭은 남겨 둠 | `{status(saved/published/scheduled/login_required/failed), message, imagesInserted, problems}` | [[publishing/business-rules/BR-PUB-001 발행하지 않고 임시저장까지만]] |
 | recommend | `server/recommend.ts:70-187` | WebSearch, WebFetch | high / 20분 | 최근 2주 뉴스·최근 통계·공고, 일정 임박·제도 변화 우선, 근거 필수, WebFetch 최대 3번, 10~12개, 이미 쓴 글과 같은 의도 제외 | `{anchorKeyword, candidates[]}` | [[topic/business-rules/BR-TOP-001 추천 후보 조건]] |

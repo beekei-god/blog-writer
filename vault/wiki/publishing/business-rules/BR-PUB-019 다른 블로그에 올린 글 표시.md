@@ -7,12 +7,12 @@ status: active
 confidence: high
 consistency: conflict
 source:
-  - blog-writer:shared/types.ts:286-287
+  - blog-writer:shared/types.ts:315-316
   - blog-writer:server/routes/util.ts:16-22
-  - blog-writer:server/pipeline.ts:337-341
-  - blog-writer:server/pipeline.ts:372-376
-  - blog-writer:src/job/NextStep.tsx:148-196
-  - blog-writer:src/job/NextStep.tsx:288-305
+  - blog-writer:server/pipeline.ts:400-404
+  - blog-writer:server/pipeline.ts:435-439
+  - blog-writer:src/job/NextStep.tsx:154-204
+  - blog-writer:src/job/NextStep.tsx:384-401
 entities: [Job]
 updated: 2026-10-09
 ---
@@ -33,10 +33,10 @@ updated: 2026-10-09
 ## 구현 현황
 | 레이어 | 구현 | 근거 |
 |---|---|---|
-| 공용 | `Job.postingTo` | `blog-writer:shared/types.ts:286-287` |
-| 서버 | 요청 때 기록, 작업 시작 때 다시 기록 | `blog-writer:server/routes/util.ts:16-22`, `blog-writer:server/pipeline.ts:337-341`, `:372-376` |
-| 화면(네이버·티스토리) | `again = registered && (!job.postingTo \|\| job.postingTo === platform)` | `blog-writer:src/job/NextStep.tsx:150-152`, `:160-178`, `:190-191` |
-| 화면(워드프레스) | **기준이 다름**: `postingTo`가 아니라 워드프레스 기록(`job.wordpress`)이 있으면 "등록됨". 기록이 없을 때만 "다른 블로그에 올린 글입니다. 워드프레스에도 올릴 수 있습니다…" | `blog-writer:src/job/NextStep.tsx:288-305` |
+| 공용 | `Job.postingTo` | `blog-writer:shared/types.ts:315-316` |
+| 서버 | 요청 때 기록, 작업 시작 때 다시 기록 | `blog-writer:server/routes/util.ts:16-22`, `blog-writer:server/pipeline.ts:400-404`, `:372-376` |
+| 화면(네이버·티스토리) | `again = registered && (!job.postingTo \|\| job.postingTo === platform)` | `blog-writer:src/job/NextStep.tsx:157-159`, `:160-178`, `:190-191` |
+| 화면(워드프레스) | **기준이 다름**: `postingTo`가 아니라 워드프레스 기록(`job.wordpress`)이 있으면 "등록됨". 기록이 없을 때만 "다른 블로그에 올린 글입니다. 워드프레스에도 올릴 수 있습니다…" | `blog-writer:src/job/NextStep.tsx:384-401` |
 
 ## 예외 / 경계값
 - 워드프레스에 올린 뒤 네이버에 다시 올려 상태가 네이버 기준 `posted`가 된 글을 워드프레스로 고르면, 워드프레스 화면은 "워드프레스에 임시저장했습니다."라고 보인다 (워드프레스 기록이 남아 있으므로). 네이버·티스토리 쪽 기준과 다르다 ([[publishing/open-questions]] #15).
@@ -51,4 +51,4 @@ updated: 2026-10-09
 ## 변경 이력
 | 날짜 | 변경 | 근거 |
 |---|---|---|
-| 2026-10-09 | 최초 기록. 예전에는 네이버·티스토리 화면이 상태만 보고 "임시저장했습니다"를 보여 다른 블로그에 올린 글도 이 블로그에 올린 것처럼 보였다 | 커밋 65bfa3e, `blog-writer:src/job/NextStep.tsx:150-152` |
+| 2026-10-09 | 최초 기록. 예전에는 네이버·티스토리 화면이 상태만 보고 "임시저장했습니다"를 보여 다른 블로그에 올린 글도 이 블로그에 올린 것처럼 보였다 | 커밋 65bfa3e, `blog-writer:src/job/NextStep.tsx:157-159` |

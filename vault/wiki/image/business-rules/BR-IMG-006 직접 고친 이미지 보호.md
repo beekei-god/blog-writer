@@ -7,10 +7,10 @@ status: active
 confidence: high
 consistency: consistent
 source:
-  - blog-writer:shared/types.ts:170-171
+  - blog-writer:shared/types.ts:176-177
   - blog-writer:src/job/PostEditor.tsx:94-110
-  - blog-writer:server/pipeline.ts:263-264
-  - blog-writer:server/pipeline.ts:286
+  - blog-writer:server/pipeline.ts:313-314
+  - blog-writer:server/pipeline.ts:336
 entities: [ImageSpec]
 updated: 2026-10-09
 ---
@@ -28,11 +28,14 @@ updated: 2026-10-09
 | 기획 결과 반영 시 | 그 사이 `userEdited`가 된 이미지는 건너뜀 |
 | "자동으로 다시 정하게 하기" | `userEdited` 해제 |
 
+## 이미지 추가와의 관계
+- 새로 추가한 이미지 자리(`prompt`·`alt`만 있음)는 `userEdited`가 아니다. 그래서 "이미지 생성" 때 주변 본문을 보고 설명·문구를 다시 정한다. 사용자가 설명·문구를 고쳐야 보호된다 → [[image/business-rules/BR-IMG-015 본문 이미지 자리 추가와 이미지 삭제]].
+
 ## 구현 현황
 | 레이어 | 구현 | 근거 |
 |---|---|---|
 | 화면 | 표시·설정·해제 | `blog-writer:src/job/PostEditor.tsx:94`, `:99`, `:101-110` |
-| 서버 | 제외 | `blog-writer:server/pipeline.ts:264`, `:286` |
+| 서버 | 제외 | `blog-writer:server/pipeline.ts:314`, `:286` |
 
 ## 영향받는 플로우
 [[image/flows/이미지 다시 만들기 플로우]], [[writing/flows/초안 편집과 자동 저장 플로우]]
@@ -41,3 +44,4 @@ updated: 2026-10-09
 | 날짜 | 변경 | 근거 |
 |---|---|---|
 | 2026-10-05 | 최초 기록 | |
+| 2026-10-09 | 이미지 자리 추가와의 관계 기록 (동작 변화 없음) | 커밋 b7ced30 |

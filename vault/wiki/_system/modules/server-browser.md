@@ -4,12 +4,13 @@ project: blog-writer
 module: server-browser
 paths: [server/browser/**]
 source:
-  - blog-writer:server/browser/blogPost.ts:1-215
-  - blog-writer:server/browser/userChrome.ts:1-490
-  - blog-writer:server/browser/adapters.ts:1-406
-  - blog-writer:server/browser/runner.ts:1-99
-  - blog-writer:server/browser/publish.ts:1-336
+  - blog-writer:server/browser/blogPost.ts:1-218
+  - blog-writer:server/browser/userChrome.ts:1-535
+  - blog-writer:server/browser/adapters.ts:1-433
+  - blog-writer:server/browser/runner.ts:1-104
+  - blog-writer:server/browser/publish.ts:1-367
   - blog-writer:server/browser/claudeChrome.ts:1-105
+  - blog-writer:server/browser/category.ts:1-264
   - blog-writer:server/browser/blockedSites.ts:1-37
   - blog-writer:server/browser/loginWindow.ts:1-65
   - blog-writer:server/browser/mouse.ts:1-74
@@ -27,11 +28,12 @@ updated: 2026-10-09
 ## 파일
 | 파일 | 줄 | 역할 | 주요 export | 관련 페이지 |
 |---|---|---|---|---|
-| `server/browser/blogPost.ts` | 215 | 본문을 HTML 조각(소제목 `<h3>`)·이미지 조각으로 나누고(`buildSegments`, 이제 내부 전용) 네이버·티스토리 안내와 함께 Claude in Chrome에 입력·임시저장 지시. `publish`가 draft가 아니면 목표 문구가 바뀌고 `publishPrompt`가 붙는다. 결과 status에 `published`·`scheduled` 추가, 기대한 status가 아니면 `PublishStepError` | `postWithClaudeInChrome`, `BlogLoginRequired`, `BlogPostResult` | [[_system/integrations/claude-in-chrome]], [[publishing/flows/블로그 임시저장 플로우]] |
-| `server/browser/userChrome.ts` | 490 | macOS AppleScript로 평소 크롬 새 탭을 열고 JS를 실행해 SmartEditor ONE에 붙여넣기(소제목은 `<p>`로 붙인 뒤 서식 변경), 이미지 업로드, 소제목 서식, 결과 검증, 임시저장. `opts.publish`가 있으면 저장 확인 뒤 발행 단계 실행 (입력 문제(`problems`)가 있어도 발행은 진행) (`blog-writer:server/browser/userChrome.ts:486-487`) | `postNaverInUserChrome`, `userChromeSupported`, `UserChromeError` | [[_system/integrations/chrome-applescript]], [[publishing/business-rules/BR-PUB-011 입력 결과 검증]] |
-| `server/browser/adapters.ts` | 406 | Playwright로 네이버·티스토리 화면을 마우스·키보드로 입력 (예전 방식). 임시저장 뒤 `publishIfAsked`로 발행 단계 실행 (네이버는 에디터가 `#mainFrame` 안이면 그 프레임에서) (`blog-writer:server/browser/adapters.ts:23-35`) | `ADAPTERS`, `AdapterContext` (`publish?` 추가) | [[_system/integrations/playwright-chrome]], [[_system/integrations/blog-editors]] |
-| `server/browser/runner.ts` | 99 | 앱 전용 크롬 프로필로 Playwright 실행, 로그인 창과 충돌 방지, 실패 스크린샷. `postWithChrome`에 `publish` 인자 추가. `withChrome`은 이제 내부 전용 | `postWithChrome`, `isAutomationRunning`, `closeAutomationWindow`, `ChromeSession` | [[_system/integrations/playwright-chrome]] |
-| `server/browser/publish.ts` | 336 | (2026-10-09 새 파일) 네이버·티스토리 발행 창 자동 조작. 발행 창을 클래스 이름 대신 화면 글자(발행·공개·예약)로 찾되 여는 버튼이 든 상자는 발행 창으로 보지 않는 페이지 안 도우미(`PUBLISH_HELPERS`), 멈춘 순간의 발행 창 구조를 읽는 스크립트(`PUBLISH_DUMP_JS`), 블로그별 단계 목록, 단계 실행기, 한국 시간 변환, Claude in Chrome용 발행 안내 | `PublishRequest`, `PublishStepError`, `PublishStep`, `kstParts`, `kstText`, `PUBLISH_HELPERS`, `naverPublishSteps`, `tistoryPublishSteps`, `runPublishSteps`, `publishedText`, `publishPrompt`, `PUBLISH_DUMP_JS` | [[_system/integrations/blog-editors]], [[publishing/business-rules/BR-PUB-001 발행하지 않고 임시저장까지만]], [[publishing/business-rules/BR-PUB-018 발행 창 단계와 안전장치]] |
+| `server/browser/blogPost.ts` | 218 | 본문을 HTML 조각(소제목 `<h3>`)·이미지 조각으로 나누고(`buildSegments`, 이제 내부 전용) 네이버·티스토리 안내와 함께 Claude in Chrome에 입력·임시저장 지시. `publish`가 draft가 아니면 목표 문구가 바뀌고 `publishPrompt`가 붙는다. 결과 status에 `published`·`scheduled` 추가, 기대한 status가 아니면 `PublishStepError`. 2026-10-09: 프롬프트에 `categoryPrompt`(카테고리·네이버 주제 안내)를 덧붙임 (`blog-writer:server/browser/blogPost.ts:167`) | `postWithClaudeInChrome`, `BlogLoginRequired`, `BlogPostResult` | [[_system/integrations/claude-in-chrome]], [[publishing/flows/블로그 임시저장 플로우]] |
+| `server/browser/userChrome.ts` | 535 | macOS AppleScript로 평소 크롬 새 탭을 열고 JS를 실행해 SmartEditor ONE에 붙여넣기(소제목은 `<p>`로 붙인 뒤 서식 변경), 이미지 업로드, 소제목 서식, 결과 검증, 임시저장. `opts.publish`가 있으면 저장 확인 뒤 발행 단계 실행 (입력 문제(`problems`)가 있어도 발행은 진행) (`blog-writer:server/browser/userChrome.ts:531-532`). 2026-10-09(2차): 글쓰기 탭 열기·에디터 대기(로그인 화면이면 중단, 이어쓰기 팝업 취소, 예전 글이 남아 있으면 중단)를 `openNaverEditor`로 분리해 글 올리기와 카테고리 목록 읽기가 같이 쓰고, `readNaverCategories`(글쓰기 탭에 짧은 제목 "카테고리 확인"을 넣고 발행 창만 열어 `readCategories`로 읽은 뒤 저장 없이 `closeTab`으로 탭을 닫음), 발행 단계는 `naverStepsWithOptions`(카테고리·주제 포함)로 실행하고 optional 단계 문제를 `problems`에 쌓음 | `postNaverInUserChrome`, `readNaverCategories`, `userChromeSupported`, `UserChromeError` | [[_system/integrations/chrome-applescript]], [[publishing/business-rules/BR-PUB-011 입력 결과 검증]] |
+| `server/browser/adapters.ts` | 433 | Playwright로 네이버·티스토리 화면을 마우스·키보드로 입력 (예전 방식). 임시저장 뒤 `publishIfAsked`로 발행 단계 실행 (네이버는 에디터가 `#mainFrame` 안이면 그 프레임에서, 단계는 `naverStepsWithOptions`) (`blog-writer:server/browser/adapters.ts:24-44`). 2026-10-09(2차): 티스토리는 임시저장 전에 `chooseCategory`(에디터 위쪽 카테고리 칸에서 고름, 모든 방식, 못 해도 기본 카테고리로 올리고 "확인 필요")를 실행하고, `readTistoryCategories`(글쓰기 화면을 열어 카테고리 칸을 읽음, 아무것도 입력·저장 안 함)를 새로 export | `ADAPTERS`, `AdapterContext` (`publish?` 추가), `readTistoryCategories` | [[_system/integrations/playwright-chrome]], [[_system/integrations/blog-editors]] |
+| `server/browser/runner.ts` | 104 | 앱 전용 크롬 프로필로 Playwright 실행, 로그인 창과 충돌 방지, 실패 스크린샷. `postWithChrome`에 `publish` 인자 추가. `withChrome`은 이제 내부 전용. 2026-10-09(2차): `readTistoryCategoriesWithChrome`(앱 전용 크롬에서 티스토리 카테고리 목록을 읽고 창을 닫음) 추가 | `postWithChrome`, `readTistoryCategoriesWithChrome`, `isAutomationRunning`, `closeAutomationWindow`, `ChromeSession` | [[_system/integrations/playwright-chrome]] |
+| `server/browser/publish.ts` | 367 | (2026-10-09 새 파일) 네이버·티스토리 발행 창 자동 조작. 발행 창을 클래스 이름 대신 화면 글자(발행·공개·예약)로 찾되 여는 버튼이 든 상자는 발행 창으로 보지 않는 페이지 안 도우미(`PUBLISH_HELPERS`), 멈춘 순간의 발행 창 구조를 읽는 스크립트(`PUBLISH_DUMP_JS`), 블로그별 단계 목록, 단계 실행기, 한국 시간 변환, Claude in Chrome용 발행 안내. 2026-10-09(2차): `PublishRequest`에 `category`·`topic`, `PublishStep`에 `optional`(안 돼도 멈추지 않고 `problems`에 "<단계>: <이유>"를 쌓고 화면 구조 로그)·`cleanupJs`(실패 시 팝업·목록 닫기), `runPublishSteps(steps, exec, log, intervalMs, problems?)`, 보이는 요소 판별을 `offsetParent` → `getClientRects().length>0 && visibility!=='hidden'`로 바꿔 position:fixed 팝업도 보게 함, `PUBLISH_DUMP_JS`는 목록 항목·"카테고리/주제" 글자 포함 최대 250개 | `PublishRequest`, `PublishStepError`, `PublishStep`, `kstParts`, `kstText`, `PUBLISH_HELPERS`, `naverPublishSteps`, `tistoryPublishSteps`, `runPublishSteps`, `publishedText`, `publishPrompt`, `PUBLISH_DUMP_JS` | [[_system/integrations/blog-editors]], [[publishing/business-rules/BR-PUB-001 발행하지 않고 임시저장까지만]], [[publishing/business-rules/BR-PUB-018 발행 창 단계와 안전장치]] |
+| `server/browser/category.ts` | 264 | (2026-10-09 새 파일) 네이버·티스토리 카테고리·주제를 에디터 화면에서 읽고 고르는 코드. 클래스 이름 대신 화면 글자("카테고리"/"주제")와 모양(`<select>`, 누르면 목록이 뜨는 버튼, 라벨 옆 클릭 영역)으로 찾는 **휴리스틱**. `readCategories`(칸 열기 → 새로 나타난 짧은 글자 모으기 → 이름 정리(`cleanCategoryNames`: 40자 이하, "카테고리" 제외, 중복 제거, 최대 100개) → Esc로 닫기), `selectCategorySteps`(optional 단계), `selectTopicSteps`(한 단계 안에서 phase: 칸 누르기 → 팝업에서 이름 고르기 → 팝업의 "확인" → 팝업이 닫히고 발행 창이 돌아올 때까지; 발행 창은 첫 단계와 마지막 단계에서만 봄; 실패하면 `TOPIC_CLEANUP_JS`로 팝업 "취소"·"닫기"/Esc), `naverStepsWithOptions`(네이버 발행 창을 연 바로 뒤에 카테고리·주제 단계를 끼움, 임시저장이면 안 넣음), `categoryPrompt`(Claude in Chrome 프롬프트용). 못 찾으면 `CategoryError`에 그 순간의 화면 구조(`dialog`)를 붙임. 실제 사이트에서는 아직 검증되지 않음 | `CategoryError`, `cleanCategoryNames`, `readCategories`, `selectCategorySteps`, `selectTopicSteps`, `naverStepsWithOptions`, `categoryPrompt` | [[_system/integrations/blog-editors]], [[_system/integrations/claude-in-chrome]], [[_system/known-issues]], [[publishing/business-rules/BR-PUB-018 발행 창 단계와 안전장치]] |
 | `server/browser/claudeChrome.ts` | 105 | 확장 ID·설치 확인(크롬 프로필 파일), 연결 상태 기억, 오류 클래스, 공통 브라우저 규칙 프롬프트. `EXTENSION_ID`·`EXTENSION_HELP`·`installedProfiles`는 이제 내부 전용 | `INSTALL_URL`, `extensionStatus`, `assertExtensionInstalled`, `rememberConnection`, `ChromeExtensionError`, `SiteBlockedError`, `SITE_BLOCKED_TEXT`, `NOT_CONNECTED_TEXT`, `BROWSER_RULES` | [[_system/integrations/claude-in-chrome]] |
 | `server/browser/blockedSites.ts` | 37 | Claude in Chrome이 막은 플랫폼 기억 (`data/blocked-sites.json`) | `isBlocked`, `markBlocked`, `clearBlocked`, `getBlockedSites` | [[publishing/entities/막힌 사이트]] |
 | `server/browser/loginWindow.ts` | 65 | 자동화 없이 앱 전용 프로필 크롬을 띄우는 로그인 창. 어느 블로그용으로 열었는지 기억 | `openLoginWindow`, `closeLoginWindow`, `isLoginWindowOpen`, `loginWindowFor` | [[publishing/business-rules/BR-PUB-017 로그인 창은 한 블로그씩]] |
@@ -39,16 +41,18 @@ updated: 2026-10-09
 | `server/browser/postHtml.ts` | 38 | `shared/postHtml` 재수출(`BLANK_LINE`, `esc`, `skippedImageLabel`, `tableHtml`, `TAG_GAP_LINES`, `tagLine`, `urlsIn` — `rich`·`TABLE_COLORS` 재수출은 없어짐), 에디터 붙여넣기용 블록 HTML(소제목 태그만 경로마다 다름), 글쓰기 화면 주소 `writeUrl`(세 경로 공용), 네이버용 대체 텍스트 파일 이름 | `pasteBlockHtml`, `writeUrl`, `altFileName` | [[publishing/business-rules/BR-PUB-009 네이버 이미지 파일 이름과 크기]] |
 
 ## 발행 단계 (`publish.ts`)
-- 단계 하나는 페이지 안에서 동기로 실행되는 JS. `true`면 다음 단계, `false`·`null`이면 0.5초 뒤 다시, `"ERR:<이유>"`면 바로 멈춘다 (`blog-writer:server/browser/publish.ts:68-80`).
-- 네이버: 발행 창 열기(상단 "발행", 공개 설정은 바꾸지 않음) → 예약(또는 "현재") → [예약 날짜 → 시·분 → 다시 읽어 확인] → 창 아래 "발행" → 주소가 `postwrite` 등을 벗어나는지 확인 (`blog-writer:server/browser/publish.ts:222-241`). 예약 분은 10분 단위(`NAVER_MINUTE_STEP`)가 아니면 단계를 만들기 전에 `PublishStepError`.
-- 티스토리: 하단 "완료" → 공개 → 예약(또는 "현재") → [예약 단계, 1분 단위] → "공개 발행"/"예약 발행" → `manage/newpost`를 벗어나는지 확인 (`blog-writer:server/browser/publish.ts:243-264`).
-- 예약 날짜는 입력 칸이 읽기 전용이면 달력에서 다음 달로 넘겨 날짜를 누른다 (`blog-writer:server/browser/publish.ts:144-199`).
-- `runPublishSteps`: 단계마다 제한 시간(기본 10초, 날짜 20초, 발행 확인 30초). 마지막 발행 버튼을 누르기 전까지만 중지 요청(`throwIfCancelled`)을 받는다. "발행 확인" 단계는 페이지 이동 중 실행 오류를 다시 시도한다 (`blog-writer:server/browser/publish.ts:266-304`).
-- 실패 문구: 발행 버튼 전이면 "임시저장은 했지만 발행 창의 "<단계>"에서 멈췄습니다…", 발행 확인에서 실패하면 "발행 버튼을 눌렀지만 발행됐는지 확인하지 못했습니다…" (`blog-writer:server/browser/publish.ts:301-304`).
+- 단계 하나는 페이지 안에서 동기로 실행되는 JS. `true`면 다음 단계, `false`·`null`이면 0.5초 뒤 다시, `"ERR:<이유>"`면 바로 멈춘다 (`blog-writer:server/browser/publish.ts:72-88`).
+- 네이버: 발행 창 열기(상단 "발행", 공개 설정은 바꾸지 않음) → 예약(또는 "현재") → [예약 날짜 → 시·분 → 다시 읽어 확인] → 창 아래 "발행" → 주소가 `postwrite` 등을 벗어나는지 확인 (`blog-writer:server/browser/publish.ts:231-250`). 예약 분은 10분 단위(`NAVER_MINUTE_STEP`)가 아니면 단계를 만들기 전에 `PublishStepError`.
+- 티스토리: 하단 "완료" → 공개 → 예약(또는 "현재") → [예약 단계, 1분 단위] → "공개 발행"/"예약 발행" → `manage/newpost`를 벗어나는지 확인 (`blog-writer:server/browser/publish.ts:252-273`).
+- 예약 날짜는 입력 칸이 읽기 전용이면 달력에서 다음 달로 넘겨 날짜를 누른다 (`blog-writer:server/browser/publish.ts:153-208`).
+- `runPublishSteps`: 단계마다 제한 시간(기본 10초, 날짜 20초, 발행 확인 30초). 마지막 발행 버튼을 누르기 전까지만 중지 요청(`throwIfCancelled`)을 받는다. "발행 확인" 단계는 페이지 이동 중 실행 오류를 다시 시도한다 (`blog-writer:server/browser/publish.ts:275-335`).
+- 실패 문구: 발행 버튼 전이면 "임시저장은 했지만 발행 창의 "<단계>"에서 멈췄습니다…", 발행 확인에서 실패하면 "발행 버튼을 눌렀지만 발행됐는지 확인하지 못했습니다…" (`blog-writer:server/browser/publish.ts:332-335`).
+
+- 카테고리·주제 단계는 `optional`이라 안 돼도 멈추지 않는다: 이유와 화면 구조를 로그에 남기고 "확인 필요"로 이어간다. 카테고리 목록을 읽는 경로(`readNaverCategories`, `readTistoryCategories`)는 글을 저장하지 않지만, 네이버는 입력 중 자동 임시저장이 남을 수 있다 → [[_system/known-issues]].
 
 ## 의존
 - 사용하는 모듈: [[_system/modules/server-claude]], [[_system/modules/server-core]] (`jobImageDir`, `jobImagePath`, `DATA_DIR`, `CHROME_PROFILE_DIR`, `sleep`, `throwIfCancelled`), [[_system/modules/shared]] (`postHtml`, `types`의 `NAVER_MINUTE_STEP`·`PublishMode`)
-- 사용되는 곳: [[_system/modules/server-pipeline]] (`doPost`가 `PublishRequest`를 세 경로에 넘기고 `PublishStepError`·`kstText`·`publishedText` 사용), [[_system/modules/server-images]] (`webAi.ts`가 `BROWSER_RULES` 등 사용), [[_system/modules/server-routes]] (확장·막힌 블로그·로그인 창 엔드포인트), [[_system/modules/server-claude]] (오류 감지)
+- 사용되는 곳: [[_system/modules/server-pipeline]] (`doPost`가 `PublishRequest`를 세 경로에 넘기고 `PublishStepError`·`kstText`·`publishedText` 사용), [[_system/modules/server-images]] (`webAi.ts`가 `BROWSER_RULES` 등 사용), [[_system/modules/server-routes]] (확장·막힌 블로그·로그인 창·카테고리 읽기 엔드포인트), [[_system/modules/server-claude]] (오류 감지)
 
 ## 주의할 점
 - 세 경로가 본문을 HTML로 바꾸는 방식이 조금씩 다르다: Claude in Chrome은 소제목을 `<h3>`로, 평소 크롬은 `<p>`로 붙인 뒤 서식을 "소제목"으로 바꾸고(둘 다 `pasteBlockHtml`), 자동 조작은 타이핑한다 → [[publishing/business-rules/BR-PUB-007 소제목 위 빈 줄]].

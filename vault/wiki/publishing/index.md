@@ -6,7 +6,7 @@ updated: 2026-10-09
 # publishing Index
 
 ## 엔티티
-- [[publishing/entities/블로그 설정]] — 블로그별 연결 값(네이버 ID·티스토리 이름·워드프레스 주소·카테고리), 기본 블로그 없음, 예전 설정 옮기기
+- [[publishing/entities/블로그 설정]] — 블로그별 연결 값(네이버 ID·티스토리 이름·워드프레스 주소·기본 카테고리), 기본 블로그 없음, 예전 설정 옮기기
 - [[publishing/entities/막힌 사이트]] — Claude in Chrome이 막은 플랫폼과 시각
 
 ## 비즈니스 규칙
@@ -27,12 +27,15 @@ updated: 2026-10-09
 - [[publishing/business-rules/BR-PUB-015 올릴 블로그는 글마다 선택]] — 기본 블로그 없음, `platform` 필수
 - [[publishing/business-rules/BR-PUB-016 워드프레스 재등록은 같은 글 갱신]] — `postId`로 갱신, 미디어 재사용
 - [[publishing/business-rules/BR-PUB-017 로그인 창은 한 블로그씩]] — 네이버·티스토리용, 다른 블로그 창이 열려 있으면 409
-- [[publishing/business-rules/BR-PUB-018 발행 창 단계와 안전장치]] — 네이버·티스토리 발행 창: 임시저장 먼저, 글자로 찾기, 예약 시각 다시 읽기, 입력 문제가 있어도 발행(로그에 확인 필요), 발행 버튼 전까지만 중지, 멈추면 임시저장 완료+오류+발행 창 구조 로그 (네이버 예약발행은 실제 사이트에서 확인, 나머지는 confidence medium)
+- [[publishing/business-rules/BR-PUB-018 발행 창 단계와 안전장치]] — 네이버·티스토리 발행 창: 임시저장 먼저, 글자로 찾기, 카테고리·주제는 optional 단계, 예약 시각 다시 읽기, 입력 문제가 있어도 발행(로그에 확인 필요), 발행 버튼 전까지만 중지, 멈추면 임시저장 완료+오류+발행 창 구조 로그 (네이버 예약발행은 실제 사이트에서 확인, 나머지는 confidence medium)
 - [[publishing/business-rules/BR-PUB-019 다른 블로그에 올린 글 표시]] — 마지막으로 올린 블로그(`postingTo`)가 지금 고른 블로그일 때만 "올린 글" (워드프레스는 기록 기준, 불일치)
+- [[publishing/business-rules/BR-PUB-020 카테고리 선택]] — 올릴 때마다 카테고리 고름(워드프레스 id가 설정 기본보다 우선), 마지막 선택 기억, 네이버는 발행 창에서만(임시저장 제외), 티스토리는 저장 전, 안 돼도 멈추지 않고 확인 필요 (confidence medium)
+- [[publishing/business-rules/BR-PUB-021 네이버 주제 자동 선택]] — 네이버 예약·자동발행 때 Claude가 고정 목록에서 주제를 골라 팝업으로 입력, 실패하면 주제 없이 (confidence medium)
 
 ## 플로우
 - [[publishing/flows/블로그 임시저장 플로우|블로그 임시저장·발행 플로우]] — 네이버·티스토리 (크롬), 임시저장 뒤 예약·자동발행
 - [[publishing/flows/워드프레스 API 등록 플로우]] — 워드프레스 (REST API)
+- [[publishing/flows/카테고리 목록 불러오기 플로우]] — 네이버·티스토리 에디터에서 카테고리 이름을 읽어 저장 (confidence medium)
 - [[publishing/flows/Claude in Chrome 연결 확인 플로우]]
 
 ## 구현 지도

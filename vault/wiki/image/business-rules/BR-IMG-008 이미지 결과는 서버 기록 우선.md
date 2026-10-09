@@ -7,8 +7,8 @@ status: active
 confidence: high
 consistency: single-source
 source:
-  - blog-writer:server/routes/jobs.ts:17-39
-  - blog-writer:server/routes/jobs.ts:90-94
+  - blog-writer:server/routes/jobs.ts:18-40
+  - blog-writer:server/routes/jobs.ts:91-95
 entities: [ImageSpec]
 updated: 2026-10-09
 ---
@@ -28,7 +28,7 @@ updated: 2026-10-09
 ## 구현 현황
 | 레이어 | 구현 | 근거 |
 |---|---|---|
-| 서버 | `keepImageResults`, 초안 저장(`PUT /api/jobs/:id/post`)에서 호출 | `blog-writer:server/routes/jobs.ts:17-39`, `:90-94` |
+| 서버 | `keepImageResults`, 초안 저장(`PUT /api/jobs/:id/post`)에서 호출 | `blog-writer:server/routes/jobs.ts:18-40`, `:90-94` |
 
 ## 예외 / 경계값
 - 사용자가 prompt를 고치고 이미지 개수가 달라지면(블록 삭제) 매칭이 안 될 수 있다. 그때는 화면 값(예전 file)이 저장된다.

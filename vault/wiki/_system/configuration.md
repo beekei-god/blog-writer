@@ -7,7 +7,7 @@ source:
   - blog-writer:server/routes/settings.ts:17-35
   - blog-writer:server/claude.ts:32-37
   - blog-writer:server/secrets.ts:1-68
-  - blog-writer:shared/types.ts:136-161
+  - blog-writer:shared/types.ts:142-167
 updated: 2026-10-09
 ---
 # 설정
@@ -64,14 +64,18 @@ updated: 2026-10-09
 | 상수 | 값 | 위치 | 관련 규칙 |
 |---|---|---|---|
 | `MAX_BODY_CHARS` | 3000 | `blog-writer:shared/length.ts:4` | [[writing/business-rules/BR-WRT-001 본문 분량 상한]] |
-| `MAX_TAGS` | 30 | `blog-writer:shared/types.ts:203` | [[writing/business-rules/BR-WRT-004 태그 최대 30개]] |
+| `MAX_TAGS` | 30 | `blog-writer:shared/types.ts:209` | [[writing/business-rules/BR-WRT-004 태그 최대 30개]] |
 | `MAX_BODY_IMAGES` | 6 | `blog-writer:shared/types.ts:15` | [[image/business-rules/BR-IMG-001 본문 이미지 개수]] |
 | `TAG_GAP_LINES` | 3 | `blog-writer:shared/postHtml.ts:54` | [[publishing/business-rules/BR-PUB-006 태그 입력 위치]] |
 | `KEEP_DAYS` | 90 | `blog-writer:server/usage.ts:14` | [[usage/business-rules/BR-USG-003 사용 기록 보관 기간]] |
-| `RECOMMENDED_MODELS` | research·writing=opus, images·browser·recommend=sonnet | `blog-writer:shared/types.ts:80-86` | [[usage/business-rules/BR-USG-001 단계별 추천 모델]] |
+| `RECOMMENDED_MODELS` | research·writing=opus, images·browser·recommend=sonnet | `blog-writer:shared/types.ts:86-92` | [[usage/business-rules/BR-USG-001 단계별 추천 모델]] |
 | 기본 Claude 타임아웃 | 15분 (호출별로 다름) | `blog-writer:server/claude.ts:90` | [[_system/integrations/claude-cli]] |
 | 워드프레스 요청 타임아웃 | 30초 (이미지 업로드 120초) | `blog-writer:server/wordpress.ts:62` | [[_system/integrations/wordpress-rest]] |
 | 예약 시각 최소 여유 | 지금 + 1분 (2026-10-09부터 네이버·티스토리 예약에도 같은 `checkSchedule`) | `blog-writer:server/wordpress.ts:248-253` | [[publishing/business-rules/BR-PUB-014 워드프레스 등록 방식과 예약 시각]] |
 | `NAVER_MINUTE_STEP` | 10 (네이버 예약 분 단위) | `blog-writer:shared/types.ts:17` | [[publishing/business-rules/BR-PUB-001 발행하지 않고 임시저장까지만]] |
-| `MAX_LINKS` | 20 (새 글 참고 링크 수) | `blog-writer:shared/types.ts:19` | [[writing/business-rules/BR-WRT-010 주제와 참고 링크 입력 검증]] |
-| 발행 창 단계 제한 시간 | 단계마다 10초(예약 날짜 20초, 발행 확인 30초), 0.5초마다 다시 확인 | `blog-writer:server/browser/publish.ts:266-292` | [[_system/integrations/blog-editors]] |
+| `MAX_LINKS` | 20 (새 글 참고 링크 수) | `blog-writer:shared/types.ts:25` | [[writing/business-rules/BR-WRT-010 주제와 참고 링크 입력 검증]] |
+| `EDIT_PROMPT_MAX` | 2000 (글 고치기 수정 요청 글자 수 상한, 최소 2자) | `blog-writer:server/editPost.ts:13` | [[_system/api]] |
+| 글 고치기 호출 | WebSearch·WebFetch, effort medium, 20분, stage `writing` | `blog-writer:server/editPost.ts:143-157` | [[_system/integrations/claude-cli]] |
+| 네이버 주제 목록 | 대분류 4개·32개 이름을 코드에 고정 (네이버가 바꾸면 코드를 고쳐야 함) | `blog-writer:server/naverTopic.ts:10-17` | [[_system/known-issues]] |
+| 카테고리 이름 상한 | 요청 `name` 1~100자(`BlogCategorySchema`), 에디터에서 읽은 이름은 40자 이하·최대 100개 | `blog-writer:server/schema.ts:48`, `blog-writer:server/browser/category.ts:93-103` | [[_system/api]] |
+| 발행 창 단계 제한 시간 | 단계마다 10초(예약 날짜 20초, 발행 확인 30초), 0.5초마다 다시 확인 | `blog-writer:server/browser/publish.ts:275-323` | [[_system/integrations/blog-editors]] |

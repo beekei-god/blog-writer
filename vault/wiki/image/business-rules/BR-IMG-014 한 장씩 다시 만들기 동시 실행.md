@@ -7,14 +7,14 @@ status: active
 confidence: high
 consistency: consistent
 source:
-  - blog-writer:server/pipeline.ts:47-58
-  - blog-writer:server/pipeline.ts:167-191
-  - blog-writer:server/pipeline.ts:217-246
-  - blog-writer:server/routes/images.ts:70-134
+  - blog-writer:server/pipeline.ts:49-60
+  - blog-writer:server/pipeline.ts:217-241
+  - blog-writer:server/pipeline.ts:267-296
+  - blog-writer:server/routes/images.ts:73-137
   - blog-writer:server/cancel.ts:15-33
-  - blog-writer:server/store.ts:131-142
-  - blog-writer:src/job/JobDetail.tsx:127-143
-  - blog-writer:src/job/images.tsx:243-276
+  - blog-writer:server/store.ts:131-148
+  - blog-writer:src/job/JobDetail.tsx:121-151
+  - blog-writer:src/job/images.tsx:255-288
   - blog-writer:tests/imageParallel.test.ts
 entities: [ImageSpec, Job]
 updated: 2026-10-09
@@ -39,12 +39,12 @@ updated: 2026-10-09
 ## 구현 현황
 | 레이어 | 구현 | 근거 |
 |---|---|---|
-| 서버 | 작업 잠금(`running`)과 별도로 이미지별 진행(`imageRuns`), `isImageBusy` | `blog-writer:server/pipeline.ts:47-58` |
-| 서버 | `runImage`: 끝날 때 다른 진행이 없을 때만 초안 상태로 | `blog-writer:server/pipeline.ts:167-191` |
-| 서버 | 진행 표시를 덮어쓰지 않고 더하고 빼기 | `blog-writer:server/pipeline.ts:217-246` |
-| 서버 API | 한 장 다시 만들기·올리기는 그 이미지 기준으로 409, `imageRunsOnly` 표시 | `blog-writer:server/routes/images.ts:70-134` |
+| 서버 | 작업 잠금(`running`)과 별도로 이미지별 진행(`imageRuns`), `isImageBusy` | `blog-writer:server/pipeline.ts:49-60` |
+| 서버 | `runImage`: 끝날 때 다른 진행이 없을 때만 초안 상태로 | `blog-writer:server/pipeline.ts:217-241` |
+| 서버 | 진행 표시를 덮어쓰지 않고 더하고 빼기 | `blog-writer:server/pipeline.ts:267-296` |
+| 서버 API | 한 장 다시 만들기·올리기는 그 이미지 기준으로 409, `imageRunsOnly` 표시 | `blog-writer:server/routes/images.ts:73-137` |
 | 서버 | 작업마다 여러 중지 신호 | `blog-writer:server/cancel.ts:15-33` |
-| 화면 | `imageRunsOnly`면 다른 이미지 도구 사용 가능, 만드는 중인 이미지는 도구 숨김 | `blog-writer:src/job/JobDetail.tsx:127-143`, `blog-writer:src/job/images.tsx:243-276` |
+| 화면 | `imageRunsOnly`면 다른 이미지 도구 사용 가능, 만드는 중인 이미지는 도구 숨김 | `blog-writer:src/job/JobDetail.tsx:121-151`, `blog-writer:src/job/images.tsx:255-288` |
 | 테스트 | 동시 실행, 같은 이미지 무시, 중지, 진행 중 요청 409 | `blog-writer:tests/imageParallel.test.ts` |
 
 ## 예외 / 경계값

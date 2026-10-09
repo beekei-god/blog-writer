@@ -7,11 +7,11 @@ status: active
 confidence: high
 consistency: consistent
 source:
-  - blog-writer:server/browser/userChrome.ts:381-406
-  - blog-writer:server/browser/blogPost.ts:64
-  - blog-writer:server/browser/blogPost.ts:74
-  - blog-writer:server/browser/adapters.ts:228
-  - blog-writer:server/browser/adapters.ts:321
+  - blog-writer:server/browser/userChrome.ts:383-408
+  - blog-writer:server/browser/blogPost.ts:65
+  - blog-writer:server/browser/blogPost.ts:75
+  - blog-writer:server/browser/adapters.ts:237
+  - blog-writer:server/browser/adapters.ts:330
 updated: 2026-10-09
 ---
 # BR-PUB-010 이어쓰기 글이 있으면 중단

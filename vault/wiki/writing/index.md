@@ -6,7 +6,7 @@ updated: 2026-10-09
 # writing Index
 
 ## 엔티티
-- [[writing/entities/Job]] — 작업. researching→writing→generating_images→draft_ready→posting→posted/scheduled/published / failed (상태 9개, 화면 이름: 자료 조사 중 / 초안 검토 / 블로그 임시저장 중·완료 / 블로그 발행 예약 / 블로그 발행완료 등). 수기 상태 변경은 초안 검토·블로그 임시저장 완료·블로그 발행완료 중에서
+- [[writing/entities/Job]] — 작업. `editProposal`(글 고치기 제안) 포함. researching→writing→generating_images→draft_ready→posting→posted/scheduled/published / failed (상태 9개, 화면 이름: 자료 조사 중 / 초안 검토 / 블로그 임시저장 중·완료 / 블로그 발행 예약 / 블로그 발행완료 등). 수기 상태 변경은 초안 검토·블로그 임시저장 완료·블로그 발행완료 중에서
 - [[writing/entities/Post]] — 초안: 제목·요약·태그·블록·작성 리포트
 - [[writing/entities/글쓰기 규칙]] — 기본/수정본, 리서치·작성 프롬프트에 그대로 들어감
 
@@ -26,11 +26,15 @@ updated: 2026-10-09
 - [[writing/business-rules/BR-WRT-013 제목 후보와 키워드]] — 검색 질문 1, 메인 1·서브 2~3, 제목 후보 3
 - [[writing/business-rules/BR-WRT-014 리서치 출처 등급과 열람 제한]] — 공식→언론→블로그, WebFetch 최대 6개
 - [[writing/business-rules/BR-WRT-015 네이버 검색어 제안 수집 범위]] — 자동완성 ≤20 검색어, 함께 많이 찾는 ≤6
+- [[writing/business-rules/BR-WRT-016 프롬프트로 글 고치기]] — 글 전체/선택한 블록을 Claude가 고쳐 제안, 적용은 사용자가 (웹 검색 허용, 분량은 경고만)
+- [[writing/business-rules/BR-WRT-017 고친 결과 적용 조건과 잠금]] — 만드는 동안 잠금(409), 범위가 그대로일 때만 적용, 재시작 시 failed
+- [[writing/business-rules/BR-WRT-018 고칠 때 이미지는 그대로]] — 이미지는 ref로만 보이고 원래대로, 늘리거나 빼면 오류
 
 ## 플로우
 - [[writing/flows/초안 작성 플로우]] — 진행 단계 6개 (자료 조사 → … → 블로그 임시저장 → 블로그 발행완료)
-- [[writing/flows/초안 편집과 자동 저장 플로우]] — 글 복사 단계는 deprecated (2026-10-09 삭제)
-- [[writing/flows/작업 중지와 재시도 플로우]]
+- [[writing/flows/초안 편집과 자동 저장 플로우]] — 글 복사 단계는 deprecated (2026-10-09 삭제), 블록 선택·이미지 추가·삭제 추가
+- [[writing/flows/작업 중지와 재시도 플로우]] — 글 고치기도 같은 중지로 멈춤
+- [[writing/flows/프롬프트로 글 고치기 플로우]] — 요청 → 제안(running/ready/failed) → 비교 → 적용/버리기
 - [[writing/flows/내 글 목록 상태 필터 플로우]] — 칩 5개 (전체/자료 조사 중/초안 검토/임시 저장/발행 완료, 실패는 전체에서만)
 
 ## 구현 지도

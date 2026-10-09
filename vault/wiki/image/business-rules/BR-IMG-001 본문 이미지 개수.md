@@ -8,7 +8,7 @@ confidence: high
 consistency: consistent
 source:
   - blog-writer:shared/types.ts:15
-  - blog-writer:server/schema.ts:50
+  - blog-writer:server/schema.ts:53
   - blog-writer:src/NewJob.tsx:76
   - blog-writer:src/NewJob.tsx:180-196
   - blog-writer:server/writer.ts:75-82
@@ -20,6 +20,8 @@ updated: 2026-10-09
 
 ## 규칙
 본문 이미지는 0~6장이다. 사용자가 정한 개수보다 많이 만들지 않고, 썸네일을 끈 글에는 썸네일을 두지 않는다.
+
+- 글이 만들어진 뒤 사용자가 직접 자리를 추가할 때도 글 안의 이미지 블록이 6장이면 400으로 막는다 → [[image/business-rules/BR-IMG-015 본문 이미지 자리 추가와 이미지 삭제]].
 
 ## 조건과 결과
 | 조건 | 결과 |
@@ -34,13 +36,13 @@ updated: 2026-10-09
 | 레이어 | 구현 | 값/내용 | 근거 |
 |---|---|---|---|
 | 공용 상수 | `MAX_BODY_IMAGES` | 6 | `blog-writer:shared/types.ts:15` |
-| 서버 검증 | `ImageOptionsSchema.bodyImages` | 정수 0~6 | `blog-writer:server/schema.ts:50` |
+| 서버 검증 | `ImageOptionsSchema.bodyImages` | 정수 0~6 | `blog-writer:server/schema.ts:53` |
 | 화면 | 스테퍼 | 0~6 | `blog-writer:src/NewJob.tsx:76`, `:180-196` |
 | 프롬프트(작성) | 위치·개수 지시 | 정확히 N | `blog-writer:server/writer.ts:75-82` |
 | 서버(작성 후) | `enforceImageOptions` | 초과분 삭제 | `blog-writer:server/writer.ts:270-278` |
 
 ## 예외 / 경계값
-- 편집 화면에서 이미지 블록을 지울 수는 있지만 추가할 수는 없다 (`blog-writer:src/job/PostEditor.tsx:133-137`).
+- 편집 화면에서 이미지 블록을 지울 수는 있지만 추가할 수는 없다 (`blog-writer:src/job/PostEditor.tsx:136-141`).
 - 썸네일이 없는 글에 나중에 썸네일만 추가할 수 있다 → [[image/business-rules/BR-IMG-009 다시 만들기 범위]].
 
 ## 영향받는 플로우
@@ -51,3 +53,4 @@ updated: 2026-10-09
 |---|---|---|
 | 2026-10-05 | 최초 기록 | |
 | 2026-10-05 | 이미지가 부족하면 채우지 않고 로그로 안내하기로 결정 | `blog-writer:server/writer.ts:168-173` |
+| 2026-10-09 | 수동 추가 시에도 6장 제한 적용(참조만 추가, 규칙 값 변화 없음) | 커밋 b7ced30 |

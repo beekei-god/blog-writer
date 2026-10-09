@@ -6,7 +6,7 @@ aliases: [이미지, 썸네일, 본문 이미지]
 status: active
 confidence: high
 source:
-  - blog-writer:shared/types.ts:163-181
+  - blog-writer:shared/types.ts:169-187
   - blog-writer:server/schema.ts:9-21
   - blog-writer:server/images/index.ts:34-54
 updated: 2026-10-09
@@ -29,6 +29,9 @@ updated: 2026-10-09
 | `errorKind` | ImageErrorKind? | 실패 원인 15종 | 원인별 안내 (메시지가 없으면 원인 제목) |
 | `errorProvider` | ImageProvider? | 실패한 AI | "(Gemini)" 등 |
 
+## 추가·삭제
+- 본문 이미지 spec은 글에서 직접 추가(파일 없는 `{type:"image", alt, prompt}` 블록)·삭제(블록 제거 + 파일 삭제)할 수 있다. 썸네일 삭제는 `post.thumbnail` 제거. → [[image/business-rules/BR-IMG-015 본문 이미지 자리 추가와 이미지 삭제]]
+
 ## 상태와 전이
 ```mermaid
 stateDiagram-v2
@@ -43,7 +46,7 @@ stateDiagram-v2
 ```
 | 전이 | 조건 | 일어나는 곳 |
 |---|---|---|
-| → 생성됨 | 생성 성공 또는 업로드 | `blog-writer:server/images/index.ts:40-45`, `blog-writer:server/routes/images.ts:126-131` |
+| → 생성됨 | 생성 성공 또는 업로드 | `blog-writer:server/images/index.ts:40-45`, `blog-writer:server/routes/images.ts:129-134` |
 | → 실패 | 생성 중 오류 (중지는 제외) | `blog-writer:server/images/index.ts:46-49`, `:86-88` |
 
 화면의 "만드는 중"은 `Job.generatingImages`(키 목록)로 표시한다. 한 장씩 동시에 다시 만들 수 있어 키를 더하고 빼며 관리한다 → [[image/business-rules/BR-IMG-014 한 장씩 다시 만들기 동시 실행]].
@@ -52,4 +55,4 @@ stateDiagram-v2
 `Job.post.thumbnail`, `Job.post.blocks[n]`, 파일은 `data/images/<jobId>/` → [[_system/data-storage]]
 
 ## 적용되는 규칙
-[[image/business-rules/BR-IMG-004 본문 기반 이미지 기획]], [[image/business-rules/BR-IMG-005 이미지 안 문구 길이]], [[image/business-rules/BR-IMG-006 직접 고친 이미지 보호]], [[image/business-rules/BR-IMG-007 이미지 실패 격리와 원인 분류]], [[image/business-rules/BR-IMG-008 이미지 결과는 서버 기록 우선]], [[image/business-rules/BR-IMG-013 이미지 API 우선과 만드는 방법 선택]], [[image/business-rules/BR-IMG-014 한 장씩 다시 만들기 동시 실행]]
+[[image/business-rules/BR-IMG-004 본문 기반 이미지 기획]], [[image/business-rules/BR-IMG-005 이미지 안 문구 길이]], [[image/business-rules/BR-IMG-006 직접 고친 이미지 보호]], [[image/business-rules/BR-IMG-007 이미지 실패 격리와 원인 분류]], [[image/business-rules/BR-IMG-008 이미지 결과는 서버 기록 우선]], [[image/business-rules/BR-IMG-013 이미지 API 우선과 만드는 방법 선택]], [[image/business-rules/BR-IMG-014 한 장씩 다시 만들기 동시 실행]], [[image/business-rules/BR-IMG-015 본문 이미지 자리 추가와 이미지 삭제]]

@@ -8,9 +8,9 @@ confidence: high
 consistency: consistent
 source:
   - blog-writer:server/browser/claudeChrome.ts:104
-  - blog-writer:server/browser/blogPost.ts:206
-  - blog-writer:server/browser/userChrome.ts:370-378
-  - blog-writer:server/browser/adapters.ts:165-168
+  - blog-writer:server/browser/blogPost.ts:209
+  - blog-writer:server/browser/userChrome.ts:372-380
+  - blog-writer:server/browser/adapters.ts:174-177
   - blog-writer:server/images/webAi.ts:243
   - blog-writer:server/wordpress.ts:92-108
 updated: 2026-10-09
@@ -32,16 +32,16 @@ updated: 2026-10-09
 | 레이어 | 구현 | 근거 |
 |---|---|---|
 | 프롬프트(공통) | 직접 로그인 금지, 멈춤 | `blog-writer:server/browser/claudeChrome.ts:104` |
-| Claude in Chrome 결과 처리 | `BlogLoginRequired` | `blog-writer:server/browser/blogPost.ts:206` |
-| 평소 크롬 | `UserChromeError("login")` | `blog-writer:server/browser/userChrome.ts:375` |
-| 자동 조작 | `waitForLogin`이 바로 throw | `blog-writer:server/browser/adapters.ts:165-168` |
+| Claude in Chrome 결과 처리 | `BlogLoginRequired` | `blog-writer:server/browser/blogPost.ts:209` |
+| 평소 크롬 | `UserChromeError("login")` | `blog-writer:server/browser/userChrome.ts:377` |
+| 자동 조작 | `waitForLogin`이 바로 throw | `blog-writer:server/browser/adapters.ts:174-177` |
 | 워드프레스 API | 401 오류 코드 해석 | `blog-writer:server/wordpress.ts:92-108` |
 
 모든 경로가 "앱이 직접 로그인하지 않고, 로그인 화면이면 멈춘다"로 같다.
 
 ## 예외 / 경계값
 - `BlogLoginRequired`를 따로 잡는 곳이 없어 화면은 일반 실패로 보여 준다 ([[_system/known-issues]], [[publishing/open-questions]] #10).
-- 작업 화면은 네이버·티스토리를 골랐고 실패 로그에 "자동 조작"이 있을 때만 그 블로그의 로그인 창 버튼을 띄운다 (`blog-writer:src/job/JobDetail.tsx:206-215`). 상자 문구는 등록 방식과 관계없이 "…로그인한 뒤 다시 임시저장하세요."이다.
+- 작업 화면은 네이버·티스토리를 골랐고 실패 로그에 "자동 조작"이 있을 때만 그 블로그의 로그인 창 버튼을 띄운다 (`blog-writer:src/job/JobDetail.tsx:219-228`). 상자 문구는 등록 방식과 관계없이 "…로그인한 뒤 다시 임시저장하세요."이다.
 
 ## 영향받는 플로우
 [[publishing/flows/블로그 임시저장 플로우]]
@@ -53,6 +53,6 @@ updated: 2026-10-09
 | 날짜 | 변경 | 근거 |
 |---|---|---|
 | 2026-10-05 | 최초 기록 | |
-| 2026-10-05 | 자동 조작의 5분 로그인 대기를 즉시 중단으로 변경 (consistency conflict → consistent) | `blog-writer:server/browser/adapters.ts:154-158` |
+| 2026-10-05 | 자동 조작의 5분 로그인 대기를 즉시 중단으로 변경 (consistency conflict → consistent) | `blog-writer:server/browser/adapters.ts:163-167` |
 | 2026-10-07 | 워드프레스 API 인증 실패(401) 원인별 안내 추가. 로그인 창은 네이버·티스토리용으로 한정 | `blog-writer:server/wordpress.ts:93-109` |
 | 2026-10-09 | 근거 줄 번호 갱신 (동작 변화 없음) | 커밋 65bfa3e |
