@@ -13,14 +13,14 @@ source:
   - blog-writer:server/routes/categories.ts:21-42
   - blog-writer:server/categories.ts:10-47
   - blog-writer:server/wordpress.ts:260-301
-  - blog-writer:server/browser/category.ts:11-264
+  - blog-writer:server/browser/category.ts:11-265
   - blog-writer:server/browser/adapters.ts:30-43
   - blog-writer:server/browser/adapters.ts:406-406
   - blog-writer:server/browser/userChrome.ts:532-532
   - blog-writer:server/browser/blogPost.ts:167-167
   - blog-writer:server/pipeline.ts:369-392
   - blog-writer:src/job/NextStep.tsx:247-330
-  - blog-writer:tests/categories.test.ts:1-113
+  - blog-writer:tests/categories.test.ts:1-120
 entities: [Job]
 updated: 2026-10-09
 ---
@@ -56,13 +56,13 @@ updated: 2026-10-09
 | 서버(목록 API) | `GET /api/categories/:platform`: 워드프레스는 사이트에서 실시간(+`last` 또는 설정 기본), 네이버·티스토리는 저장된 목록(블로그 ID가 같을 때만)+`last` | 모르는 블로그 404 | `blog-writer:server/routes/categories.ts:21-42` |
 | 서버(저장) | `data/categories.json`: `lists`(네이버·티스토리만), `last`(블로그별) | | `blog-writer:server/categories.ts:10-47` |
 | 서버(워드프레스) | `publishToWordPress(..., category)`: 고른 `id`가 설정 기본보다 우선 | | `blog-writer:server/wordpress.ts:260-301` |
-| 서버(크롬, 공용) | `selectCategorySteps`(optional 단계 `카테고리 고르기`, 12초), `naverStepsWithOptions`(임시저장이면 안 넣음), `categoryPrompt` | | `blog-writer:server/browser/category.ts:122-163`, `:243-264` |
+| 서버(크롬, 공용) | `selectCategorySteps`(optional 단계 `카테고리 고르기`, 12초), `naverStepsWithOptions`(임시저장이면 안 넣음), `categoryPrompt` | | `blog-writer:server/browser/category.ts:124-164`, `:243-264` |
 | 평소 크롬(네이버) | 저장 확인 뒤 `naverStepsWithOptions`로 발행 창 단계 실행 | | `blog-writer:server/browser/userChrome.ts:532-532` |
 | 앱 전용 크롬 | 네이버: 같은 `naverStepsWithOptions`. 티스토리: 임시저장 전 `chooseCategory` | | `blog-writer:server/browser/adapters.ts:30-43`, `:406-406` |
 | 프롬프트 | Claude in Chrome 지시에 `categoryPrompt` 포함 | 티스토리는 저장 전, 네이버는 발행 창, 임시저장이면 안 고름 | `blog-writer:server/browser/blogPost.ts:167-167` |
 | 파이프라인 | `runPost`가 `category`를 `doPost`/`doWordPressPost`로 전달, 로그 "…(방식, 카테고리: X)" | | `blog-writer:server/pipeline.ts:369-392`, `:440-440` |
 | 화면 | `useCategories`(목록·마지막 선택 불러오기, "목록 불러오기"), `CategoryField`(선택 상자 "블로그 기본 카테고리"+안내 문구), 올리기 요청에 `category` | 네이버 임시저장이면 "…임시저장에는 적용되지 않습니다." | `blog-writer:src/job/NextStep.tsx:247-330` |
-| 테스트 | 기억·목록 저장, 이름 정리, optional 단계·문법, 네이버 단계 끼우기, 안 돼도 다음 단계로, 프롬프트, 요청 검사·목록 API, 워드프레스 우선순위 | | `blog-writer:tests/categories.test.ts:1-113`, `blog-writer:tests/api.test.ts:99-135`, `blog-writer:tests/wordpress.test.ts:115-120` |
+| 테스트 | 기억·목록 저장, 이름 정리, optional 단계·문법, 네이버 단계 끼우기, 안 돼도 다음 단계로, 프롬프트, 요청 검사·목록 API, 워드프레스 우선순위 | | `blog-writer:tests/categories.test.ts:1-120`, `blog-writer:tests/api.test.ts:99-135`, `blog-writer:tests/wordpress.test.ts:115-120` |
 
 ## 예외 / 경계값
 - 워드프레스 `id` 없이 이름만 보내면 거절된다. 네이버·티스토리는 `id` 없이 이름만 쓴다.
@@ -82,3 +82,4 @@ updated: 2026-10-09
 | 날짜 | 변경 | 근거 |
 |---|---|---|
 | 2026-10-09 | 최초 기록 (카테고리를 올릴 때마다 고름, 마지막 선택 기억, 네이버는 발행 창에서만, 티스토리는 저장 전, optional 단계) | 커밋 b7ced30 |
+| 2026-10-09 | 카테고리 목록 읽기에서 첫 항목이 빠지던 문제 수정: 칸이 현재 선택값(기본은 첫 항목)을 보여 줘서 첫 항목의 글자가 이미 화면에 있었고, "누르기 전에 없던 글자"로만 목록을 읽어 걸러졌다. 이제 누르기 전에 화면의 요소에 표시를 남기고 표시 없는 새 요소를 목록으로 읽는다 (사용자 보고) | 커밋 19d0364, `blog-writer:server/browser/category.ts:41-43` |

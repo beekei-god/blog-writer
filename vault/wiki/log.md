@@ -140,3 +140,11 @@ updated: 2026-10-05
 - 불일치: 없음. 새 open question: publishing #16~19, image #9~10, writing #10~13 (카테고리·주제 에디터 구조는 실제 사이트 미검증, 글 고치기 결과 품질 미확인)
 - 비고: 서브에이전트 4개가 영역별로 갱신하고 메인이 용어집·index·registry·log·점검을 마무리했다
 - 분석 시점: git b7ced30 (스냅샷 `_snapshot.json`)
+
+## [2026-10-09] update | publishing · _system (네이버 예약 날짜 달력, 카테고리 첫 항목 누락)
+- 읽은 범위: 커밋 b7ced30..19d0364에서 바뀐 4개 파일 (`server/browser/publish.ts`, `server/browser/category.ts`, `tests/publish.test.ts`, `tests/categories.test.ts`)
+- 변경 내용: 발행 창의 예약 날짜 입력에서 달력을 구조로 찾고(날짜 숫자 28개 이상, 월 제목까지 윗 상자로 올라감), 발행 창의 스크롤 영역을 내려 보이게 하고, 실제 마우스처럼 누르고, 이전·다음 달 날짜를 구분해 이번 달 날짜를 고르도록 수정. 카테고리 목록 읽기는 글자 대신 요소로 새 항목을 가려 첫 항목이 빠지던 문제 수정
+- 갱신(내용): publishing — BR-PUB-018(날짜 입력 단계와 경계값, 변경 이력, 테스트), BR-PUB-020(변경 이력), 카테고리 목록 불러오기 플로우, 구현 지도(`publish.ts` 줄 번호 전체 재작성) / _system — known-issues #29 / _registry
+- 줄 번호 보정: 바뀐 파일을 가리키는 `blog-writer:` 참조 71곳을 diff로 새 줄 번호에 맞춤
+- 불일치: 없음. 새 open question 없음 (예약 날짜 달력은 사용자 보고로 고쳤지만 실제 사이트에서 다시 확인되지 않음)
+- 분석 시점: git 19d0364 (스냅샷 `_snapshot.json`)

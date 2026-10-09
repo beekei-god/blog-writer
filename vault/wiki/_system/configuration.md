@@ -77,5 +77,5 @@ updated: 2026-10-09
 | `EDIT_PROMPT_MAX` | 2000 (글 고치기 수정 요청 글자 수 상한, 최소 2자) | `blog-writer:server/editPost.ts:13` | [[_system/api]] |
 | 글 고치기 호출 | WebSearch·WebFetch, effort medium, 20분, stage `writing` | `blog-writer:server/editPost.ts:143-157` | [[_system/integrations/claude-cli]] |
 | 네이버 주제 목록 | 대분류 4개·32개 이름을 코드에 고정 (네이버가 바꾸면 코드를 고쳐야 함) | `blog-writer:server/naverTopic.ts:10-17` | [[_system/known-issues]] |
-| 카테고리 이름 상한 | 요청 `name` 1~100자(`BlogCategorySchema`), 에디터에서 읽은 이름은 40자 이하·최대 100개 | `blog-writer:server/schema.ts:48`, `blog-writer:server/browser/category.ts:93-103` | [[_system/api]] |
-| 발행 창 단계 제한 시간 | 단계마다 10초(예약 날짜 20초, 발행 확인 30초), 0.5초마다 다시 확인 | `blog-writer:server/browser/publish.ts:275-323` | [[_system/integrations/blog-editors]] |
+| 카테고리 이름 상한 | 요청 `name` 1~100자(`BlogCategorySchema`), 에디터에서 읽은 이름은 40자 이하·최대 100개 | `blog-writer:server/schema.ts:48`, `blog-writer:server/browser/category.ts:95-105` | [[_system/api]] |
+| 발행 창 단계 제한 시간 | 단계마다 10초(예약 날짜 20초, 발행 확인 30초), 0.5초마다 다시 확인 | `blog-writer:server/browser/publish.ts:314-362` | [[_system/integrations/blog-editors]] |

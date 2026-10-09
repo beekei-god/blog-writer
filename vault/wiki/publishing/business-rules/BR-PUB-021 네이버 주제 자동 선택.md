@@ -9,13 +9,13 @@ consistency: consistent
 source:
   - blog-writer:server/naverTopic.ts:1-63
   - blog-writer:server/pipeline.ts:369-392
-  - blog-writer:server/browser/category.ts:165-249
+  - blog-writer:server/browser/category.ts:166-250
   - blog-writer:server/browser/publish.ts:78-88
-  - blog-writer:server/browser/publish.ts:280-327
+  - blog-writer:server/browser/publish.ts:319-366
   - blog-writer:server/browser/blogPost.ts:167-167
   - blog-writer:src/job/NextStep.tsx:327-327
   - blog-writer:tests/naverTopic.test.ts:1-63
-  - blog-writer:tests/categories.test.ts:46-100
+  - blog-writer:tests/categories.test.ts:46-107
 entities: [Job]
 updated: 2026-10-09
 ---
@@ -54,12 +54,12 @@ Claude 호출: 단계 `writing`(모델 설정 따름), effort `low`, 도구 없�
 |---|---|---|---|
 | 서버(선택) | `NAVER_TOPICS`(고정 목록), `matchNaverTopic`, `pickNaverTopic`(Claude, 실패 시 null, 중지는 전파) | 4개 대분류·32개 주제 | `blog-writer:server/naverTopic.ts:10-63` |
 | 서버(파이프라인) | `runPost`: 네이버이고 `mode !== "draft"`일 때 크롬 큐 전에 호출 | | `blog-writer:server/pipeline.ts:369-392` |
-| 브라우저(공용) | `selectTopicSteps`(optional, 25초, `TOPIC_CLEANUP_JS`), `naverStepsWithOptions`(카테고리 다음에 끼움, 임시저장이면 안 넣음) | | `blog-writer:server/browser/category.ts:171-249` |
+| 브라우저(공용) | `selectTopicSteps`(optional, 25초, `TOPIC_CLEANUP_JS`), `naverStepsWithOptions`(카테고리 다음에 끼움, 임시저장이면 안 넣음) | | `blog-writer:server/browser/category.ts:172-250` |
 | 브라우저(실행) | `PublishStep.optional`·`cleanupJs`, `runPublishSteps`의 `fail` 처리 | | `blog-writer:server/browser/publish.ts:78-88`, `:280-327` |
 | 평소 크롬 / 앱 전용 크롬 | 네이버는 둘 다 `naverStepsWithOptions` 사용 | | `blog-writer:server/browser/userChrome.ts:532-532`, `blog-writer:server/browser/adapters.ts:296-296` |
-| 프롬프트 | Claude 주제 선택 시스템 프롬프트(목록·단 하나·목록 밖 금지), Claude in Chrome용 주제 안내 | | `blog-writer:server/naverTopic.ts:42-46`, `blog-writer:server/browser/category.ts:253-254` |
+| 프롬프트 | Claude 주제 선택 시스템 프롬프트(목록·단 하나·목록 밖 금지), Claude in Chrome용 주제 안내 | | `blog-writer:server/naverTopic.ts:42-46`, `blog-writer:server/browser/category.ts:254-255` |
 | 화면 | 네이버 예약·자동이면 "네이버 주제는 글 내용을 보고 자동으로 고릅니다." 안내 (사용자가 고르는 칸 없음) | | `blog-writer:src/job/NextStep.tsx:327-327` |
-| 테스트 | 목록 맞추기, 글 요약으로 선택, 실패·목록 밖이면 null, 중지 전파, 팝업 순서·정리·발행 창 확인 시점 | | `blog-writer:tests/naverTopic.test.ts:33-62`, `blog-writer:tests/categories.test.ts:46-100` |
+| 테스트 | 목록 맞추기, 글 요약으로 선택, 실패·목록 밖이면 null, 중지 전파, 팝업 순서·정리·발행 창 확인 시점 | | `blog-writer:tests/naverTopic.test.ts:33-62`, `blog-writer:tests/categories.test.ts:46-107` |
 
 ## 예외 / 경계값
 - 주제 목록은 코드에 고정이라 네이버가 목록을 바꾸면 발행 창에서 이름을 못 찾아 주제 없이 올라간다 ([[publishing/open-questions]] #19).

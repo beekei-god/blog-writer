@@ -7,8 +7,8 @@ status: active
 confidence: medium
 consistency: consistent
 source:
-  - blog-writer:server/browser/publish.ts:1-367
-  - blog-writer:server/browser/category.ts:122-264
+  - blog-writer:server/browser/publish.ts:1-406
+  - blog-writer:server/browser/category.ts:124-265
   - blog-writer:server/browser/userChrome.ts:519-534
   - blog-writer:server/browser/adapters.ts:23-44
   - blog-writer:server/browser/adapters.ts:294-296
@@ -17,7 +17,7 @@ source:
   - blog-writer:server/pipeline.ts:446-491
   - blog-writer:server/browser/runner.ts:92-104
   - blog-writer:src/styles.css:160
-  - blog-writer:tests/publish.test.ts:1-102
+  - blog-writer:tests/publish.test.ts:1-119
 entities: [Job]
 updated: 2026-10-09
 ---
@@ -47,7 +47,7 @@ updated: 2026-10-09
 | 1b | (예약·자동, 주제가 정해졌을 때) **주제 고르기** — optional, 25초. 칸을 누르면 발행 창이 주제 팝업으로 바뀌므로 칸 누르기 → 이름 고르기 → 팝업 "확인" → 발행 창이 돌아올 때까지를 한 단계 안에서 진행 → [[publishing/business-rules/BR-PUB-021 네이버 주제 자동 선택|BR-PUB-021]] | (없음) |
 | 2 | (공개 설정은 건드리지 않음. 2026-10-09 "전체공개 고르기" 단계 삭제) | "공개" 고르기 (없으면 멈춤) |
 | 3 | 예약: "예약" 고르기(날짜 칸이 보일 때까지, 없으면 "발행 시간의 예약을 찾지 못했습니다") / 자동: "현재" 고르기(없으면 그대로 진행) | 같음 ("발행일의 예약") |
-| 4 | (예약) 예약 날짜 입력: 칸에 바로 넣거나, 읽기 전용이면 달력에서 다음 달로 넘기며 날짜 클릭. 20초 | 같음 |
+| 4 | (예약) 예약 날짜 입력: 칸에 바로 넣거나, 읽기 전용이면 날짜 칸을 눌러 달력을 열고 → 달력을 **구조로** 찾고(날짜 숫자 28개 이상이 모인 상자, 월 제목이 보일 때까지 윗 상자로 올라감) → **스크롤해서 보이게 하고** → 월 제목을 읽어 다음 달 버튼을 누르며 → 이번 달 날짜를 **실제 마우스처럼**(pointerdown·mousedown·pointerup·mouseup·click) 누름. 25초 | 같음 |
 | 5 | (예약) 예약 시각 입력: 시·분 칸(select/input)에 숫자 넣기 | 같음 |
 | 6 | (예약) 예약 시각 확인: 날짜·시·분을 다시 읽어 비교, 다르면 "발행 창의 예약 시각(…)이 요청한 시각과 달라 발행하지 않았습니다" | 같음 |
 | 7 | 발행 버튼 누르기: 창 안 `confirm_btn` 또는 마지막 "발행" 버튼 | `#publish-btn` 또는 "공개 발행"/"예약 발행"/"발행" 버튼 |
@@ -77,18 +77,21 @@ updated: 2026-10-09
 ## 구현 현황
 | 레이어 | 구현 | 근거 |
 |---|---|---|
-| 서버(공용) | `PublishRequest`(`category`·`topic` 추가), `PublishStep`(`optional`·`cleanupJs` 추가), `PublishStepError`(`dialog`), `PUBLISH_DUMP_JS`, `kstParts`·`kstText`, `PUBLISH_HELPERS`, `scheduleSteps`, `finishSteps`, `naverPublishSteps`, `tistoryPublishSteps`, `runPublishSteps`(멈추면 `withDialog`), `publishedText`, `publishPrompt` | `blog-writer:server/browser/publish.ts:12-367` |
-| 카테고리·주제 단계 | `selectCategorySteps`, `selectTopicSteps`(+`TOPIC_CLEANUP_JS`), `naverStepsWithOptions`(임시저장이면 안 넣음, 발행 창을 연 바로 뒤에 끼움) | `blog-writer:server/browser/category.ts:122-249` |
+| 서버(공용) | `PublishRequest`(`category`·`topic` 추가), `PublishStep`(`optional`·`cleanupJs` 추가), `PublishStepError`(`dialog`), `PUBLISH_DUMP_JS`, `kstParts`·`kstText`, `PUBLISH_HELPERS`, `scheduleSteps`, `finishSteps`, `naverPublishSteps`, `tistoryPublishSteps`, `runPublishSteps`(멈추면 `withDialog`), `publishedText`, `publishPrompt` | `blog-writer:server/browser/publish.ts:12-406` |
+| 카테고리·주제 단계 | `selectCategorySteps`, `selectTopicSteps`(+`TOPIC_CLEANUP_JS`), `naverStepsWithOptions`(임시저장이면 안 넣음, 발행 창을 연 바로 뒤에 끼움) | `blog-writer:server/browser/category.ts:124-250` |
 | 평소 크롬(네이버) | 저장 확인 → AppleScript `runJs`로 단계 실행 (검증 문제는 결과 `problems`로 돌려줌) | `blog-writer:server/browser/userChrome.ts:519-534` |
 | 앱 전용 크롬 | `publishIfAsked` (Playwright `evaluate`), 네이버는 `mainFrame` 프레임. 입력 중 문제는 `ctx.problems`에 모아 `postWithChrome`이 돌려줌 | `blog-writer:server/browser/adapters.ts:23-44`, `:285-287`, `:397-399`, `blog-writer:server/browser/runner.ts:92-104` |
-| Claude in Chrome | 프롬프트 절차, 결과 `status` 비교 | `blog-writer:server/browser/publish.ts:341-367`, `blog-writer:server/browser/blogPost.ts:214-216` |
+| Claude in Chrome | 프롬프트 절차, 결과 `status` 비교 | `blog-writer:server/browser/publish.ts:380-406`, `blog-writer:server/browser/blogPost.ts:214-216` |
 | 파이프라인 | 세 경로의 "확인 필요" 로그, 성공 상태·로그, `PublishStepError` → 이유·발행 창 구조 로그, `posted`+오류 | `blog-writer:server/pipeline.ts:446-457`, `:403`, `:410-428` |
 | 화면(로그) | 진행 로그 줄을 여러 줄 그대로 표시 (`white-space: pre-wrap`) | `blog-writer:src/styles.css:160` |
-| 테스트 | (카테고리·주제 단계는 `blog-writer:tests/categories.test.ts:31-100`) 한국 시간 변환, 네이버 10분 단위, 예약 확인 뒤 발행, 즉시 발행엔 예약 단계 없음, js 문법, ERR 즉시 중단, 발행 전/후 중지, 멈추면 화면 구조를 붙이고 못 읽어도 원래 오류, 구조 스크립트 문법·편집 영역 제외, 발행 확인 실패 문구, 프롬프트("문제가 있어도 발행은 진행하세요") | `blog-writer:tests/publish.test.ts:5-102` |
+| 테스트 | (날짜 입력의 달력 도우미·실제 마우스 누르기·정규식 이스케이프는 `blog-writer:tests/publish.test.ts:83-101`) (카테고리·주제 단계는 `blog-writer:tests/categories.test.ts:31-107`) 한국 시간 변환, 네이버 10분 단위, 예약 확인 뒤 발행, 즉시 발행엔 예약 단계 없음, js 문법, ERR 즉시 중단, 발행 전/후 중지, 멈추면 화면 구조를 붙이고 못 읽어도 원래 오류, 구조 스크립트 문법·편집 영역 제외, 발행 확인 실패 문구, 프롬프트("문제가 있어도 발행은 진행하세요") | `blog-writer:tests/publish.test.ts:5-119` |
 
 ## 예외 / 경계값
 - 예약 시각은 항상 **한국 시간(Asia/Seoul)**으로 바꿔 발행 창에 넣는다. 화면의 입력은 브라우저 현지 시간이다.
 - 달력이 예약할 달보다 뒤에 있으면 앞으로 넘기지 않고 멈춘다 ("달력이 예약할 달보다 뒤에 있습니다").
+- 달력은 이름이 아니라 구조로 찾는다. 알려진 클래스(`calendar`·`datepicker` 등)를 먼저 보고, 없으면 "날짜 숫자(1~31) 요소가 28개 이상 든 가장 작은 보이는 상자"를 찾아 월 제목("2026.10")이 보일 때까지 윗 상자로 올라간다(최대 3단계). 날짜 격자만 잡으면 월을 읽지 못해 다음 달로 넘기지 않고 이번 달의 같은 날짜를 누른다.
+- 달력이 발행 창의 스크롤 영역 아래에 열려 가려지면 그 영역을 아래로 내려 달력·다음 달 버튼·날짜가 보이게 한다 (`reveal`). 눌러야 할 날짜는 이전·다음 달 날짜와 고를 수 없는 날을 뺀 뒤, 클래스로 구분되지 않으면 위치로 고른다(22일 이후는 앞쪽에 이전 달 끝 날짜가 있어 마지막 것, 그 밖에는 첫 것).
+- 날짜 칸은 달력을 못 찾았을 때만, 몇 번 기다린 뒤에 다시 누른다 (0.5초마다 눌러 열었다 닫는 일을 막는다).  날짜를 눌렀는데 날짜 칸의 값이 바뀌지 않으면 같은 단계가 반복되다가 시간 초과("시간 안에 끝나지 않았습니다")로 멈추고, 그때의 화면 구조가 진행 로그에 남는다.
 - "현재"(즉시) 선택지를 못 찾으면 기본값이 즉시 발행이라 보고 그대로 진행한다.
 - 발행 창에서 멈춘 경우에도 이번 입력으로 블로그에 임시저장 글이 생겼으므로, 다시 올리면 새 글이 하나 더 생긴다.
 - 발행 창 구조 로그에는 글 본문(편집 영역)은 빠지지만, 편집 영역 밖의 버튼 이름·짧은 글자(예: 블로그 메뉴 이름)는 들어갈 수 있다.
@@ -106,6 +109,7 @@ updated: 2026-10-09
 |---|---|---|
 | 2026-10-09 | 최초 기록 (네이버·티스토리 예약발행·자동발행 추가와 함께) | 커밋 65bfa3e |
 | 2026-10-09 | 발행 창 찾기 변경: 여는 버튼(`OPENER`·`data-bw-opener`)이 든 상자는 빼고, "공개·예약·발행 시간·발행일" 글자로 찾음 (위쪽 막대를 발행 창으로 잘못 골라 "전체공개를 찾지 못했습니다"·"예약을 찾지 못했습니다"로 멈추던 문제). `pick`은 이름표가 없으면 가장 안쪽 요소를 누름 | 커밋 9a9c6df, `blog-writer:server/browser/publish.ts:97-119` |
-| 2026-10-09 | **규칙 변경**: 네이버는 "전체공개 고르기" 단계를 없애고 공개 설정을 바꾸지 않음(프롬프트도). 입력 문제가 있으면 발행하지 않던 안전장치 삭제 → 발행은 진행하고 "확인 필요"로 로그 (사용자 결정) | 커밋 9a9c6df, `blog-writer:server/browser/publish.ts:231-251`, `:310-336`, `blog-writer:server/browser/userChrome.ts:530-533` |
+| 2026-10-09 | **규칙 변경**: 네이버는 "전체공개 고르기" 단계를 없애고 공개 설정을 바꾸지 않음(프롬프트도). 입력 문제가 있으면 발행하지 않던 안전장치 삭제 → 발행은 진행하고 "확인 필요"로 로그 (사용자 결정) | 커밋 9a9c6df, `blog-writer:server/browser/publish.ts:270-290`, `:310-336`, `blog-writer:server/browser/userChrome.ts:530-533` |
 | 2026-10-09 | 멈춘 단계의 발행 창 구조(`PUBLISH_DUMP_JS`)를 진행 로그에 남김. 네이버 예약발행 실제 사이트 확인 → 해당 단계 신뢰도 high | 커밋 9a9c6df, `blog-writer:server/browser/publish.ts:22-48`, `:294-299`, `blog-writer:server/pipeline.ts:483-484` |
-| 2026-10-09 | 카테고리·네이버 주제 고르기 단계 추가(발행 창을 연 바로 뒤). `PublishStep.optional`(안 돼도 멈추지 않고 problems에 쌓고 화면 구조 로그)·`cleanupJs`(팝업 닫기), `runPublishSteps(…, problems?)`. 보이는 요소 판별을 `offsetParent` → `getClientRects()`+`visibility`로 변경(position:fixed 팝업). 화면 구조 기록에 목록 항목·"카테고리/주제" 글자 포함, 250개. 네이버 주제 팝업은 발행 창을 대체하므로 첫·마지막 단계에서만 발행 창을 봄 | 커밋 b7ced30, `blog-writer:server/browser/publish.ts:78-93`, `:280-327`, `blog-writer:server/browser/category.ts:171-249` |
+| 2026-10-09 | 카테고리·네이버 주제 고르기 단계 추가(발행 창을 연 바로 뒤). `PublishStep.optional`(안 돼도 멈추지 않고 problems에 쌓고 화면 구조 로그)·`cleanupJs`(팝업 닫기), `runPublishSteps(…, problems?)`. 보이는 요소 판별을 `offsetParent` → `getClientRects()`+`visibility`로 변경(position:fixed 팝업). 화면 구조 기록에 목록 항목·"카테고리/주제" 글자 포함, 250개. 네이버 주제 팝업은 발행 창을 대체하므로 첫·마지막 단계에서만 발행 창을 봄 | 커밋 b7ced30, `blog-writer:server/browser/publish.ts:78-93`, `:280-327`, `blog-writer:server/browser/category.ts:172-250` |
+| 2026-10-09 | 예약 날짜 입력 수정: 달력을 구조로 찾고(월 제목까지 올라감), 스크롤해서 보이게 하고, 실제 마우스처럼 누름. 달력이 발행 창의 스크롤 영역 아래에 열려 못 찾거나 날짜가 눌리지 않아 "예약 날짜 입력에서 시간 안에 끝나지 않았습니다"로 멈추던 문제 (사용자 보고). 도우미 안 정규식의 역슬래시가 템플릿 문자열에서 사라지던 실수도 바로잡음 | 커밋 19d0364, `blog-writer:server/browser/publish.ts:121-150`, `:192-225` |

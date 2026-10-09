@@ -14,8 +14,8 @@ source:
   - blog-writer:tests/webAi.test.ts:1-53
   - blog-writer:tests/imageApi.test.ts:1-148
   - blog-writer:tests/imageParallel.test.ts:1-189
-  - blog-writer:tests/publish.test.ts:1-102
-  - blog-writer:tests/categories.test.ts:1-113
+  - blog-writer:tests/publish.test.ts:1-119
+  - blog-writer:tests/categories.test.ts:1-120
   - blog-writer:tests/editPost.test.ts:1-223
   - blog-writer:tests/naverTopic.test.ts:1-63
 updated: 2026-10-09

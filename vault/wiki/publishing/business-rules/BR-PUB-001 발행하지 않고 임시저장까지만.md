@@ -13,7 +13,7 @@ source:
   - blog-writer:server/pipeline.ts:429-495
   - blog-writer:server/browser/blogPost.ts:145-171
   - blog-writer:server/browser/blogPost.ts:208-217
-  - blog-writer:server/browser/publish.ts:341-367
+  - blog-writer:server/browser/publish.ts:380-406
   - blog-writer:server/browser/userChrome.ts:519-533
   - blog-writer:server/browser/adapters.ts:30-43
   - blog-writer:server/browser/adapters.ts:290-296
@@ -58,15 +58,15 @@ updated: 2026-10-09
 |---|---|---|
 | 서버(API 검사) | 네이버·티스토리도 `draft`/`schedule`/`publish` 허용 (예전 400 거절 삭제). 예약이면 시각 검사 | `blog-writer:server/routes/jobs.ts:140-155` |
 | 서버(작업) | `runPost`가 크롬 블로그에 `PublishRequest` 전달, `doPost`가 성공 시 방식별 상태, `PublishStepError`면 `posted`+오류 | `blog-writer:server/pipeline.ts:369-392`, `:366-432` |
-| 프롬프트(블로그) | 목표 문장을 방식별로, 발행 절차 `publishPrompt` 삽입, 탭 유지 | `blog-writer:server/browser/blogPost.ts:145-171`, `blog-writer:server/browser/publish.ts:341-367` |
-| 프롬프트(공통) | 되돌리기 어려운 동작(글 발행 포함) 금지 — 발행 절차가 이 경우만 예외라고 명시 | `blog-writer:server/browser/claudeChrome.ts:105`, `blog-writer:server/browser/publish.ts:360` |
+| 프롬프트(블로그) | 목표 문장을 방식별로, 발행 절차 `publishPrompt` 삽입, 탭 유지 | `blog-writer:server/browser/blogPost.ts:145-171`, `blog-writer:server/browser/publish.ts:380-406` |
+| 프롬프트(공통) | 되돌리기 어려운 동작(글 발행 포함) 금지 — 발행 절차가 이 경우만 예외라고 명시 | `blog-writer:server/browser/claudeChrome.ts:105`, `blog-writer:server/browser/publish.ts:399` |
 | 서버(Claude in Chrome 결과) | 요청 방식과 결과 `status`가 다르면 `PublishStepError` | `blog-writer:server/browser/blogPost.ts:214-216` |
 | 서버(AppleScript) | 저장 확인 → 발행 창 단계 (입력 문제는 로그의 "확인 필요"로만 남기고 발행은 진행) | `blog-writer:server/browser/userChrome.ts:519-533` |
 | 서버(Playwright) | 임시저장 클릭 → `publishIfAsked` | `blog-writer:server/browser/adapters.ts:30-43`, `:281-287`, `:397-399`, `blog-writer:server/browser/runner.ts:93-104` |
 | 서버(워드프레스) | 모드별 상태 → [[_system/integrations/wordpress-rest]] | `blog-writer:server/wordpress.ts:245`, `blog-writer:server/pipeline.ts:395-423` |
 | 화면(글) | 네이버·티스토리 `ChromeBlogNext`와 `WordPressNext`가 같은 방식 선택(`PublishModeFields`·`usePublishMode`)을 씀. 안내 문구 `CHROME_MODE_HINT`, 예약·자동은 확인 창 | `blog-writer:src/job/NextStep.tsx:136-354` |
 | 화면(설정) | 네이버·티스토리 카드: "글을 올릴 때 임시저장·예약발행·자동발행 중에서 고릅니다 (늘 임시저장을 먼저 합니다)." (2026-10-09 9a9c6df에서 맞춤) | `blog-writer:src/SettingsPanel.tsx:186` |
-| 테스트 | 네이버·티스토리 예약 요청 검사, 발행 창 단계 | `blog-writer:tests/api.test.ts:75-85`, `blog-writer:tests/publish.test.ts:12-90` |
+| 테스트 | 네이버·티스토리 예약 요청 검사, 발행 창 단계 | `blog-writer:tests/api.test.ts:75-85`, `blog-writer:tests/publish.test.ts:12-107` |
 
 ## 예외 / 경계값
 - 발행 창 조작(버튼·라디오·날짜 칸 찾기)은 **모의 발행 창으로만 확인**했고 실제 네이버·티스토리에서는 아직 시험하지 않았다. 이 부분의 신뢰도는 medium이다 ([[publishing/open-questions]] #11).
@@ -88,6 +88,6 @@ updated: 2026-10-09
 | 2026-10-05 | 최초 기록 | |
 | 2026-10-05 | 다시 임시저장은 새 글이 생기는 동작을 유지하고 화면에 안내 추가 | |
 | 2026-10-07 | 워드프레스는 REST API로 올리고 임시저장·예약발행·자동발행을 고를 수 있게 됨 (예약·자동은 확인 창). 크롬 블로그는 계속 임시저장만, 서버가 `draft` 외 요청을 400으로 거절. 워드프레스 크롬 경로 삭제 | `blog-writer:server/routes/jobs.ts:129-146`, `blog-writer:server/pipeline.ts:356-418` |
-| 2026-10-09 | **규칙 변경**: 네이버·티스토리 "임시저장까지만(발행 안 함)" → "임시저장/예약발행/자동발행 선택, 늘 임시저장 먼저 하고 발행 창에서 발행". 서버의 400 거절("예약발행·자동발행은 워드프레스에서만…") 삭제. 성공 상태가 `posted`만 → `posted`/`scheduled`/`published`. 발행 창에서 멈추면 `posted`+오류. 규칙 이름 변경 | 커밋 65bfa3e, `blog-writer:server/routes/jobs.ts:140-155`, `blog-writer:server/pipeline.ts:429-495`, `blog-writer:server/browser/publish.ts:1-367` |
+| 2026-10-09 | **규칙 변경**: 네이버·티스토리 "임시저장까지만(발행 안 함)" → "임시저장/예약발행/자동발행 선택, 늘 임시저장 먼저 하고 발행 창에서 발행". 서버의 400 거절("예약발행·자동발행은 워드프레스에서만…") 삭제. 성공 상태가 `posted`만 → `posted`/`scheduled`/`published`. 발행 창에서 멈추면 `posted`+오류. 규칙 이름 변경 | 커밋 65bfa3e, `blog-writer:server/routes/jobs.ts:140-155`, `blog-writer:server/pipeline.ts:429-495`, `blog-writer:server/browser/publish.ts:1-406` |
 | 2026-10-09 | 설정 화면 문구를 새 규칙에 맞춤("임시저장·예약발행·자동발행 중에서 고릅니다") → 불일치 해소. 진행 로그에 블로그 이름(코드 이름 대신 "네이버 블로그")을 씀 | 커밋 9a9c6df, `blog-writer:src/SettingsPanel.tsx:185-187`, `blog-writer:server/pipeline.ts:440` |
 | 2026-10-09 | 네이버 예약·자동발행의 발행 창 단계에 카테고리·주제 고르기(optional)가 끼어듦. 임시저장 우선 규칙은 그대로 → [[publishing/business-rules/BR-PUB-020 카테고리 선택]], [[publishing/business-rules/BR-PUB-021 네이버 주제 자동 선택]] | 커밋 b7ced30 |

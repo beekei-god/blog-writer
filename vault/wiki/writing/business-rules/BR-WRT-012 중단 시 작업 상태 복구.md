@@ -12,7 +12,7 @@ source:
   - blog-writer:server/pipeline.ts:199-265
   - blog-writer:server/pipeline.ts:418-419
   - blog-writer:server/pipeline.ts:479-491
-  - blog-writer:server/browser/publish.ts:275-335
+  - blog-writer:server/browser/publish.ts:314-374
   - blog-writer:server/store.ts:131-149
   - blog-writer:server/pipeline.ts:157-197
   - blog-writer:server/cancel.ts:1-39
@@ -64,4 +64,4 @@ updated: 2026-10-09
 | 2026-10-05 | 최초 기록 | |
 | 2026-10-08 | 이미지 한 장씩 동시 실행: 중지는 작업의 모든 신호를 보냄(`cancel.ts`가 작업마다 여러 AbortController), 이미지 상태 복귀는 마지막 진행이 끝날 때, 재시작 복구가 `imageRunsOnly`도 지움 | 커밋 38ae96c |
 | 2026-10-09 | 글 고치기(`editProposal`) 복구 추가: 재시작 시 running 제안 → failed, 중지 시 제안 삭제, 실패 시 제안 failed. 작업 상태는 바꾸지 않음 | `blog-writer:server/store.ts:131-140`, `blog-writer:server/pipeline.ts:172-197`, 커밋 b7ced30 |
-| 2026-10-09 | 네이버·티스토리 발행 창 단계가 멈추면(`PublishStepError`) draft_ready가 아니라 posted + 오류 이유로 둠. 실패·중지 처리를 `failStep`으로 공용화(동작 같음) | `blog-writer:server/pipeline.ts:39-47`, `:416-428`, `blog-writer:server/browser/publish.ts:275-335` |
+| 2026-10-09 | 네이버·티스토리 발행 창 단계가 멈추면(`PublishStepError`) draft_ready가 아니라 posted + 오류 이유로 둠. 실패·중지 처리를 `failStep`으로 공용화(동작 같음) | `blog-writer:server/pipeline.ts:39-47`, `:416-428`, `blog-writer:server/browser/publish.ts:314-374` |

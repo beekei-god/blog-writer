@@ -16,7 +16,7 @@ source:
   - blog-writer:server/wordpress.ts:302-305
   - blog-writer:server/pipeline.ts:369-423
   - blog-writer:server/pipeline.ts:474-478
-  - blog-writer:server/browser/publish.ts:153-156
+  - blog-writer:server/browser/publish.ts:185-188
   - blog-writer:src/job/NextStep.tsx:136-425
 entities: [블로그 설정, Job]
 updated: 2026-10-09
@@ -60,7 +60,7 @@ updated: 2026-10-09
 | 서버(요청 검사) | `mode` 기본 `draft`, `scheduledAt` ISO, 예약이면 `checkSchedule`(모든 블로그), 네이버 10분 단위 | `blog-writer:server/routes/jobs.ts:107-155` |
 | 서버(워드프레스) | `WP_STATUS`, `checkSchedule`, 업로드 전 재확인, 자동발행 때 공개 시각 지금으로 | `blog-writer:server/wordpress.ts:245-266`, `:299-302` |
 | 서버(상태) | `doWordPressPost` 사이트 상태로, `doPost` 요청 방식으로 | `blog-writer:server/pipeline.ts:395-423`, `:411-415` |
-| 서버(발행 창) | 분 단위가 맞지 않으면 단계를 만들지 않음 (네이버 10, 티스토리 1) | `blog-writer:server/browser/publish.ts:154-156`, `:238`, `:259` |
+| 서버(발행 창) | 분 단위가 맞지 않으면 단계를 만들지 않음 (네이버 10, 티스토리 1) | `blog-writer:server/browser/publish.ts:186-188`, `:238`, `:259` |
 | 화면 | 공용 `usePublishMode`(분 단위·1분 검사·요청 값)와 `PublishModeFields`(방식 버튼·안내·시각 칸)를 `ChromeBlogNext`와 `WordPressNext`가 같이 씀. 안내 문구는 `CHROME_MODE_HINT`/`WP_MODE_HINT` | `blog-writer:src/job/NextStep.tsx:155-165`, `:200-259`, `:273-281` |
 | 테스트 | 예약 시각 경계, 과거 시각이면 업로드 전 거절, 자동발행 공개 시각, 네이버·티스토리 과거 시각·10분 단위 | `blog-writer:tests/wordpress.test.ts:18-26`, `:124-137`, `:145-149`, `blog-writer:tests/api.test.ts:75-98`, `blog-writer:tests/publish.test.ts:14-16` |
 

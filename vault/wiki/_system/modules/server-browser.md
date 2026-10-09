@@ -8,9 +8,9 @@ source:
   - blog-writer:server/browser/userChrome.ts:1-535
   - blog-writer:server/browser/adapters.ts:1-433
   - blog-writer:server/browser/runner.ts:1-104
-  - blog-writer:server/browser/publish.ts:1-367
+  - blog-writer:server/browser/publish.ts:1-406
   - blog-writer:server/browser/claudeChrome.ts:1-105
-  - blog-writer:server/browser/category.ts:1-264
+  - blog-writer:server/browser/category.ts:1-265
   - blog-writer:server/browser/blockedSites.ts:1-37
   - blog-writer:server/browser/loginWindow.ts:1-65
   - blog-writer:server/browser/mouse.ts:1-74
@@ -42,11 +42,11 @@ updated: 2026-10-09
 
 ## 발행 단계 (`publish.ts`)
 - 단계 하나는 페이지 안에서 동기로 실행되는 JS. `true`면 다음 단계, `false`·`null`이면 0.5초 뒤 다시, `"ERR:<이유>"`면 바로 멈춘다 (`blog-writer:server/browser/publish.ts:72-88`).
-- 네이버: 발행 창 열기(상단 "발행", 공개 설정은 바꾸지 않음) → 예약(또는 "현재") → [예약 날짜 → 시·분 → 다시 읽어 확인] → 창 아래 "발행" → 주소가 `postwrite` 등을 벗어나는지 확인 (`blog-writer:server/browser/publish.ts:231-250`). 예약 분은 10분 단위(`NAVER_MINUTE_STEP`)가 아니면 단계를 만들기 전에 `PublishStepError`.
-- 티스토리: 하단 "완료" → 공개 → 예약(또는 "현재") → [예약 단계, 1분 단위] → "공개 발행"/"예약 발행" → `manage/newpost`를 벗어나는지 확인 (`blog-writer:server/browser/publish.ts:252-273`).
-- 예약 날짜는 입력 칸이 읽기 전용이면 달력에서 다음 달로 넘겨 날짜를 누른다 (`blog-writer:server/browser/publish.ts:153-208`).
-- `runPublishSteps`: 단계마다 제한 시간(기본 10초, 날짜 20초, 발행 확인 30초). 마지막 발행 버튼을 누르기 전까지만 중지 요청(`throwIfCancelled`)을 받는다. "발행 확인" 단계는 페이지 이동 중 실행 오류를 다시 시도한다 (`blog-writer:server/browser/publish.ts:275-335`).
-- 실패 문구: 발행 버튼 전이면 "임시저장은 했지만 발행 창의 "<단계>"에서 멈췄습니다…", 발행 확인에서 실패하면 "발행 버튼을 눌렀지만 발행됐는지 확인하지 못했습니다…" (`blog-writer:server/browser/publish.ts:332-335`).
+- 네이버: 발행 창 열기(상단 "발행", 공개 설정은 바꾸지 않음) → 예약(또는 "현재") → [예약 날짜 → 시·분 → 다시 읽어 확인] → 창 아래 "발행" → 주소가 `postwrite` 등을 벗어나는지 확인 (`blog-writer:server/browser/publish.ts:270-289`). 예약 분은 10분 단위(`NAVER_MINUTE_STEP`)가 아니면 단계를 만들기 전에 `PublishStepError`.
+- 티스토리: 하단 "완료" → 공개 → 예약(또는 "현재") → [예약 단계, 1분 단위] → "공개 발행"/"예약 발행" → `manage/newpost`를 벗어나는지 확인 (`blog-writer:server/browser/publish.ts:291-312`).
+- 예약 날짜는 입력 칸이 읽기 전용이면 달력에서 다음 달로 넘겨 날짜를 누른다 (`blog-writer:server/browser/publish.ts:185-247`).
+- `runPublishSteps`: 단계마다 제한 시간(기본 10초, 날짜 20초, 발행 확인 30초). 마지막 발행 버튼을 누르기 전까지만 중지 요청(`throwIfCancelled`)을 받는다. "발행 확인" 단계는 페이지 이동 중 실행 오류를 다시 시도한다 (`blog-writer:server/browser/publish.ts:314-374`).
+- 실패 문구: 발행 버튼 전이면 "임시저장은 했지만 발행 창의 "<단계>"에서 멈췄습니다…", 발행 확인에서 실패하면 "발행 버튼을 눌렀지만 발행됐는지 확인하지 못했습니다…" (`blog-writer:server/browser/publish.ts:371-374`).
 
 - 카테고리·주제 단계는 `optional`이라 안 돼도 멈추지 않는다: 이유와 화면 구조를 로그에 남기고 "확인 필요"로 이어간다. 카테고리 목록을 읽는 경로(`readNaverCategories`, `readTistoryCategories`)는 글을 저장하지 않지만, 네이버는 입력 중 자동 임시저장이 남을 수 있다 → [[_system/known-issues]].
 
