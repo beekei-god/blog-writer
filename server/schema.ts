@@ -44,6 +44,9 @@ export const PostSchema = z.object({
   ),
 });
 
+/** 올릴 때 고른 카테고리: 워드프레스는 사이트의 ID와 이름, 네이버·티스토리는 에디터에서 이름으로 고른다 */
+export const BlogCategorySchema = z.object({ id: z.number().int().positive().optional(), name: z.string().trim().min(1).max(100) });
+
 export const ImageOptionsSchema = z
   .object({
     thumbnail: z.boolean(),

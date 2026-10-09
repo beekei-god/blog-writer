@@ -2,11 +2,11 @@ import express, { Router } from "express";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { z } from "zod";
-import { bodyImageKey, bodyIndexOf, imageSpecAt, STYLES_BY_PROVIDER } from "../../shared/types";
+import { bodyImageKey, bodyIndexOf, imageSpecAt, MAX_BODY_IMAGES, STYLES_BY_PROVIDER } from "../../shared/types";
 import { isImageBusy, isRunning, runImage, runImages } from "../pipeline";
 import { ImageOptionsSchema, MethodEnum, ProviderEnum, StyleEnum } from "../schema";
 import { recordImageFile } from "../images";
-import { getJob, jobImageDir, jobImagePath, log, updateJob } from "../store";
+import { getJob, jobImageDir, jobImagePath, log, removeImageFile, updateJob } from "../store";
 import { markBusy, wrap } from "./util";
 
 /** 이미지: 다시 만들기, 한 장만 다시 만들기, 직접 올리기, 미리보기 */
@@ -25,13 +25,15 @@ router.post(
         /** 썸네일만 다른 AI·스타일로 */
         thumbnailProvider: ProviderEnum.optional(),
         thumbnailStyle: StyleEnum.optional(),
+        /** 썸네일을 API로 만들지 크롬에서 만들지 (Gemini·ChatGPT) */
+        thumbnailMethod: MethodEnum.optional(),
         onlyFailed: z.boolean().optional(),
         /** 썸네일이 없는 글에 썸네일을 추가로 만든다 (다른 이미지는 그대로) */
         addThumbnail: z.boolean().optional(),
       })
       .safeParse(req.body ?? {});
     if (!body.success) return void res.status(400).json({ error: "이미지 옵션 값이 올바르지 않습니다." });
-    const { style, provider, thumbnailProvider, thumbnailStyle, onlyFailed, addThumbnail } = body.data;
+    const { style, provider, thumbnailProvider, thumbnailStyle, thumbnailMethod, onlyFailed, addThumbnail } = body.data;
     if (addThumbnail) {
       await updateJob(job.id, (j) => {
         j.imageOptions = { ...j.imageOptions, thumbnail: true };
@@ -47,7 +49,7 @@ router.post(
         }
       });
     }
-    if (style || provider || thumbnailProvider || thumbnailStyle) {
+    if (style || provider || thumbnailProvider || thumbnailStyle || thumbnailMethod) {
       const current = (await getJob(job.id))!.imageOptions;
       const next = ImageOptionsSchema.safeParse({
         ...current,
@@ -55,6 +57,7 @@ router.post(
         ...(style && { style }),
         ...(thumbnailProvider && { thumbnailProvider }),
         ...(thumbnailStyle && { thumbnailStyle }),
+        ...(thumbnailMethod && { thumbnailMethod }),
       });
       if (!next.success) return void res.status(400).json({ error: next.error.issues[0].message });
       await updateJob(job.id, (j) => {
@@ -130,6 +133,68 @@ router.post(
     await recordImageFile(job.id, target, name);
     await log(job.id, `${target === "thumbnail" ? "썸네일" : `본문 이미지 #${bodyIndexOf(target)}`}을 직접 올린 이미지로 바꿨습니다.`);
     res.json({ file: name });
+  }),
+);
+
+/**
+ * 본문 이미지 자리 추가: 고른 블록 바로 뒤에 이미지가 없는 이미지 블록을 넣는다. 이미지는 "이미지 생성"으로 만든다
+ * (만들기 직전에 주변 본문을 보고 설명과 문구를 정한다). 블록 번호가 밀리므로 어떤 작업이든 진행 중이면 막는다.
+ */
+router.post(
+  "/api/jobs/:id/images",
+  wrap(async (req, res) => {
+    const parsed = z.object({ afterBlock: z.number().int().min(0) }).safeParse(req.body ?? {});
+    if (!parsed.success) return void res.status(400).json({ error: "이미지를 넣을 자리를 골라 주세요." });
+    const job = await getJob(String(req.params.id));
+    if (!job?.post) return void res.status(400).json({ error: "초안이 없습니다." });
+    if (isRunning(job.id)) return void res.status(409).json({ error: "진행 중인 작업이 끝난 뒤에 추가해 주세요." });
+    const { afterBlock } = parsed.data;
+    if (afterBlock >= job.post.blocks.length) return void res.status(404).json({ error: "이미지를 넣을 자리를 찾지 못했습니다. 화면을 새로고침해 주세요." });
+    if (job.post.blocks.filter((b) => b.type === "image").length >= MAX_BODY_IMAGES) {
+      return void res.status(400).json({ error: `본문 이미지는 최대 ${MAX_BODY_IMAGES}장입니다.` });
+    }
+    // 가까운 앞쪽 소제목을 이미지 이름·기본 설명에 쓴다 (이미지를 만들 때 주변 본문을 보고 다시 정한다)
+    const heading = job.post.blocks
+      .slice(0, afterBlock + 1)
+      .reverse()
+      .find((b) => b.type === "heading");
+    const topic = (heading?.type === "heading" ? heading.text.replace(/\*\*/g, "") : job.post.title).trim();
+    const at = afterBlock + 1;
+    await updateJob(job.id, (j) => {
+      j.post?.blocks.splice(at, 0, {
+        type: "image",
+        alt: topic,
+        prompt: `블로그 글 "${job.post!.title}"의 ${heading ? `"${topic}" 부분` : "이 위치"}에 들어갈 삽화. 그 부분 내용이 한눈에 보이는 한 장면.`,
+      });
+    });
+    await log(job.id, `본문 이미지 자리를 추가했습니다 (#${at}). "이미지 생성"으로 만들 수 있습니다.`);
+    res.status(201).json(await getJob(job.id));
+  }),
+);
+
+/**
+ * 이미지 삭제: 썸네일이면 썸네일을 없애고(없으면 "썸네일 만들기"로 다시 만들 수 있다), 본문 이미지면 그 블록을 없앤다.
+ * 이미지 파일도 같이 지운다. 블록 번호가 밀리므로 어떤 작업이든 진행 중이면 막는다.
+ */
+router.delete(
+  "/api/jobs/:id/images/:target",
+  wrap(async (req, res) => {
+    const job = await getJob(String(req.params.id));
+    if (!job?.post) return void res.status(400).json({ error: "초안이 없습니다." });
+    if (isRunning(job.id)) return void res.status(409).json({ error: "진행 중인 작업이 끝난 뒤에 삭제해 주세요." });
+    const target = String(req.params.target);
+    const spec = imageSpecAt(job.post, target);
+    if (!spec) return void res.status(404).json({ error: "삭제할 이미지를 찾지 못했습니다. 화면을 새로고침해 주세요." });
+    const index = bodyIndexOf(target);
+    const file = spec.file;
+    await updateJob(job.id, (j) => {
+      if (!j.post || !imageSpecAt(j.post, target)) return;
+      if (index === null) delete j.post.thumbnail;
+      else j.post.blocks.splice(index, 1);
+    });
+    if (file) await removeImageFile(job.id, file); // 글에서 뺀 뒤에 파일을 지운다
+    await log(job.id, `${index === null ? "썸네일" : `본문 이미지 #${index}`}을 삭제했습니다.`);
+    res.json(await getJob(job.id));
   }),
 );
 

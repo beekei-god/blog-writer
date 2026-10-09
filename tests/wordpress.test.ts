@@ -112,6 +112,13 @@ describe("워드프레스 등록 (가짜 사이트)", () => {
     expect(Object.keys(r.mediaIds!)).toEqual(["thumbnail-1.png", "body-1-1.png"]);
   });
 
+  it("글에서 고른 카테고리가 설정의 기본 카테고리보다 우선한다", async () => {
+    fakeWordPress(standard);
+    await publishToWordPress(post, JOB, await getSettings(), "draft", undefined, undefined, () => {}, { id: 7, name: "여행" });
+    const created = calls.find((c) => c.method === "POST" && c.url.endsWith("/wp-json/wp/v2/posts"))!;
+    expect(created.body).toMatchObject({ categories: [7] });
+  });
+
   it("이미 올린 글은 갱신하고, 올린 이미지는 다시 올리지 않는다", async () => {
     fakeWordPress((c) => (c.method === "GET" && /\/wp\/v2\/media\/\d+/.test(c.url) ? { json: { id: 10, source_url: "https://wp.example/up.png" } } : standard(c)));
     const existing = { postId: 100, link: "", mode: "draft" as const, mediaIds: { "thumbnail-1.png": { id: 10, url: "" }, "body-1-1.png": { id: 20, url: "" } } };

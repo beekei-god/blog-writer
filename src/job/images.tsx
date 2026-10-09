@@ -47,11 +47,11 @@ export function useImageApi() {
 }
 
 /** 이 AI의 이미지를 API로 만들 수 있는지 (설정에서 API 키를 연결했는지) */
-export const hasImageApi = (provider: ImageProvider, apiStatus: ImageApiStatus | null) =>
+const hasImageApi = (provider: ImageProvider, apiStatus: ImageApiStatus | null) =>
   provider !== "claude" && !!apiStatus?.[provider].configured;
 
 /** API로 만들 수 없을 때 버튼 툴팁에 보여 줄 이유 */
-export const noImageApiReason = (provider: ImageProvider, apiStatus: ImageApiStatus | null) =>
+const noImageApiReason = (provider: ImageProvider, apiStatus: ImageApiStatus | null) =>
   !apiStatus
     ? "API 연결 상태를 확인하는 중입니다."
     : `${PROVIDER_LABEL[provider]} API 키가 연결되어 있지 않습니다. 설정 → 이미지 API 설정에서 키를 연결하면 쓸 수 있습니다.`;
@@ -163,10 +163,16 @@ export type ImageToolsProps = {
   defaults: { thumbnail: ImageAi; body: ImageAi };
   onRegenerate: (target: string, ai: ImageAi & { method: ImageMethod }) => void;
   onUpload: (target: string, file: File) => void;
+  /** 이미지 삭제 (확인은 부른 쪽이 받는다) */
+  onDelete: (target: string) => void;
+  /** 본문 이미지 자리 추가: afterBlock 번 블록 바로 뒤 */
+  onAdd: (afterBlock: number) => void;
+  /** 이미지 추가·삭제는 블록 번호가 밀리므로 어떤 작업이든 진행 중이면 할 수 없다 */
+  locked: boolean;
 };
 
 /** 이미지 한 장 다시 만들기(AI·스타일 선택) · 직접 올리기. again: 이미 만들었거나 실패한 이미지면 "다시 만들기" */
-export function ImageTools({ target, tools, again }: { target: string; tools: ImageToolsProps; again: boolean }) {
+export function ImageTools({ target, tools, again, hasFile }: { target: string; tools: ImageToolsProps; again: boolean; hasFile: boolean }) {
   const input = useRef<HTMLInputElement>(null);
   const initial = target === "thumbnail" ? tools.defaults.thumbnail : tools.defaults.body;
   const [open, setOpen] = useState(false);
@@ -225,6 +231,12 @@ export function ImageTools({ target, tools, again }: { target: string; tools: Im
       <button type="button" disabled={tools.disabled} onClick={() => input.current?.click()}>
         직접 올리기
       </button>
+      {/* 만들어진 이미지가 있을 때만 보인다 (아직 없거나 실패한 자리는 에디터 블록의 ×로 없앤다) */}
+      {hasFile && (
+        <button type="button" className="danger ghost" disabled={tools.locked} onClick={() => tools.onDelete(target)}>
+          이미지 삭제
+        </button>
+      )}
       <input
         ref={input}
         type="file"
@@ -270,7 +282,7 @@ export function PreviewImage({
           <span className="spinner" /> 이 이미지를 다시 만드는 중입니다
         </p>
       )}
-      {!tools.disabled && !generating && !regenerating && <ImageTools target={target} tools={tools} again={!!spec.file || !!spec.error} />}
+      {!tools.disabled && !generating && !regenerating && <ImageTools target={target} tools={tools} again={!!spec.file || !!spec.error} hasFile={!!spec.file} />}
     </figure>
   );
 }

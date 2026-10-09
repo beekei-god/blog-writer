@@ -84,7 +84,7 @@ export function App() {
   }, [busyCount]);
 
   // 진행 중인 작업이 있을 때만 폴링한다.
-  const hasBusy = jobs.some((j) => BUSY_STATUSES.includes(j.status));
+  const hasBusy = jobs.some((j) => BUSY_STATUSES.includes(j.status) || j.editProposal?.status === "running");
   useEffect(() => {
     if (!hasBusy) return;
     const t = setInterval(() => void refresh(), 1500);

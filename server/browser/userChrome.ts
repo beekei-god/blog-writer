@@ -8,6 +8,7 @@ import { sleep } from "../fsutil";
 import { jobImageDir } from "../store";
 import { altFileName, BLANK_LINE, esc, pasteBlockHtml, skippedImageLabel, TAG_GAP_LINES, tagLine, urlsIn, writeUrl } from "./postHtml";
 import { errorText } from "../../shared/labels";
+import { naverStepsWithOptions, readCategories } from "./category";
 import { naverPublishSteps, PUBLISH_HELPERS, runPublishSteps, type PublishRequest } from "./publish";
 
 /**
@@ -80,9 +81,22 @@ const RUN_JS = `on run argv
   end tell
 end run`;
 
+const CLOSE_TAB = `on run argv
+  set wid to (item 1 of argv) as integer
+  set tid to (item 2 of argv) as integer
+  tell application "Google Chrome"
+    close (first tab of (first window whose id is wid) whose id is tid)
+  end tell
+end run`;
+
 interface Tab {
   windowId: string;
   tabId: string;
+}
+
+/** 탭을 닫는다 (이미 닫혔으면 조용히 넘어간다) */
+async function closeTab(tab: Tab) {
+  await osascript(CLOSE_TAB, [tab.windowId, tab.tabId]).catch(() => {});
 }
 
 async function openTab(url: string): Promise<Tab> {
@@ -347,22 +361,10 @@ export interface UserChromeResult {
 }
 
 /**
- * 평소 크롬의 새 탭에서 네이버 블로그 글을 입력하고 임시저장한다. 탭은 사용자가 확인하도록 열어 둔다.
- * publish가 예약발행·자동발행이면 임시저장을 확인한 뒤 발행 창에서 발행까지 한다 (못 하면 PublishStepError).
+ * 평소 크롬에 네이버 글쓰기 탭을 열고 에디터가 뜰 때까지 기다린다 (로그인 화면이면 중단, 이어쓰기 팝업은 취소, 예전 글이 남아 있으면 중단).
+ * 글을 올릴 때와 카테고리 목록을 읽을 때 같이 쓴다.
  */
-export async function postNaverInUserChrome(
-  post: Post,
-  jobId: string,
-  settings: PostSettings,
-  log: (m: string) => void,
-  /** save=false면 입력만 하고 임시저장은 누르지 않는다 (점검용) */
-  opts: { save?: boolean; publish?: PublishRequest } = {},
-): Promise<UserChromeResult> {
-  if (!userChromeSupported()) throw new UserChromeError("other", "macOS에서만 쓸 수 있습니다.");
-  if (!settings.blogId) throw new Error("설정에서 네이버 블로그 ID를 입력하세요.");
-  const problems: string[] = [];
-  const { segments, headings } = segmentsOf(post, jobId, log);
-
+async function openNaverEditor(settings: PostSettings, log: (m: string) => void): Promise<Tab> {
   log("평소 크롬에 네이버 블로그 글쓰기 탭을 엽니다. 끝날 때까지 그 탭은 그대로 두세요.");
   const tab = await openTab(writeUrl("naver", settings.blogId));
 
@@ -404,6 +406,49 @@ export async function postNaverInUserChrome(
       "글쓰기 화면에 예전에 작성 중이던 글이 불러와져 있어서 멈췄습니다. 크롬에 열린 탭을 닫거나 내용을 지운 뒤 다시 시도하세요",
     );
   }
+  return tab;
+}
+
+/**
+ * 네이버 카테고리 목록을 평소 크롬에서 읽는다. 네이버는 카테고리를 발행 창에서 고르므로, 글쓰기 탭을 열어 짧은 제목을 넣고
+ * 발행 창을 열어 카테고리 칸을 읽은 뒤, 아무것도 저장하지 않고 탭을 닫는다 (마지막 발행 버튼은 누르지 않는다).
+ */
+export async function readNaverCategories(settings: PostSettings, log: (m: string) => void): Promise<string[]> {
+  if (!userChromeSupported()) throw new UserChromeError("other", "macOS에서만 쓸 수 있습니다.");
+  if (!settings.blogId) throw new Error("설정에서 네이버 블로그 ID를 입력하세요.");
+  const tab = await openNaverEditor(settings, log);
+  try {
+    // 제목이 비어 있으면 발행 버튼이 눌리지 않을 수 있어 짧은 제목만 넣는다 (저장하지 않는다).
+    await runJs(tab, `
+      fire(document.querySelector('.se-documentTitle .se-text-paragraph'));
+      const dt = new DataTransfer(); dt.setData('text/plain', '카테고리 확인'); paste(dt); return true;`);
+    await sleep(500);
+    const exec = (js: string) => runJs(tab, PUBLISH_HELPERS + js);
+    await runPublishSteps(naverPublishSteps({ mode: "publish" }).slice(0, 1), exec, log); // 발행 창만 연다
+    return await readCategories(exec, "layer()", log);
+  } finally {
+    await closeTab(tab);
+  }
+}
+
+/**
+ * 평소 크롬의 새 탭에서 네이버 블로그 글을 입력하고 임시저장한다. 탭은 사용자가 확인하도록 열어 둔다.
+ * publish가 예약발행·자동발행이면 임시저장을 확인한 뒤 발행 창에서 발행까지 한다 (못 하면 PublishStepError).
+ */
+export async function postNaverInUserChrome(
+  post: Post,
+  jobId: string,
+  settings: PostSettings,
+  log: (m: string) => void,
+  /** save=false면 입력만 하고 임시저장은 누르지 않는다 (점검용) */
+  opts: { save?: boolean; publish?: PublishRequest } = {},
+): Promise<UserChromeResult> {
+  if (!userChromeSupported()) throw new UserChromeError("other", "macOS에서만 쓸 수 있습니다.");
+  if (!settings.blogId) throw new Error("설정에서 네이버 블로그 ID를 입력하세요.");
+  const problems: string[] = [];
+  const { segments, headings } = segmentsOf(post, jobId, log);
+
+  const tab = await openNaverEditor(settings, log);
 
   log("제목 입력");
   await runJs(tab, `
@@ -484,7 +529,7 @@ export async function postNaverInUserChrome(
   );
   if (!saved) throw new Error("임시저장 완료를 확인하지 못했습니다. 크롬에 열린 탭에서 직접 저장 버튼을 눌러 주세요.");
   if (opts.publish && opts.publish.mode !== "draft") {
-    await runPublishSteps(naverPublishSteps(opts.publish), (js) => runJs(tab, PUBLISH_HELPERS + js), log);
+    await runPublishSteps(naverStepsWithOptions(opts.publish), (js) => runJs(tab, PUBLISH_HELPERS + js), log, 500, problems);
   }
   return { imagesInserted, problems };
 }

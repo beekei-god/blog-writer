@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { CancelledError, cancelJob, withCancel } from "../server/cancel";
-import { kstParts, kstText, naverPublishSteps, publishPrompt, PUBLISH_DUMP_JS, runPublishSteps, PublishStepError, tistoryPublishSteps } from "../server/browser/publish";
+import { kstParts, kstText, naverPublishSteps, publishPrompt, PUBLISH_DUMP_JS, PUBLISH_HELPERS, runPublishSteps, PublishStepError, tistoryPublishSteps } from "../server/browser/publish";
 
 describe("예약 시각은 한국 시간으로", () => {
   it("UTC를 한국 시간 연·월·일·시·분으로", () => {
@@ -74,6 +74,11 @@ describe("단계 실행", () => {
     const noDump = await fail(() => Promise.reject(new Error("탭이 닫힘")));
     expect(noDump.message).toContain("버튼 없음");
     expect(noDump.dialog).toBeUndefined();
+  });
+  it("보이는 요소를 offsetParent로 판별하지 않는다 (position:fixed 팝업이 안 보이게 된다)", () => {
+    expect(PUBLISH_HELPERS).not.toMatch(/\.offsetParent/);
+    expect(PUBLISH_DUMP_JS).not.toMatch(/\.offsetParent/);
+    expect(PUBLISH_HELPERS).toContain("getClientRects");
   });
   it("화면 구조를 읽는 스크립트는 문법이 맞고 글 본문(편집 영역)은 건너뛴다", () => {
     expect(() => new Function(PUBLISH_DUMP_JS)).not.toThrow();

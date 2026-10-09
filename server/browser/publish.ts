@@ -1,18 +1,22 @@
-import { NAVER_MINUTE_STEP, type PublishMode } from "../../shared/types";
+import { NAVER_MINUTE_STEP, type BlogCategory, type PublishMode } from "../../shared/types";
 import { throwIfCancelled } from "../cancel";
 import { sleep } from "../fsutil";
 
 /**
  * 크롬으로 올리는 블로그(네이버·티스토리)의 예약발행·자동발행.
  * 늘 임시저장을 먼저 끝낸 뒤 발행 창을 연다. 발행 창은 클래스 이름이 자주 바뀌므로 화면 글자(발행·예약·공개)로 찾고,
- * 예약 날짜·시각은 넣은 뒤 다시 읽어 요청과 같을 때만 마지막 발행 버튼을 누른다. 하나라도 못 하면 멈추고 PublishStepError를 낸다
- * (글은 임시저장된 채로 남는다).
+ * 예약 날짜·시각은 넣은 뒤 다시 읽어 요청과 같을 때만 마지막 발행 버튼을 누른다. 필수 단계가 안 되면 멈추고 PublishStepError를 낸다
+ * (글은 임시저장된 채로 남는다). 카테고리·주제 고르기는 optional이라 안 돼도 멈추지 않고 "확인 필요"로 남긴다.
  */
 
 export interface PublishRequest {
   mode: PublishMode;
   /** 예약발행 시각 (ISO, UTC) */
   scheduledAt?: string;
+  /** 고른 카테고리 (이름으로 에디터에서 고른다). 없으면 블로그 기본 */
+  category?: BlogCategory;
+  /** 네이버 블로그의 "주제" (발행 창에서 이름으로 고른다. 글 내용을 보고 Claude가 정한다). 네이버에만 있다 */
+  topic?: string;
 }
 
 /** 임시저장은 끝났지만 발행 창에서 멈춘 경우. 글은 블로그에 임시저장된 채로 남는다 */
@@ -23,7 +27,7 @@ export class PublishStepError extends Error {
 
 /**
  * 멈춘 순간의 화면 구조를 읽는 스크립트 (동기, 문자열을 돌려준다).
- * 버튼·입력 칸·이름표와 "공개/발행/예약/현재/시간/날짜"가 들어간 짧은 글자만 모은다. 글 본문(편집 영역)은 읽지 않는다.
+ * 버튼·입력 칸·이름표·목록 항목과 "공개/발행/예약/현재/시간/날짜/카테고리/주제"가 들어간 짧은 글자만 모은다. 글 본문(편집 영역)은 읽지 않는다.
  */
 export const PUBLISH_DUMP_JS = `
 const docs = [document, ...[...document.querySelectorAll('iframe')].map((f) => { try { return f.contentDocument; } catch (e) { return null; } }).filter(Boolean)];
@@ -35,11 +39,11 @@ const desc = (e) => e.tagName.toLowerCase() + (e.id ? '#' + e.id : '') +
   (e.getAttribute('aria-label') ? ' aria-label="' + e.getAttribute('aria-label').slice(0, 30) + '"' : '');
 const out = [];
 for (const d of docs) for (const el of d.querySelectorAll('*')) {
-  if (el.offsetParent === null || el.closest('[contenteditable="true"], .se-content, .se-main-container')) continue;
+  if (!(el.getClientRects().length > 0) || getComputedStyle(el).visibility === 'hidden' || el.closest('[contenteditable="true"], .se-content, .se-main-container')) continue;
   const own = [...el.childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent.trim()).join(' ').slice(0, 30);
-  const control = /^(BUTTON|INPUT|SELECT|LABEL)$/.test(el.tagName) || el.getAttribute('role');
-  if (control || /공개|발행|예약|현재|시간|날짜/.test(own)) out.push(desc(el) + (own ? ' "' + own + '"' : ''));
-  if (out.length >= 200) break;
+  const control = /^(BUTTON|INPUT|SELECT|LABEL|LI|OPTION)$/.test(el.tagName) || el.getAttribute('role');
+  if (control || /공개|발행|예약|현재|시간|날짜|카테고리|주제/.test(own)) out.push(desc(el) + (own ? ' "' + own + '"' : ''));
+  if (out.length >= 250) break;
 }
 return location.host + location.pathname + '\\n' + out.join('\\n');`;
 
@@ -77,11 +81,16 @@ export interface PublishStep {
   retryOnError?: boolean;
   /** 마지막 발행 버튼을 누르는 단계. 이 단계가 끝나면 이미 발행됐을 수 있어 중지 요청을 받지 않는다 */
   publishes?: boolean;
+  /** 이 단계가 안 되어도 멈추지 않고 "확인 필요"로 남기고 넘어간다 (예: 카테고리 고르기. 기본 카테고리로 올라간다) */
+  optional?: boolean;
+  /** 이 단계가 안 됐을 때 뒤처리 스크립트 (예: 열려 있는 팝업 닫기). 실패해도 무시한다 */
+  cleanupJs?: string;
 }
 
 /** 페이지 안에서 쓰는 도우미: 보이는 요소, 글자로 찾기, 숫자만 뽑기, 발행 창, 값 넣기 */
 export const PUBLISH_HELPERS = `
-const vis = (e) => !!e && e.offsetParent !== null;
+/* 보이는 요소: 화면에 그려지고(display:none 아님) 숨김 처리가 아닌 것. offsetParent는 position:fixed 요소(대개 팝업·모달)에서 null이라 쓰지 않는다 */
+const vis = (e) => !!e && e.getClientRects().length > 0 && getComputedStyle(e).visibility !== 'hidden';
 const text = (e) => (e.innerText || e.textContent || '').replace(/\\s+/g, ' ').trim();
 const byText = (sel, re, root) => [...(root || document).querySelectorAll(sel)].find((e) => vis(e) && re.test(text(e)));
 const nums = (s) => ((s || '').match(/\\d+/g) || []).map(Number);
@@ -268,8 +277,24 @@ b.setAttribute('data-bw-opener', '1'); b.click(); return false;`,
  * 단계마다 timeoutMs(기본 10초) 안에 true가 되지 않거나 "ERR:"이면 PublishStepError.
  * 마지막 발행 버튼을 누르기 전까지는 단계마다 중지 요청을 확인한다 (누른 뒤에는 이미 발행됐을 수 있어 끝까지 확인한다).
  */
-export async function runPublishSteps(steps: PublishStep[], exec: (js: string) => Promise<unknown>, log: (m: string) => void, intervalMs = 500) {
+export async function runPublishSteps(
+  steps: PublishStep[],
+  exec: (js: string) => Promise<unknown>,
+  log: (m: string) => void,
+  intervalMs = 500,
+  /** optional 단계가 안 됐을 때 "확인 필요" 문구를 모은다 */
+  problems?: string[],
+) {
   let clicked = false;
+  // 단계가 안 됐을 때: 필수면 멈추고, optional이면 이유와 화면 구조를 로그에 남기고 다음 단계로 간다.
+  const fail = async (step: PublishStep, why: string) => {
+    const e = await withDialog(new PublishStepError(stepError(step.name, why)), exec);
+    if (step.cleanupJs) await exec(step.cleanupJs).catch(() => {}); // 화면 구조를 읽은 뒤 열려 있는 팝업·목록을 닫는다
+    if (!step.optional) throw e;
+    problems?.push(`${step.name}: ${why}`);
+    log(`${step.name}을(를) 하지 못해 넘어갑니다: ${why}`);
+    if (e.dialog) log(`화면 구조 (문제 확인용, 글 본문은 빠짐):\n${e.dialog}`);
+  };
   for (const step of steps) {
     if (!clicked) throwIfCancelled();
     log(`발행 창: ${step.name}`);
@@ -283,8 +308,14 @@ export async function runPublishSteps(steps: PublishStep[], exec: (js: string) =
         if (step.publishes) clicked = true;
         break;
       }
-      if (typeof r === "string" && r.startsWith("ERR:")) throw await withDialog(new PublishStepError(stepError(step.name, r.slice(4))), exec);
-      if (Date.now() > deadline) throw await withDialog(new PublishStepError(stepError(step.name, "시간 안에 끝나지 않았습니다")), exec);
+      if (typeof r === "string" && r.startsWith("ERR:")) {
+        await fail(step, r.slice(4));
+        break;
+      }
+      if (Date.now() > deadline) {
+        await fail(step, "시간 안에 끝나지 않았습니다");
+        break;
+      }
       if (!clicked) throwIfCancelled();
       await sleep(intervalMs);
     }

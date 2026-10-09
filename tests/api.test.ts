@@ -1,8 +1,11 @@
+import fs from "node:fs/promises";
 import type { AddressInfo } from "node:net";
+import path from "node:path";
 import type { Server } from "node:http";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createApp } from "../server/app";
-import { createJob, getJob, getSettings, saveSettings, updateJob } from "../server/store";
+import { saveCategoryList, saveLastCategory } from "../server/categories";
+import { createJob, getJob, getSettings, jobImageDir, saveSettings, updateJob } from "../server/store";
 
 // 요청이 거절되는 경로만 확인한다. Claude·크롬을 실제로 띄우는 요청(새 글 시작, 블로그 등록 시작 등)은 보내지 않는다.
 let server: Server;
@@ -93,9 +96,38 @@ describe("블로그 등록 요청 검사", () => {
     expect(noAuth.body.error).toContain("워드프레스 연결 정보가 없습니다");
     expect((await getJob(id))?.status).toBe("draft_ready");
   });
+  it("카테고리 값 검사: 모양이 틀리거나 워드프레스인데 ID가 없으면 거절", async () => {
+    await saveSettings({ ...(await getSettings()), naverBlogId: "nid", wordpressUrl: "wp.example" });
+    const id = await draftJob();
+    const bad = await call("POST", `/api/jobs/${id}/post-to-blog`, { platform: "naver", category: { name: "" } });
+    expect(bad).toEqual({ status: 400, body: { error: "카테고리 값이 올바르지 않습니다." } });
+    const noId = await call("POST", `/api/jobs/${id}/post-to-blog`, { platform: "wordpress", category: { name: "여행" } });
+    expect(noId).toEqual({ status: 400, body: { error: "워드프레스 카테고리는 사이트 목록에서 골라 주세요." } });
+    expect((await getJob(id))?.status).toBe("draft_ready");
+  });
   it("초안이 없으면 거절", async () => {
     const job = await createJob("초안 없음", IMAGES);
     expect((await call("POST", `/api/jobs/${job.id}/post-to-blog`, { platform: "naver" })).body.error).toBe("초안이 없습니다.");
+  });
+});
+
+describe("카테고리 목록", () => {
+  it("저장해 둔 목록과 마지막으로 고른 카테고리를 돌려준다 (블로그가 바뀌면 목록은 비움)", async () => {
+    await saveSettings({ ...(await getSettings()), naverBlogId: "nid" });
+    await saveCategoryList("naver", "nid", ["일상", "여행"]);
+    await saveLastCategory("naver", { name: "여행" });
+    const r = await call("GET", "/api/categories/naver");
+    expect(r.status).toBe(200);
+    expect(r.body).toMatchObject({ categories: [{ name: "일상" }, { name: "여행" }], last: { name: "여행" } });
+    await saveSettings({ ...(await getSettings()), naverBlogId: "other" });
+    expect((await call("GET", "/api/categories/naver")).body.categories).toEqual([]);
+  });
+  it("알 수 없는 블로그는 404, 워드프레스는 불러오기(refresh) 대상이 아니다, 블로그 ID가 없으면 거절", async () => {
+    expect((await call("GET", "/api/categories/blogger")).status).toBe(404);
+    expect((await call("POST", "/api/categories/wordpress/refresh")).status).toBe(404);
+    await saveSettings({ ...(await getSettings()), tistoryBlogId: undefined });
+    const r = await call("POST", "/api/categories/tistory/refresh");
+    expect(r).toEqual({ status: 400, body: { error: "먼저 설정에서 티스토리 블로그 ID를 입력하세요." } });
   });
 });
 
@@ -138,6 +170,55 @@ describe("이미지", () => {
       fetch(`${base}/api/jobs/${id}/images/${target}`, { method: "POST", headers: { "Content-Type": type }, body: new Uint8Array([1, 2, 3]) }).then((r) => r.status);
     expect(await up("thumbnail", "text/plain")).toBe(400);
     expect(await up("body-0", "image/png")).toBe(404);
+  });
+  it("본문 이미지 자리 추가: 고른 블록 뒤에 이미지 없는 이미지 블록이 들어가고, 가까운 소제목을 이름으로 쓴다", async () => {
+    const id = await draftJob();
+    await updateJob(id, (j) => void (j.post!.blocks = [{ type: "paragraph", text: "도입" }, { type: "heading", text: "**둘째** 소제목" }, { type: "paragraph", text: "내용" }, { type: "image", prompt: "p", alt: "" }]));
+    const r = await call("POST", `/api/jobs/${id}/images`, { afterBlock: 2 });
+    expect(r.status).toBe(201);
+    const blocks = r.body.post.blocks;
+    expect(blocks.map((b: { type: string }) => b.type)).toEqual(["paragraph", "heading", "paragraph", "image", "image"]);
+    expect(blocks[3]).toMatchObject({ type: "image", alt: "둘째 소제목" });
+    expect(blocks[3].prompt).toContain("둘째 소제목");
+    expect(blocks[3].file).toBeUndefined();
+    expect((await getJob(id))?.logs.at(-1)?.message).toContain("본문 이미지 자리를 추가했습니다 (#3)");
+    // 앞에 소제목이 없으면 글 제목으로 이름을 짓고, 설명에 같은 말이 두 번 나오지 않는다
+    const top = await call("POST", `/api/jobs/${id}/images`, { afterBlock: 0 });
+    expect(top.body.post.blocks[1]).toMatchObject({ type: "image", alt: "제목" });
+    expect(top.body.post.blocks[1].prompt).toBe('블로그 글 "제목"의 이 위치에 들어갈 삽화. 그 부분 내용이 한눈에 보이는 한 장면.');
+  });
+  it("본문 이미지 자리 추가: 자리·개수·진행 중 검사", async () => {
+    const id = await draftJob();
+    expect((await call("POST", `/api/jobs/${id}/images`, { afterBlock: 9 })).status).toBe(404);
+    expect((await call("POST", `/api/jobs/${id}/images`, { afterBlock: -1 })).status).toBe(400);
+    await updateJob(id, (j) => void (j.post!.blocks = Array.from({ length: 6 }, () => ({ type: "image" as const, prompt: "p", alt: "a" }))));
+    expect((await call("POST", `/api/jobs/${id}/images`, { afterBlock: 0 })).body.error).toBe("본문 이미지는 최대 6장입니다.");
+    expect((await call("POST", "/api/jobs/없는글/images", { afterBlock: 0 })).status).toBe(400);
+  });
+  it("이미지 삭제: 썸네일은 없애고 본문 이미지는 블록을 없애며, 파일도 지운다", async () => {
+    const id = await draftJob();
+    const dir = jobImageDir(id);
+    await fs.mkdir(dir, { recursive: true });
+    await fs.writeFile(path.join(dir, "thumbnail-1.png"), "x");
+    await fs.writeFile(path.join(dir, "body-1-1.png"), "x");
+    await updateJob(id, (j) => {
+      j.post!.thumbnail!.file = "thumbnail-1.png";
+      (j.post!.blocks[1] as { file?: string }).file = "body-1-1.png";
+    });
+    const body = await call("DELETE", `/api/jobs/${id}/images/body-1`);
+    expect(body.status).toBe(200);
+    expect(body.body.post.blocks).toEqual([{ type: "paragraph", text: "본문" }]);
+    await expect(fs.stat(path.join(dir, "body-1-1.png"))).rejects.toThrow();
+    const thumb = await call("DELETE", `/api/jobs/${id}/images/thumbnail`);
+    expect(thumb.body.post.thumbnail).toBeUndefined();
+    await expect(fs.stat(path.join(dir, "thumbnail-1.png"))).rejects.toThrow();
+    expect((await getJob(id))?.logs.map((l) => l.message)).toEqual(expect.arrayContaining(["본문 이미지 #1을 삭제했습니다.", "썸네일을 삭제했습니다."]));
+  });
+  it("이미지 삭제: 없는 이미지는 404", async () => {
+    const id = await draftJob();
+    expect((await call("DELETE", `/api/jobs/${id}/images/body-0`)).status).toBe(404); // 문단이다
+    expect((await call("DELETE", `/api/jobs/${id}/images/body-9`)).status).toBe(404);
+    expect((await call("DELETE", `/api/jobs/${id}/images/아무거나`)).status).toBe(404);
   });
   it("미리보기는 이미지 폴더 밖 파일을 열지 않는다", async () => {
     expect((await fetch(`${base}/api/images/x/..%2F..%2Fsettings.json`)).status).toBe(404);

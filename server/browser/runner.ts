@@ -1,7 +1,7 @@
 import { chromium, type BrowserContext, type Page } from "playwright-core";
 import type { Post, PostSettings } from "../../shared/types";
 import { CHROME_PROFILE_DIR, DATA_DIR } from "../store";
-import { ADAPTERS } from "./adapters";
+import { ADAPTERS, readTistoryCategories } from "./adapters";
 import type { PublishRequest } from "./publish";
 import { closeLoginWindow, isLoginWindowOpen } from "./loginWindow";
 import { CURSOR_OVERLAY_SCRIPT, HumanMouse } from "./mouse";
@@ -82,6 +82,11 @@ async function runWithChrome<T>(fn: (s: ChromeSession) => Promise<T>, opts: { ke
     if (!opts.keepOpen) await context.close().catch(() => {});
     throw err;
   }
+}
+
+/** 티스토리 카테고리 목록을 읽는다 (앱 전용 크롬. 읽고 나면 창을 닫는다) */
+export function readTistoryCategoriesWithChrome(settings: PostSettings, log: (m: string) => void) {
+  return withChrome(({ page }) => readTistoryCategories({ page, settings, log }), { keepOpen: false, log });
 }
 
 /** 앱 전용 크롬으로 입력하고 임시저장한다 (고른 방식이면 발행까지). 초안과 다르게 들어간 부분을 돌려준다 */

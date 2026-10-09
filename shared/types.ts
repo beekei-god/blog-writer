@@ -15,6 +15,12 @@ export const STYLES_BY_PROVIDER: Record<ImageProvider, ImageStyle[]> = {
 export const MAX_BODY_IMAGES = 6;
 /** 네이버 예약 발행은 분을 10분 단위로만 고를 수 있다 */
 export const NAVER_MINUTE_STEP = 10;
+/** 블로그의 카테고리. 워드프레스는 사이트의 카테고리 ID가 있고, 네이버·티스토리는 에디터에서 이름으로 고른다 */
+export interface BlogCategory {
+  id?: number;
+  name: string;
+}
+
 /** 새 글의 참고 링크 최대 개수 */
 export const MAX_LINKS = 20;
 
@@ -275,6 +281,29 @@ export type ManualStatus = (typeof MANUAL_STATUSES)[number];
 /** 이 상태(초안 검토 이후)의 글만 상태를 직접 바꿀 수 있다 */
 export const canSetStatus = (status: JobStatus) => (["draft_ready", "posted", "scheduled", "published"] as JobStatus[]).includes(status);
 
+/** 프롬프트로 글을 고치는 제안. 고친 결과를 "적용"하기 전까지 글은 바뀌지 않는다 */
+export interface EditProposal {
+  /** 사용자가 쓴 수정 요청 */
+  prompt: string;
+  /** 고치는 블록 범위 (처음·끝 포함). 글 전체를 고치면 없다 */
+  range?: { start: number; end: number };
+  status: "running" | "ready" | "failed";
+  createdAt: string;
+  error?: string;
+  // ── ready일 때 ──
+  /** 범위의 원래 블록과 고친 블록 (이미지 블록은 원래 이미지 그대로) */
+  before?: PostBlock[];
+  after?: PostBlock[];
+  /** 글 전체를 고칠 때의 새 제목·요약 */
+  title?: string;
+  summary?: string;
+  /** 무엇을 어떻게 고쳤는지 한두 문장 */
+  note?: string;
+  /** 본문 글자 수 (적용 전·후, 공백 포함) */
+  charsBefore?: number;
+  charsAfter?: number;
+}
+
 export interface Job {
   id: string;
   topic: string;
@@ -291,6 +320,8 @@ export interface Job {
   regeneratingImages?: string[];
   /** 이미지를 한 장씩 다시 만드는 것만 진행 중 (다른 이미지는 동시에 더 만들거나 올릴 수 있다) */
   imageRunsOnly?: boolean;
+  /** 프롬프트로 글을 고치는 중이거나, 고친 결과를 적용하기 전인 제안 */
+  editProposal?: EditProposal;
   createdAt: string;
   updatedAt: string;
   researchNotes?: string;

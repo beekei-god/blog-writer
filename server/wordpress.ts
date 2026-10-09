@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { MAX_TAGS, type Post, type PostBlock, type PublishMode, type Settings, type WordPressRecord } from "../shared/types";
+import { MAX_TAGS, type BlogCategory, type Post, type PostBlock, type PublishMode, type Settings, type WordPressRecord } from "../shared/types";
 import { esc, plain, rich, skippedImageLabel, tableHtml } from "../shared/postHtml";
 import { currentSignal, throwIfCancelled } from "./cancel";
 import { getWordPressAuth, type WordPressAuth } from "./secrets";
@@ -260,6 +260,8 @@ export async function publishToWordPress(
   scheduledAt: string | undefined,
   existing: WordPressRecord | undefined,
   log: (m: string) => void,
+  /** 이번에 고른 카테고리. 없으면 설정의 기본 카테고리 */
+  category?: BlogCategory,
 ): Promise<PublishResult> {
   const dateGmt = mode === "schedule" ? checkSchedule(scheduledAt) : undefined; // 업로드 전에 먼저 확인
   const ctx = await context();
@@ -295,7 +297,8 @@ export async function publishToWordPress(
     tags,
     featured_media: thumb?.id ?? 0,
   };
-  if (settings.wordpressCategoryId) payload.categories = [settings.wordpressCategoryId];
+  const categoryId = category?.id ?? settings.wordpressCategoryId;
+  if (categoryId) payload.categories = [categoryId];
   if (dateGmt) payload.date_gmt = dateGmt;
   // 예약해 둔 글을 자동발행으로 다시 올리면, 글에 남아 있는 미래 예약 시각 때문에 워드프레스가 "예약"으로 되돌린다.
   // 그래서 이 경우에는 공개 시각을 지금으로 맞춘다. (이미 자동발행한 글을 갱신할 때는 원래 공개 시각을 그대로 둔다)

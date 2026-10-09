@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { classifyImageError } from "../shared/imageErrors";
+import { blockText, collapseSame, diffBlocks } from "../shared/blockDiff";
 import { errorText, PLATFORM_LABEL, STATUS_LABEL, statusLabel } from "../shared/labels";
 import { countBodyChars, MAX_BODY_CHARS } from "../shared/length";
 import {
@@ -11,6 +12,7 @@ import {
   imageKey,
   methodFor,
   settingsFor,
+  type PostBlock,
   type Settings,
 } from "../shared/types";
 
@@ -120,4 +122,32 @@ describe("이미지 오류 분류", () => {
     ["뭔지 모를 오류", "unknown"],
     [undefined, "unknown"],
   ] as const)("%s → %s", (msg, kind) => expect(classifyImageError(msg)).toBe(kind));
+});
+
+describe("글 고치기 비교", () => {
+  const p = (text: string): PostBlock => ({ type: "paragraph", text });
+  it("고친 블록만 del·add로 나오고 나머지는 그대로다", () => {
+    const rows = diffBlocks([p("a"), p("b"), p("c")], [p("a"), p("b2"), p("c")]);
+    expect(rows.map((r) => r.kind)).toEqual(["same", "del", "add", "same"]);
+    expect((rows[1].block as { text: string }).text).toBe("b");
+    expect((rows[2].block as { text: string }).text).toBe("b2");
+  });
+  it("블록을 더하거나 빼면 그것만 add·del이다", () => {
+    expect(diffBlocks([p("a"), p("c")], [p("a"), p("b"), p("c")]).map((r) => r.kind)).toEqual(["same", "add", "same"]);
+    expect(diffBlocks([p("a"), p("b"), p("c")], [p("a"), p("c")]).map((r) => r.kind)).toEqual(["same", "del", "same"]);
+    expect(diffBlocks([], [p("a")]).map((r) => r.kind)).toEqual(["add"]);
+  });
+  it("바뀌지 않은 블록이 길게 이어지면 접는다", () => {
+    const rows = diffBlocks([p("1"), p("2"), p("3"), p("4"), p("5"), p("6"), p("7")], [p("1"), p("2"), p("3"), p("4"), p("5"), p("6"), p("X")]);
+    const out = collapseSame(rows);
+    expect(out.map((r) => r.kind)).toEqual(["skip", "same", "del", "add"]);
+    expect(out[0]).toEqual({ kind: "skip", count: 5 });
+    expect(collapseSame(diffBlocks([p("1")], [p("2")])).map((r) => r.kind)).toEqual(["del", "add"]);
+  });
+  it("블록을 글로 보여 준다 (이미지는 파일 대신 대체 텍스트)", () => {
+    expect(blockText({ type: "heading", text: "제목" })).toBe("## 제목");
+    expect(blockText({ type: "list", items: ["a", "b"] })).toBe("• a\n• b");
+    expect(blockText({ type: "table", headers: ["h1", "h2"], rows: [["1", "2"]] })).toBe("h1 | h2\n1 | 2");
+    expect(blockText({ type: "image", prompt: "p", alt: "그림", file: "x.png" })).toBe("[이미지: 그림]");
+  });
 });

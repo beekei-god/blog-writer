@@ -5,7 +5,8 @@ import { canSetStatus, imageSpecsOf, MANUAL_STATUSES, MAX_LINKS, NAVER_MINUTE_ST
 import { extensionStatus, INSTALL_URL } from "../browser/claudeChrome";
 import { cancelJob } from "../cancel";
 import { isRunning, runDraft, runPost } from "../pipeline";
-import { ImageOptionsSchema, PostSchema } from "../schema";
+import { saveLastCategory } from "../categories";
+import { BlogCategorySchema, ImageOptionsSchema, PostSchema } from "../schema";
 import { createJob, deleteJob, getJob, getSettings, listJobs, log, saveSettings, updateJob } from "../store";
 import { checkSchedule, normalizeSite, wordpressSiteOf } from "../wordpress";
 import { isCompleteTable } from "../writer";
@@ -109,10 +110,17 @@ router.post(
         scheduledAt: z.iso.datetime().optional(),
         /** 이 글을 올릴 블로그. 기본 블로그가 없으므로 항상 직접 고른다. */
         platform: z.enum(["naver", "tistory", "wordpress"]),
+        /** 고른 카테고리 (없으면 블로그 기본). 워드프레스는 사이트의 카테고리 ID가 필요하다 */
+        category: BlogCategorySchema.optional(),
       })
       .safeParse(req.body ?? {});
-    if (!body.success) return void res.status(400).json({ error: "올릴 블로그를 선택하세요." });
-    const { mode, scheduledAt, platform } = body.data;
+    if (!body.success) {
+      return void res.status(400).json({ error: body.error.issues[0]?.path[0] === "category" ? "카테고리 값이 올바르지 않습니다." : "올릴 블로그를 선택하세요." });
+    }
+    const { mode, scheduledAt, platform, category } = body.data;
+    if (platform === "wordpress" && category && !category.id) {
+      return void res.status(400).json({ error: "워드프레스 카테고리는 사이트 목록에서 골라 주세요." });
+    }
     const all = await getSettings();
     const settings = settingsFor(all, platform);
     if (!settings.blogId) {
@@ -146,7 +154,8 @@ router.post(
       }
     }
     await markBusy(job.id, "posting", platform);
-    void runPost(job.id, { mode, scheduledAt, platform });
+    await saveLastCategory(platform, category); // 다음에 이 블로그에 올릴 때 처음 값으로 쓴다
+    void runPost(job.id, { mode, scheduledAt, platform, category });
     res.status(202).json({ ok: true });
   }),
 );

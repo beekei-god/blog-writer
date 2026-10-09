@@ -130,6 +130,12 @@ export async function deleteJob(id: string) {
 /** 서버가 죽으면서 진행 중으로 남은 작업을 실패 처리한다. */
 export async function recoverStuckJobs() {
   for (const job of await listJobs()) {
+    // 프롬프트로 글을 고치던 중에 멈췄으면 그 제안만 실패로 둔다 (글은 그대로)
+    if (job.editProposal?.status === "running") {
+      await updateJob(job.id, (j) => {
+        if (j.editProposal) j.editProposal = { ...j.editProposal, status: "failed", error: "서버가 재시작되어 글 고치기가 중단되었습니다." };
+      });
+    }
     if (BUSY_STATUSES.includes(job.status)) {
       await updateJob(job.id, (j) => {
         j.status = j.post ? "draft_ready" : "failed";

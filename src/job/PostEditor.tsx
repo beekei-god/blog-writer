@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { MAX_TAGS, bodyImageKey, type ImageSpec, type Post, type PostBlock } from "../../shared/types";
+import { Fragment, useState } from "react";
+import { MAX_BODY_IMAGES, MAX_TAGS, bodyImageKey, type ImageSpec, type Post, type PostBlock } from "../../shared/types";
 import { FailedPlaceholder, ImageTools, type ImageToolsProps } from "./images";
 import { imageUrl } from "../api";
 
@@ -79,7 +79,7 @@ function ImageEditor({
       ) : (
         <FailedPlaceholder spec={spec} />
       )}
-      {!tools.disabled && <ImageTools target={target} tools={tools} again={!!spec.file || !!spec.error} />}
+      {!tools.disabled && <ImageTools target={target} tools={tools} again={!!spec.file || !!spec.error} hasFile={!!spec.file} />}
       {spec.basis && <p className="basis">이 이미지가 그리는 본문: “{spec.basis}”</p>}
       <label className="mini-label">
         {thumbnail
@@ -122,18 +122,22 @@ export function PostEditor({
   onChange,
   disabled,
   tools,
+  selection,
 }: {
   jobId: string;
   post: Post;
   onChange: (p: Post) => void;
   disabled: boolean;
   tools: ImageToolsProps;
+  /** 프롬프트로 고칠 블록 고르기 (고른 블록 번호와 토글) */
+  selection?: { selected: number[]; toggle: (i: number) => void };
 }) {
   const setBlock = (i: number, b: PostBlock) => onChange({ ...post, blocks: post.blocks.map((x, j) => (j === i ? b : x)) });
   const removeBlock = (i: number) => {
     if (!confirm("이 블록을 지울까요?")) return;
     onChange({ ...post, blocks: post.blocks.filter((_, j) => j !== i) });
   };
+  const imageCount = post.blocks.filter((b) => b.type === "image").length;
   const kindLabel = { heading: "소제목", paragraph: "문단", list: "목록", quote: "인용", table: "표", image: "이미지" } as const;
 
   return (
@@ -162,8 +166,22 @@ export function PostEditor({
         </div>
       )}
       {post.blocks.map((b, i) => (
-        <div key={i} className={`block ${b.type}`}>
-          <span className="kind">{kindLabel[b.type]}</span>
+        <Fragment key={i}>
+        <div className={`block ${b.type}`}>
+          <span className="kind">
+            {selection && (
+              <input
+                type="checkbox"
+                className="pick"
+                title="프롬프트로 고칠 부분으로 고릅니다 (위의 프롬프트로 글 고치기 카드)"
+                aria-label={`블록 #${i} 고를 부분으로 선택`}
+                checked={selection.selected.includes(i)}
+                disabled={disabled}
+                onChange={() => selection.toggle(i)}
+              />
+            )}
+            {kindLabel[b.type]}
+          </span>
           {b.type === "image" ? (
             <ImageEditor
               jobId={jobId}
@@ -197,12 +215,34 @@ export function PostEditor({
               {b.type === "list" && <p className="hint small">한 줄이 항목 하나입니다.</p>}
             </div>
           )}
-          <button className="x" disabled={disabled} onClick={() => removeBlock(i)} aria-label="블록 삭제" title="블록 삭제">
+          <button
+            className="x"
+            disabled={disabled || (b.type === "image" && tools.locked)}
+            onClick={() => (b.type === "image" ? tools.onDelete(bodyImageKey(i)) : removeBlock(i))}
+            aria-label={b.type === "image" ? "이미지 삭제" : "블록 삭제"}
+            title={b.type === "image" ? "이미지 삭제 (이미지 파일도 지웁니다)" : "블록 삭제"}
+          >
             ×
           </button>
         </div>
+        {b.type !== "image" && post.blocks[i + 1]?.type !== "image" && (
+          <div className="add-image-row">
+            <button
+              type="button"
+              className="ghost"
+              disabled={disabled || tools.locked || imageCount >= MAX_BODY_IMAGES}
+              title={imageCount >= MAX_BODY_IMAGES ? `본문 이미지는 최대 ${MAX_BODY_IMAGES}장입니다` : "이 블록 아래에 이미지 자리를 추가합니다"}
+              onClick={() => tools.onAdd(i)}
+            >
+              ＋ 여기에 이미지 추가
+            </button>
+          </div>
+        )}
+        </Fragment>
       ))}
-      <p className="hint small">**굵게** 처럼 별표 두 개로 감싸면 굵은 글씨가 됩니다. 고친 내용은 자동으로 저장됩니다.</p>
+      <p className="hint small">
+        **굵게** 처럼 별표 두 개로 감싸면 굵은 글씨가 됩니다. 고친 내용은 자동으로 저장됩니다. 이미지는 "이미지 추가"로 자리를 만든 뒤 "이미지 생성"(또는 "직접 올리기")으로 채우세요. 이미지 자리가 비어 있으면 블로그에 올릴 때 건너뜁니다.
+      </p>
     </section>
   );
 }

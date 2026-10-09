@@ -7,7 +7,8 @@ import { sleep } from "../fsutil";
 import { jobImagePath } from "../store";
 import { HumanMouse } from "./mouse";
 import { altFileName, skippedImageLabel, tableHtml, writeUrl } from "./postHtml";
-import { naverPublishSteps, PUBLISH_HELPERS, runPublishSteps, tistoryPublishSteps, type PublishRequest } from "./publish";
+import { naverStepsWithOptions, readCategories, selectCategorySteps } from "./category";
+import { PUBLISH_HELPERS, runPublishSteps, tistoryPublishSteps, type PublishRequest, type PublishStep } from "./publish";
 
 /**
  * 예전 자동 조작 방식의 블로그별 입력 순서. Claude in Chrome이 막는 사이트에서만 쓴다.
@@ -27,10 +28,18 @@ export interface AdapterContext {
 }
 
 /** 임시저장 뒤 발행 창 단계를 실행한다 (임시저장만이면 아무것도 하지 않는다) */
-async function publishIfAsked(ctx: AdapterContext, target: Pick<Page, "evaluate">, steps: (req: PublishRequest) => ReturnType<typeof naverPublishSteps>) {
+async function publishIfAsked(ctx: AdapterContext, target: Pick<Page, "evaluate">, steps: (req: PublishRequest) => PublishStep[]) {
   const req = ctx.publish;
   if (!req || req.mode === "draft") return;
-  await runPublishSteps(steps(req), (js) => target.evaluate(`(() => { ${PUBLISH_HELPERS}\n${js} })()`), ctx.log);
+  await runPublishSteps(steps(req), (js) => target.evaluate(`(() => { ${PUBLISH_HELPERS}\n${js} })()`), ctx.log, 500, ctx.problems);
+}
+
+/** 티스토리: 임시저장하기 전에 에디터 위쪽 카테고리 칸에서 고른 카테고리를 고른다 (못 해도 기본 카테고리로 올리고 "확인 필요"로 남긴다) */
+async function chooseCategory(ctx: AdapterContext) {
+  const category = ctx.publish?.category;
+  if (!category) return;
+  ctx.log(`카테고리 고르기: ${category.name}`);
+  await runPublishSteps(selectCategorySteps(category.name, "document"), (js) => ctx.page.evaluate(`(() => { ${PUBLISH_HELPERS}\n${js} })()`), ctx.log, 500, ctx.problems);
 }
 
 /** 에디터가 iframe 안에 있을 수도, 페이지에 바로 있을 수도 있다 */
@@ -284,7 +293,7 @@ async function naver(ctx: AdapterContext) {
   );
   log("임시저장 완료.");
   // 에디터가 #mainFrame 안에 있으면 그 프레임에서 발행 창을 다룬다.
-  await publishIfAsked(ctx, editor === page ? page : (page.frame({ name: "mainFrame" }) ?? page), naverPublishSteps);
+  await publishIfAsked(ctx, editor === page ? page : (page.frame({ name: "mainFrame" }) ?? page), naverStepsWithOptions);
 }
 
 let naverFormatWarned = false;
@@ -394,9 +403,27 @@ async function tistory(ctx: AdapterContext) {
     await page.keyboard.press("Enter");
   }
 
+  await chooseCategory(ctx);
   await clickSaveDraft(ctx, page.locator(".btn-draft, button.action:has-text('임시저장')").or(page.getByRole("button", { name: /임시\s*저장/ })));
   log("임시저장 완료.");
   await publishIfAsked(ctx, page, tistoryPublishSteps);
+}
+
+/**
+ * 티스토리 카테고리 목록을 앱 전용 크롬에서 읽는다: 글쓰기 화면을 열고 에디터 위쪽 카테고리 칸을 읽는다.
+ * 아무것도 입력·저장하지 않는다 (호출한 쪽이 크롬 창을 닫는다).
+ */
+export async function readTistoryCategories(ctx: Pick<AdapterContext, "page" | "settings" | "log">): Promise<string[]> {
+  const { page, settings, log } = ctx;
+  if (!settings.blogId) throw new Error("설정에서 티스토리 블로그 이름을 입력하세요.");
+  page.on("dialog", (d) => d.dismiss().catch(() => {}));
+  const url = writeUrl("tistory", settings.blogId);
+  log("티스토리 글쓰기 페이지로 이동");
+  await page.goto(url, { waitUntil: "domcontentloaded" });
+  await waitForLogin(ctx as AdapterContext, (u) => /accounts\.kakao\.com|tistory\.com\/auth\/login/.test(u));
+  if (!page.url().includes("newpost")) await page.goto(url, { waitUntil: "domcontentloaded" });
+  await page.locator("#post-title-inp").waitFor({ timeout: 30_000 });
+  return readCategories((js) => page.evaluate(`(() => { ${PUBLISH_HELPERS}\n${js} })()`), "document", log);
 }
 
 /** 크롬으로 올리는 블로그. 워드프레스는 REST API로 올린다 (server/wordpress.ts). */

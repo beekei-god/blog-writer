@@ -1,4 +1,4 @@
-import type { ImageMethod, ImageOptions, ImageProvider, ImageStyle, Job, ManualStatus, Platform, Post, PublishMode, Recommendation, Settings, TokenTotals, UsageSummary } from "../shared/types";
+import type { BlogCategory, ImageMethod, ImageOptions, ImageProvider, ImageStyle, Job, ManualStatus, Platform, Post, PublishMode, Recommendation, Settings, TokenTotals, UsageSummary } from "../shared/types";
 
 export interface DatalabStatus {
   configured: boolean;
@@ -11,6 +11,13 @@ export interface ImageApiKeyStatus {
   /** .env의 키를 쓰는 중 (화면에서 지워도 남는다) */
   fromEnv: boolean;
 }
+/** 올릴 블로그의 카테고리 목록. last: 이 블로그에 마지막으로 올릴 때 고른 카테고리 (처음 값) */
+export interface CategoryList {
+  categories: BlogCategory[];
+  fetchedAt?: string;
+  last?: BlogCategory;
+}
+
 export type ImageApiStatus = Record<"gemini" | "chatgpt", ImageApiKeyStatus>;
 
 export interface WordPressStatus {
@@ -85,6 +92,7 @@ export const api = {
     style?: ImageStyle;
     thumbnailProvider?: ImageProvider;
     thumbnailStyle?: ImageStyle;
+    thumbnailMethod?: ImageMethod;
     onlyFailed?: boolean;
     addThumbnail?: boolean;
   }) =>
@@ -92,6 +100,16 @@ export const api = {
   /** 이미지 한 장만 고른 AI·스타일로 다시 만든다. target: "thumbnail" 또는 "body-<블록 번호>" */
   regenerateImage: (id: string, target: string, ai: { provider: ImageProvider; style: ImageStyle; method?: ImageMethod }) =>
     req<void>(`/api/jobs/${id}/images/${target}/regenerate`, { method: "POST", body: JSON.stringify(ai) }),
+  /** 프롬프트로 글 고치기: range는 고칠 블록 범위(처음·끝 포함), 없으면 글 전체. 결과는 job.editProposal로 오고, 적용해야 글에 들어간다 */
+  editPost: (id: string, prompt: string, range?: { start: number; end: number }) =>
+    req<void>(`/api/jobs/${id}/edit`, { method: "POST", body: JSON.stringify({ prompt, range }) }),
+  applyEdit: (id: string) => req<Job>(`/api/jobs/${id}/edit/apply`, { method: "POST" }),
+  discardEdit: (id: string) => req<Job>(`/api/jobs/${id}/edit`, { method: "DELETE" }),
+  /** 본문 이미지 자리 추가: afterBlock 번 블록 바로 뒤에 이미지 없는 이미지 블록을 넣는다 (이미지는 "이미지 생성"으로 만든다) */
+  addImage: (id: string, afterBlock: number) =>
+    req<Job>(`/api/jobs/${id}/images`, { method: "POST", body: JSON.stringify({ afterBlock }) }),
+  /** 이미지 삭제 (파일도 지운다). target: "thumbnail" 또는 "body-<블록 번호>" */
+  deleteImage: (id: string, target: string) => req<Job>(`/api/jobs/${id}/images/${target}`, { method: "DELETE" }),
   /** target: "thumbnail" 또는 "body-<블록 번호>" */
   uploadImage: (id: string, target: string, file: File) =>
     req<{ file: string }>(`/api/jobs/${id}/images/${target}`, { method: "POST", body: file, headers: { "Content-Type": file.type } }),
@@ -99,12 +117,15 @@ export const api = {
   savePost: (id: string, post: Post) =>
     req<Job>(`/api/jobs/${id}/post`, { method: "PUT", body: JSON.stringify(post) }),
   /** mode: 임시저장/예약발행/자동발행 (네이버 예약은 10분 단위). scheduledAt: 예약 시각 (ISO, UTC) */
-  postToBlog: (id: string, opts: { mode?: PublishMode; scheduledAt?: string; platform?: Platform } = {}) =>
+  postToBlog: (id: string, opts: { mode?: PublishMode; scheduledAt?: string; platform?: Platform; category?: BlogCategory } = {}) =>
     req<void>(`/api/jobs/${id}/post-to-blog`, { method: "POST", body: JSON.stringify(opts) }),
   getWordPress: () => req<WordPressStatus>("/api/wordpress"),
   saveWordPress: (username: string, appPassword: string) =>
     req<WordPressStatus>("/api/wordpress", { method: "PUT", body: JSON.stringify({ username, appPassword }) }),
   deleteWordPress: () => req<WordPressStatus>("/api/wordpress", { method: "DELETE" }),
+  getCategories: (platform: Platform) => req<CategoryList>(`/api/categories/${platform}`),
+  /** 네이버·티스토리: 블로그 에디터에서 카테고리 목록을 읽어 온다 (글은 저장하지 않는다) */
+  refreshCategories: (platform: Platform) => req<CategoryList>(`/api/categories/${platform}/refresh`, { method: "POST" }),
   getWordPressCategories: () => req<{ id: number; name: string }[]>("/api/wordpress/categories"),
   /** 임시저장 이후 상태를 직접 바꾼다: 블로그 발행완료 표시/취소, 초안 검토로 되돌리기 */
   setStatus: (id: string, status: ManualStatus) =>

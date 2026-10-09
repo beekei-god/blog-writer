@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { BUSY_STATUSES, aiFor, canSetStatus, type ImageProvider, type ImageStyle, type Job, type Platform, type Post, type PublishMode } from "../../shared/types";
+import { BUSY_STATUSES, aiFor, canSetStatus, methodFor, type ImageMethod, type ImageProvider, type ImageStyle, type Job, type Platform, type Post } from "../../shared/types";
 import { countBodyChars, MAX_BODY_CHARS } from "../../shared/length";
 import { PLATFORM_LABEL } from "../../shared/labels";
 import { api } from "../api";
@@ -7,12 +7,13 @@ import { ExtensionStatus } from "../ExtensionStatus";
 import { LoginWindow } from "../LoginWindow";
 import { errorText } from "../labels";
 import { JobUsage } from "./JobUsage";
-import { NextStep, StatusPicker } from "./NextStep";
+import { NextStep, type PostOpts, StatusPicker } from "./NextStep";
 import { PostEditor } from "./PostEditor";
 import { Preview } from "./Preview";
+import { EditByPrompt } from "./EditByPrompt";
 import { Progress } from "./Progress";
 import { Report } from "./Report";
-import { AiPicker, type ImageToolsProps } from "./images";
+import { AiPicker, type ImageToolsProps, MethodPicker, shownMethod, useImageApi } from "./images";
 
 interface Props {
   job: Job;
@@ -31,7 +32,8 @@ export function JobDetail({ job, ready, onChange, onDeleted, onOpenSettings }: P
   const [mode, setMode] = useState<"preview" | "edit">("preview");
   const [error, setError] = useState("");
   const [saveState, setSaveState] = useState<SaveState>("saved");
-  const busy = BUSY_STATUSES.includes(job.status);
+  // 프롬프트로 글을 고치는 동안(제안 만드는 중)도 다른 작업처럼 글 수정·올리기·이미지 작업을 막는다 (서버도 막는다)
+  const busy = BUSY_STATUSES.includes(job.status) || job.editProposal?.status === "running";
 
   // ───── 자동 저장: 입력을 멈추고 1초 뒤 저장. 저장은 순서대로 하나씩 보낸다. ─────
   const pending = useRef<Post | null>(null);
@@ -103,22 +105,14 @@ export function JobDetail({ job, ready, onChange, onDeleted, onOpenSettings }: P
   // 이미 워드프레스에 올린 기록이 있으면 그것은 사실이므로 그 블로그를 보여 준다.
   const [destPick, setDestPick] = useState<Platform | null>(job.wordpress ? "wordpress" : null);
   const dest: Platform | undefined = destPick ?? undefined;
-  const postToBlog = (opts?: { mode?: PublishMode; scheduledAt?: string }) =>
+  const postToBlog = (opts?: PostOpts) =>
     run(async () => {
       if (!dest) throw new Error("올릴 블로그를 선택하세요.");
       await flush();
       await api.postToBlog(job.id, { ...opts, platform: dest });
     });
 
-  type RegenOpts = {
-    provider?: ImageProvider;
-    style?: ImageStyle;
-    thumbnailProvider?: ImageProvider;
-    thumbnailStyle?: ImageStyle;
-    onlyFailed: boolean;
-    addThumbnail?: boolean;
-  };
-  const regenerate = (opts: RegenOpts) =>
+  const regenerate = (opts: Parameters<typeof api.regenerateImages>[1]) =>
     run(async () => {
       await flush();
       await api.regenerateImages(job.id, opts);
@@ -140,12 +134,27 @@ export function JobDetail({ job, ready, onChange, onDeleted, onOpenSettings }: P
         await flush();
         await api.uploadImage(job.id, target, file);
       }),
+    // 이미지 추가·삭제는 서버가 블록 번호를 정한다. 먼저 고치던 내용을 저장해 서버의 글과 맞춘다.
+    locked: busy,
+    onAdd: (afterBlock) =>
+      run(async () => {
+        await flush();
+        await api.addImage(job.id, afterBlock);
+      }),
+    onDelete: (target) => {
+      if (!confirm(`${target === "thumbnail" ? "썸네일" : "이 본문 이미지"}를 삭제할까요?\n이미지 파일도 같이 지워집니다.`)) return;
+      void run(async () => {
+        await flush();
+        await api.deleteImage(job.id, target);
+      });
+    },
   };
   const cancel = () => {
     if (!confirm("진행 중인 작업을 중지할까요?\n지금까지 만든 초안과 이미지는 그대로 남습니다.")) return;
     void run(() => api.cancel(job.id));
   };
-  const [missingThumb, setMissingThumb] = useState<{ provider: ImageProvider; style: ImageStyle }>(thumbAi);
+  const [missingThumb, setMissingThumb] = useState<{ provider: ImageProvider; style: ImageStyle; method: ImageMethod }>({ ...thumbAi, method: methodFor(job.imageOptions, "thumbnail") });
+  const imageApi = useImageApi();
 
   const retry = () => {
     if (job.post && !confirm("자료 조사부터 다시 해서 새 초안을 만듭니다.\n지금 초안(직접 고친 내용 포함)은 새 초안으로 바뀝니다. 계속할까요?")) return;
@@ -165,6 +174,10 @@ export function JobDetail({ job, ready, onChange, onDeleted, onOpenSettings }: P
   };
 
   const lastLog = job.logs[job.logs.length - 1]?.message;
+  // 프롬프트로 고칠 블록 (편집 화면에서 고른다). 블록 수가 바뀌면(이미지 추가·삭제, 고친 결과 적용) 번호가 달라지므로 비운다.
+  const [selected, setSelected] = useState<number[]>([]);
+  const blockCount = draft?.blocks.length;
+  useEffect(() => setSelected([]), [blockCount, job.id]);
   const chars = draft ? countBodyChars(draft) : 0;
 
   return (
@@ -275,6 +288,23 @@ export function JobDetail({ job, ready, onChange, onDeleted, onOpenSettings }: P
             </span>
           </div>
 
+          <EditByPrompt
+            job={job}
+            draft={draft}
+            selected={selected}
+            disabled={busy}
+            lastLog={lastLog}
+            onStart={(prompt, range) =>
+              run(async () => {
+                await flush();
+                await api.editPost(job.id, prompt, range);
+              })
+            }
+            onApply={() => void run(() => api.applyEdit(job.id))}
+            onDiscard={() => void run(() => api.discardEdit(job.id))}
+            onCancel={cancel}
+          />
+
           {!draft.thumbnail && !busy && (
             <div className="thumb-missing">
               <div>
@@ -283,12 +313,29 @@ export function JobDetail({ job, ready, onChange, onDeleted, onOpenSettings }: P
               <AiPicker
                 provider={missingThumb.provider}
                 style={missingThumb.style}
-                onChange={(p, s) => setMissingThumb({ provider: p, style: s })}
+                onChange={(p, s) => setMissingThumb({ ...missingThumb, provider: p, style: s })}
               />
+              {/* Gemini·ChatGPT는 API로 만들지 크롬에서 만들지 고른다 (Claude는 해당 없음) */}
+              {missingThumb.provider !== "claude" && (
+                <div className="ai-picker">
+                  <MethodPicker
+                    provider={missingThumb.provider}
+                    method={missingThumb.method}
+                    apiStatus={imageApi}
+                    onChange={(method) => setMissingThumb({ ...missingThumb, method })}
+                  />
+                </div>
+              )}
               <button
                 className="primary"
                 onClick={() =>
-                  regenerate({ thumbnailProvider: missingThumb.provider, thumbnailStyle: missingThumb.style, onlyFailed: true, addThumbnail: true })
+                  regenerate({
+                    thumbnailProvider: missingThumb.provider,
+                    thumbnailStyle: missingThumb.style,
+                    ...(missingThumb.provider !== "claude" && { thumbnailMethod: shownMethod(missingThumb.provider, missingThumb.method, imageApi) }),
+                    onlyFailed: true,
+                    addThumbnail: true,
+                  })
                 }
               >
                 썸네일 만들기
@@ -305,7 +352,14 @@ export function JobDetail({ job, ready, onChange, onDeleted, onOpenSettings }: P
               tools={imageTools}
             />
           ) : (
-            <PostEditor jobId={job.id} post={draft} onChange={edit} disabled={busy} tools={imageTools} />
+            <PostEditor
+              jobId={job.id}
+              post={draft}
+              onChange={edit}
+              disabled={busy}
+              tools={imageTools}
+              selection={{ selected, toggle: (i) => setSelected((s) => (s.includes(i) ? s.filter((x) => x !== i) : [...s, i].sort((a, b) => a - b))) }}
+            />
           )}
 
           <Report post={draft} onChange={edit} disabled={busy} />

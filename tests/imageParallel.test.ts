@@ -148,5 +148,42 @@ describe("이미지를 만드는 동안 받는 요청", () => {
     });
     vi.unstubAllGlobals();
   });
-});
+  it("썸네일이 없는 글에 썸네일을 추가할 때도 만드는 방법(크롬/API)을 고른다", async () => {
+    pending.length = 0;
+    web.generateWithWebAi.mockClear();
+    vi.stubGlobal("fetch", fakeFetch);
+    await saveImageApiKey("chatgpt", "o-key");
+    const start = async (thumbnailMethod: "api" | "chrome") => {
+      const id = await draftJob();
+      await updateJob(id, (j) => void delete j.post!.thumbnail);
+      const body = { thumbnailProvider: "chatgpt", thumbnailStyle: "flat", thumbnailMethod, onlyFailed: true, addThumbnail: true };
+      expect(await post(`/api/jobs/${id}/regenerate-images`, body)).toBe(202);
+      return id;
+    };
+    const idle = (id: string) => async () => !isRunning(id) && (await getJob(id))?.status === "draft_ready";
 
+    // 크롬: 키가 있어도 API를 부르지 않고 크롬 경로로 만든다
+    const chrome = await start("chrome");
+    await waitFor(idle(chrome));
+    const j1 = (await getJob(chrome))!;
+    expect(j1.imageOptions.thumbnailMethod).toBe("chrome");
+    expect(j1.post!.thumbnail!.file).toMatch(/\.web\.png$/);
+    expect(web.generateWithWebAi).toHaveBeenCalledTimes(1);
+    expect(pending).toHaveLength(0);
+
+    // API: 크롬은 부르지 않는다
+    const api = await start("api");
+    await waitFor(() => pending.length === 1);
+    pending[0].resolve();
+    await waitFor(idle(api));
+    const j2 = (await getJob(api))!;
+    expect(j2.imageOptions.thumbnailMethod).toBe("api");
+    expect(j2.post!.thumbnail!.file).toMatch(/^thumbnail-\d+\.png$/);
+    expect(web.generateWithWebAi).toHaveBeenCalledTimes(1);
+
+    // 잘못된 값은 거절한다
+    const bad = await realFetch(`${base}/api/jobs/${api}/regenerate-images`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ thumbnailMethod: "email" }) });
+    expect(bad.status).toBe(400);
+    vi.unstubAllGlobals();
+  });
+});

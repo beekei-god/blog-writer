@@ -7,6 +7,7 @@ import { runClaude } from "../claude";
 import { jobImageDir, jobImagePath } from "../store";
 import { altFileName, BLANK_LINE, esc, pasteBlockHtml, skippedImageLabel, TAG_GAP_LINES, tagLine, writeUrl } from "./postHtml";
 import { assertExtensionInstalled, BROWSER_RULES, SITE_BLOCKED_TEXT, SiteBlockedError } from "./claudeChrome";
+import { categoryPrompt } from "./category";
 import { publishPrompt, PublishStepError, type PublishRequest } from "./publish";
 import { PLATFORM_LABEL } from "../../shared/labels";
 
@@ -162,6 +163,8 @@ ${PASTE_HELPER}
 ${PLATFORM_GUIDE[settings.platform as Exclude<Platform, "wordpress">]}
 
 ${publishPrompt(settings.platform, publish)}
+
+${categoryPrompt(settings.platform, publish.category, publish.mode, publish.topic)}
 
 ## 결과
 - status: 임시저장까지 했으면 "saved", 로그인 화면이 나와 멈췄으면 "login_required", 그 밖에 끝내지 못했으면 "failed".

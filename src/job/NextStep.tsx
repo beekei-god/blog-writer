@@ -1,8 +1,12 @@
-import { useState } from "react";
-import { MANUAL_STATUSES, NAVER_MINUTE_STEP, type Job, type ManualStatus, type Platform, type PublishMode } from "../../shared/types";
+import { useEffect, useState } from "react";
+import { MANUAL_STATUSES, NAVER_MINUTE_STEP, type BlogCategory, type Job, type ManualStatus, type Platform, type PublishMode } from "../../shared/types";
 import { PLATFORM_LABEL, PUBLISH_MODE_LABEL } from "../../shared/labels";
-import { STATUS_LABEL, statusLabel } from "../labels";
+import { api, type CategoryList } from "../api";
+import { errorText, STATUS_LABEL, statusLabel } from "../labels";
 
+
+/** 블로그에 올리는 요청: 방식(임시저장·예약발행·자동발행), 예약 시각, 고른 카테고리 */
+export type PostOpts = { mode?: PublishMode; scheduledAt?: string; category?: BlogCategory };
 
 /**
  * 초안 검토 이후의 글 상태를 직접 바꾼다 (앱이 블로그에 올리거나 발행하지는 않는다).
@@ -47,13 +51,15 @@ export function NextStep({
   /** 올릴 블로그를 고르는 부분 (기본 블로그가 없으므로 글마다 직접 고른다) */
   destPicker?: React.ReactNode;
   busy: boolean;
-  onPost: (opts?: { mode?: PublishMode; scheduledAt?: string }) => void;
+  onPost: (opts?: PostOpts) => void;
   onRetry: () => void;
   onOpenSettings: () => void;
 }) {
   if (busy) {
     const msg =
-      job.status === "posting" && (job.postingTo ?? platform) === "wordpress"
+      job.editProposal?.status === "running"
+        ? "프롬프트로 글을 고치는 중입니다. 끝나면 바뀐 부분을 보고 적용할지 정할 수 있습니다."
+        : job.status === "posting" && (job.postingTo ?? platform) === "wordpress"
         ? "워드프레스 API로 글과 이미지를 올리고 있습니다. 크롬은 필요 없습니다. 이 화면을 닫아도 계속 진행됩니다."
         : job.status === "posting"
         ? "평소 쓰는 크롬에서 Claude in Chrome이 글을 입력하고 있습니다. 끝날 때까지 Claude가 연 탭 그룹은 건드리지 마세요. 글 길이와 이미지 수에 따라 10~30분 걸릴 수 있습니다."
@@ -143,10 +149,11 @@ function ChromeBlogNext({
   target: string;
   platform?: Platform;
   blogReady: boolean;
-  onPost: (opts?: { mode?: PublishMode; scheduledAt?: string }) => void;
+  onPost: (opts?: PostOpts) => void;
   onOpenSettings: () => void;
 }) {
   const pm = usePublishMode(platform === "naver" ? NAVER_MINUTE_STEP : 1);
+  const cats = useCategories(platform);
   const registered = job.status === "posted" || job.status === "scheduled";
   // 마지막으로 올린 블로그가 이 블로그일 때만 "올렸다"고 본다 (예전 글은 올린 블로그 기록이 없으면 이 블로그로 본다).
   const again = registered && (!job.postingTo || job.postingTo === platform);
@@ -154,7 +161,7 @@ function ChromeBlogNext({
     const dup = again ? "\n이전에 올린 글은 그대로 두고 블로그에 새 글이 하나 더 생깁니다." : "";
     if (pm.mode === "publish" && !confirm(`${target}에 임시저장한 뒤 바로 공개합니다. 계속할까요?${dup}`)) return;
     if (pm.mode === "schedule" && !confirm(`${target}에 임시저장한 뒤 ${new Date(pm.when).toLocaleString("ko-KR")}에 공개되도록 예약합니다. 계속할까요?${dup}`)) return;
-    onPost(pm.request());
+    onPost({ ...pm.request(), category: cats.selected });
   };
   return (
     <div className={`next-step ${again ? "ok" : ""}`}>
@@ -177,6 +184,7 @@ function ChromeBlogNext({
           </>
         )}
         <PublishModeFields pm={pm} hints={CHROME_MODE_HINT} />
+        <CategoryField cats={cats} platform={platform} mode={pm.mode} />
         {!blogReady && (
           <p className="hint small">
             블로그 ID가 없어 아직 올릴 수 없습니다.{" "}
@@ -235,6 +243,93 @@ function usePublishMode(minuteStep = 1, initialWhen?: string) {
   return { mode, setMode, when, setWhen, problem, minuteStep, request };
 }
 
+/** 올릴 블로그의 카테고리 목록과 고른 카테고리. 블로그를 바꾸면 그 블로그의 목록과 마지막으로 고른 카테고리를 다시 불러온다 */
+function useCategories(platform: Platform | undefined) {
+  const [list, setList] = useState<CategoryList | null>(null);
+  const [selected, setSelected] = useState<BlogCategory | undefined>();
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    setList(null);
+    setSelected(undefined);
+    setError("");
+    if (!platform) return;
+    let live = true;
+    api
+      .getCategories(platform)
+      .then((r) => {
+        if (!live) return;
+        setList(r);
+        setSelected(r.last);
+      })
+      .catch((e) => live && setError(errorText(e)));
+    return () => {
+      live = false;
+    };
+  }, [platform]);
+  /** 네이버·티스토리: 블로그 에디터에서 목록을 다시 읽는다 */
+  const refresh = async () => {
+    if (!platform) return;
+    setLoading(true);
+    setError("");
+    try {
+      setList(await api.refreshCategories(platform));
+    } catch (e) {
+      setError(errorText(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+  return { list, selected, setSelected, error, loading, refresh };
+}
+
+/** 카테고리 고르기. 네이버·티스토리는 "목록 불러오기"로 블로그에서 목록을 읽어 온다 */
+function CategoryField({ cats, platform, mode }: { cats: ReturnType<typeof useCategories>; platform?: Platform; mode: PublishMode }) {
+  if (!platform) return null;
+  const fromEditor = platform !== "wordpress"; // 블로그 에디터에서 읽어 오는 블로그
+  const items = cats.list?.categories ?? [];
+  const sel = cats.selected;
+  const options = sel && !items.some((c) => c.name === sel.name) ? [sel, ...items] : items;
+  return (
+    <div className="category-field">
+      <label className="mini-label">
+        카테고리
+        <select
+          className="inline-select"
+          value={sel?.name ?? ""}
+          disabled={!cats.list && !cats.error}
+          onChange={(e) => cats.setSelected(options.find((c) => c.name === e.target.value))}
+        >
+          <option value="">블로그 기본 카테고리</option>
+          {options.map((c) => (
+            <option key={c.id ?? c.name} value={c.name}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+      </label>
+      {fromEditor && (
+        <button type="button" onClick={() => void cats.refresh()} disabled={cats.loading}>
+          {cats.loading ? "불러오는 중..." : cats.list?.fetchedAt ? "목록 다시 불러오기" : "목록 불러오기"}
+        </button>
+      )}
+      <span className="hint small">
+        {cats.loading
+          ? "블로그 글쓰기 화면을 열어 읽는 중입니다 (30초쯤 걸릴 수 있습니다). 글은 저장하지 않습니다."
+          : fromEditor && !items.length
+            ? "\"목록 불러오기\"를 누르면 블로그 에디터에서 카테고리를 읽어 옵니다."
+            : platform === "naver" && mode === "draft" && sel
+              ? "네이버는 발행 창에서만 카테고리를 고를 수 있어, 임시저장에는 적용되지 않습니다."
+              : fromEditor
+                ? "에디터에서 같은 이름을 찾아 고릅니다. 못 찾으면 기본 카테고리로 올리고 진행 로그에 \"확인 필요\"로 남깁니다."
+                : "이 글에만 적용됩니다. 처음 값은 마지막으로 고른 카테고리, 없으면 설정의 기본 카테고리입니다."}
+      </span>
+      {platform === "naver" && mode !== "draft" && <span className="hint small">네이버 주제는 글 내용을 보고 자동으로 고릅니다.</span>}
+      {cats.error && <pre className="error small category-error">{cats.error}</pre>}
+    </div>
+  );
+}
+
 /** 올리는 방식 고르기와 예약 시각 칸 */
 function PublishModeFields({ pm, hints }: { pm: ReturnType<typeof usePublishMode>; hints: Record<PublishMode, string> }) {
   return (
@@ -267,17 +362,18 @@ function WordPressNext({
 }: {
   job: Job;
   blogReady: boolean;
-  onPost: (opts?: { mode?: PublishMode; scheduledAt?: string }) => void;
+  onPost: (opts?: PostOpts) => void;
   onOpenSettings: () => void;
 }) {
   const wp = job.wordpress;
   const pm = usePublishMode(1, wp?.scheduledAt ? toLocalInput(new Date(wp.scheduledAt)) : undefined);
+  const cats = useCategories("wordpress");
   const { mode } = pm;
 
   const go = () => {
     if (mode === "publish" && !confirm("지금 바로 공개됩니다. 계속할까요?")) return;
     if (mode === "schedule" && !confirm(`${new Date(pm.when).toLocaleString("ko-KR")}에 공개되도록 예약합니다. 계속할까요?`)) return;
-    onPost(pm.request());
+    onPost({ ...pm.request(), category: cats.selected });
   };
 
   const link = wp?.link && (
@@ -309,6 +405,7 @@ function WordPressNext({
           </>
         )}
         <PublishModeFields pm={pm} hints={WP_MODE_HINT} />
+        <CategoryField cats={cats} platform="wordpress" mode={mode} />
         {!blogReady && (
           <p className="hint small">
             워드프레스 사이트 주소가 없어 아직 올릴 수 없습니다.{" "}
