@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { keyedQueue, readJson, writeJsonAtomic } from "./fsutil";
 import { BUSY_STATUSES, RECOMMENDED_MODELS } from "../shared/types";
-import type { BlogStates, ImageOptions, Job, Settings, WritingOptions } from "../shared/types";
+import type { BlogState, BlogStates, ImageOptions, Job, Platform, Settings, WritingOptions } from "../shared/types";
 import { DEFAULT_TARGET_CHARS } from "../shared/length";
 
 /** 프로젝트 루트 (이 파일 기준). 서버를 어느 폴더에서 실행해도 같은 경로를 쓴다. */
@@ -58,20 +58,38 @@ export function saveSettings(s: Settings) {
 
 const jobFile = (id: string) => path.join(JOBS_DIR, `${path.basename(id)}.json`);
 
+/** 예약 시각을 저장하지 않던 때 발행예약한 글의 예약 시각: 2026-10-11 05:00 (한국 시간). 사용자가 모두 그 시각으로 예약했다고 알려 줌 */
+const LEGACY_SCHEDULED_AT = "2026-10-10T20:00:00.000Z";
+
 /**
  * 예전 글은 블로그 상태를 글 상태 하나(posted·scheduled·published)로 가졌다. 읽을 때 블로그별 상태로 옮긴다 (파일은 다음에 저장할 때 바뀐다).
  * - 발행완료: 네이버와 워드프레스 모두 발행완료
- * - 임시저장 완료·발행 예약: 마지막으로 올린 블로그(없으면 워드프레스 기록이 있으면 워드프레스, 그것도 없으면 네이버)에 그 상태
+ * - 임시저장·발행예약: 마지막으로 올린 블로그(없으면 워드프레스 기록이 있으면 워드프레스, 그것도 없으면 네이버)에 그 상태
  */
 export function migrateJob(job: Job): Job {
   const legacy = job.status as string;
-  if (legacy !== "posted" && legacy !== "scheduled" && legacy !== "published") return job;
-  const state = { status: legacy, at: job.updatedAt } as const;
-  const blogs: BlogStates =
-    legacy === "published"
-      ? { naver: state, wordpress: state, ...job.blogs }
-      : { [job.postingTo ?? (job.wordpress ? "wordpress" : "naver")]: state, ...job.blogs };
-  return { ...job, status: "draft_ready", blogs };
+  let next = job;
+  if (legacy === "posted" || legacy === "scheduled" || legacy === "published") {
+    const state: BlogState = { status: legacy, at: job.updatedAt };
+    let blogs: BlogStates;
+    if (legacy === "published") blogs = { naver: state, wordpress: state, ...job.blogs };
+    else {
+      const target = job.postingTo ?? (job.wordpress ? "wordpress" : "naver");
+      const scheduledAt = legacy === "scheduled" && target === "wordpress" ? job.wordpress?.scheduledAt : undefined;
+      blogs = { [target]: scheduledAt ? { ...state, scheduledAt } : state, ...job.blogs };
+    }
+    next = { ...job, status: "draft_ready", blogs };
+  }
+  // 예약 시각을 저장하기 전에 발행예약한 글(`scheduledAt` 자체가 없음)은 사용자가 알려 준 시각으로 채운다.
+  // 직접 표시해서 시각을 모르는 글은 null이라 건드리지 않는다.
+  if (next.blogs && Object.values(next.blogs).some((b) => b?.status === "scheduled" && b.scheduledAt === undefined)) {
+    const blogs: BlogStates = {};
+    for (const [p, b] of Object.entries(next.blogs) as [Platform, BlogState][]) {
+      blogs[p] = b.status === "scheduled" && b.scheduledAt === undefined ? { ...b, scheduledAt: LEGACY_SCHEDULED_AT } : b;
+    }
+    next = { ...next, blogs };
+  }
+  return next;
 }
 
 export const getJob = async (id: string) => {

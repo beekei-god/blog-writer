@@ -30,6 +30,18 @@ function chromePath(): string | null {
   return candidates.find((p) => p && fs.existsSync(p)) ?? null;
 }
 
+/**
+ * 평소 쓰는 크롬(기본 프로필)에서 주소를 새 탭으로 연다. 이미 켜져 있는 크롬이 있으면 그 크롬에 탭이 생긴다.
+ * `chrome-extension://` 주소는 웹 페이지의 링크로는 열 수 없어서 이렇게 연다.
+ */
+export function openInUserChrome(url: string) {
+  const exe = chromePath();
+  if (!exe) throw new Error("Google Chrome을 찾을 수 없습니다. 크롬을 설치하거나 .env에 CHROME_PATH를 지정하세요.");
+  const child = spawn(exe, [url], { stdio: "ignore", detached: true });
+  child.on("error", () => {});
+  child.unref();
+}
+
 export const isLoginWindowOpen = () => proc !== null;
 export const loginWindowFor = () => (proc ? procFor : null);
 

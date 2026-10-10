@@ -30,8 +30,8 @@ const POSITIONS: Partial<Record<StatusFilter, BlogPosition[]>> = {
 /**
  * 블로그를 고르면 그 블로그에서의 상태로, 전체 블로그면 어느 블로그든 해당하면 보인다.
  * - 자료 조사 중: 초안이 나오기 전 (블로그와 관계없음)
- * - 초안 검토: 초안이 있고, 고른 블로그(전체면 모든 블로그)에 아직 올리지 않은 글
- * - 임시 저장: 올리는 중이거나 임시저장 완료 / 발행 완료: 발행 예약이거나 발행완료
+ * - 초안검토: 초안이 있고, 고른 블로그(전체면 모든 블로그)에 아직 올리지 않은 글
+ * - 임시저장: 올리는 중이거나 임시저장 / 발행완료: 발행예약이거나 발행완료
  */
 export function matchesFilter(job: Pick<Job, "status" | "postingTo" | "blogs" | "post">, blog: BlogFilter, f: StatusFilter): boolean {
   if (f === "all") return true;

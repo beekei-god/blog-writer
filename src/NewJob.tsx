@@ -14,6 +14,7 @@ import { draftOf, parseWriting, WritingPicker, type WritingDraft } from "./Writi
 import { api, type ImageApiStatus } from "./api";
 import { MethodPicker, ProviderPicker, shownMethod, StylePicker, useImageApi } from "./job/images";
 import { errorText, PROVIDER_HINT, PROVIDER_LABEL } from "./labels";
+import { Sentences } from "./Sentences";
 
 interface Props {
   topic: string;
@@ -121,9 +122,9 @@ export function NewJob({ topic, links, onTopicChange, onLinksChange, onCreated, 
       <header>
         <div>
           <h2>새 글 쓰기</h2>
-          <p className="hint small">
+          <Sentences className="hint small">
             주제를 넣으면 웹에서 자료를 찾아(딥서칭) 글쓰기 규칙에 맞는 초안을 만듭니다. 보통 5~15분 걸립니다.
-          </p>
+          </Sentences>
         </div>
       </header>
 
@@ -222,12 +223,12 @@ export function NewJob({ topic, links, onTopicChange, onLinksChange, onCreated, 
           )}
         </div>
         {images.thumbnail && images.bodyImages > 0 && !thumbSame && (
-          <p className="hint small">
+          <Sentences className="hint small">
             썸네일과 본문 이미지를 서로 다른 AI·스타일·방법으로 만듭니다.{" "}
             <button type="button" className="link" onClick={() => setThumbAi(images.provider, images.style, methodFor(images, "body"))}>
               본문 이미지와 같게 하기
             </button>
-          </p>
+          </Sentences>
         )}
       </section>
 
@@ -276,14 +277,14 @@ function AiRows({
           <MethodPicker provider={provider} method={method} apiStatus={apiStatus} onChange={(m) => onChange(provider, style, m)} />
         </div>
       )}
-      <p className="hint small">
+      <Sentences className="hint small">
         {shown === "api"
           ? `${name} API로 만듭니다. 크롬을 쓰지 않아 다른 작업과 동시에 만들 수 있고, API 사용 요금이 듭니다.`
           : PROVIDER_HINT[provider]}
-      </p>
-      {provider === "claude" && <p className="hint small">Claude는 플랫 일러스트만 그릴 수 있습니다.</p>}
+      </Sentences>
+      {provider === "claude" && <Sentences className="hint small">Claude는 플랫 일러스트만 그릴 수 있습니다.</Sentences>}
       {style === "ghibli" && (
-        <p className="hint small">지브리풍은 서비스 정책 때문에 거절될 수 있습니다. 거절되면 초안 화면에서 다른 스타일로 다시 만들 수 있습니다.</p>
+        <Sentences className="hint small">지브리풍은 서비스 정책 때문에 거절될 수 있습니다. 거절되면 초안 화면에서 다른 스타일로 다시 만들 수 있습니다.</Sentences>
       )}
     </div>
   );

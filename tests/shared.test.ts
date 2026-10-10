@@ -108,14 +108,15 @@ describe("이미지 AI·스타일", () => {
 
 describe("라벨", () => {
   it("상태·블로그 이름", () => {
-    expect(STATUS_LABEL.draft_ready).toBe("초안 검토");
+    expect(STATUS_LABEL.draft_ready).toBe("초안검토");
     expect(blogStatusText("naver", "published")).toBe("네이버 발행완료");
-    expect(blogStatusText("wordpress", "scheduled")).toBe("워드프레스 발행 예약");
+    expect(blogStatusText("wordpress", "scheduled")).toBe("워드프레스 발행예약");
     expect(PLATFORM_LABEL.naver).toBe("네이버 블로그");
   });
-  it("올리는 중 라벨: 올리는 블로그와 관계없이 단계 이름과 같다", () => {
-    expect(statusLabel({ status: "posting", postingTo: "wordpress" })).toBe("블로그 임시저장 중");
-    expect(statusLabel({ status: "posting", postingTo: "naver" })).toBe("블로그 임시저장 중");
+  it("올리는 중 라벨: 올리는 블로그 이름을 붙이고, 모르면 단계 이름", () => {
+    expect(statusLabel({ status: "posting", postingTo: "wordpress" })).toBe("워드프레스 임시저장 중");
+    expect(statusLabel({ status: "posting", postingTo: "naver" })).toBe("네이버 임시저장 중");
+    expect(statusLabel({ status: "posting", postingTo: "tistory" })).toBe("티스토리 임시저장 중");
     expect(statusLabel({ status: "posting" })).toBe("블로그 임시저장 중");
   });
   it("errorText", () => {
@@ -179,10 +180,10 @@ describe("내 글 목록 필터 (블로그 × 상태)", () => {
     expect(matchesFilter(naverPub, "wordpress", "draft")).toBe(true); // 워드프레스에는 아직 안 올린 초안
     expect(matchesFilter(naverPub, "naver", "draft")).toBe(false);
     expect(matchesFilter(wpPosting, "wordpress", "saved")).toBe(true); // 올리는 중
-    expect(matchesFilter(wpPosting, "naver", "saved")).toBe(true); // 임시저장 완료
+    expect(matchesFilter(wpPosting, "naver", "saved")).toBe(true); // 임시저장
     expect(matchesFilter(wpPosting, "tistory", "draft")).toBe(true);
   });
-  it("전체 블로그면 어느 블로그든 해당하면 보이고, 초안 검토는 어느 블로그에도 안 올린 글만", () => {
+  it("전체 블로그면 어느 블로그든 해당하면 보이고, 초안검토는 어느 블로그에도 안 올린 글만", () => {
     expect(matchesFilter(naverPub, "all", "published")).toBe(true);
     expect(matchesFilter(naverPub, "all", "draft")).toBe(false);
     expect(matchesFilter(draft, "all", "draft")).toBe(true);

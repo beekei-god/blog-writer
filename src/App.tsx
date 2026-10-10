@@ -28,9 +28,9 @@ const TABS: { view: View; label: string }[] = [
 const FILTERS: { key: StatusFilter; label: string }[] = [
   { key: "all", label: "전체" },
   { key: "researching", label: "자료 조사 중" },
-  { key: "draft", label: "초안 검토" },
-  { key: "saved", label: "임시 저장" },
-  { key: "published", label: "발행 완료" },
+  { key: "draft", label: "초안검토" },
+  { key: "saved", label: "임시저장" },
+  { key: "published", label: "발행완료" },
 ];
 const BLOG_FILTERS: { key: BlogFilter; label: string }[] = [{ key: "all", label: "전체 블로그" }, ...PLATFORMS.map((p) => ({ key: p, label: PLATFORM_SHORT_LABEL[p] }))];
 
@@ -73,6 +73,11 @@ export function App() {
     void refresh();
     loadSettings();
   }, [refresh, loadSettings]);
+
+  // 계정을 바꿀 때 사용량을 다시 읽는다: check면 새 계정으로 한도를 새로 확인(짧은 Claude 호출 한 번), 아니면 저장된 값만 읽는다
+  const refreshUsage = (check: boolean) => {
+    (check ? api.checkPlan() : api.getUsage()).then(setUsage).catch(() => api.getUsage().then(setUsage).catch(() => {}));
+  };
 
   // 상단의 한도 표시: 1분마다, 그리고 작업이 끝날 때마다 새로 읽는다 (Claude 호출 없음).
   const busyCount = jobs.filter((j) => BUSY_STATUSES.includes(j.status)).length;
@@ -238,7 +243,7 @@ export function App() {
           )}
           {view === "rules" && <RulesEditor />}
           {view === "usage" && <Usage summary={usage} settings={settings} onSummary={setUsage} onOpenSettings={() => go("settings")} />}
-          {view === "settings" && <SettingsPanel onSaved={setSettings} defaultModel={usage?.defaultModel ?? null} />}
+          {view === "settings" && <SettingsPanel onSaved={setSettings} defaultModel={usage?.defaultModel ?? null} onUsage={refreshUsage} />}
           {view === "job" &&
             (selected ? (
               <JobDetail

@@ -47,6 +47,11 @@ export function savePlanLimits(plan: PlanLimits) {
   return serial(() => writeJsonAtomic(PLAN_FILE, plan)).catch((e) => console.error("한도 정보 저장 실패:", e));
 }
 
+/** 계정을 바꿀 때 이전 계정의 한도 정보를 지운다 (새 계정으로 다시 확인하기 전까지 남아 있으면 틀린 값이 보인다) */
+export function clearPlanLimits() {
+  return serial(() => fs.rm(PLAN_FILE, { force: true })).catch((e) => console.error("한도 정보 삭제 실패:", e));
+}
+
 const readPlan = () => readJson<PlanLimits | null>(PLAN_FILE, null);
 
 async function readRecords(): Promise<UsageRecord[]> {

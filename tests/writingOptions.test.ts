@@ -73,4 +73,35 @@ describe("분량·말투 옵션 (글 작성)", () => {
     await writePost(input({ targetChars: 4000, tone: "friendly" }), (m) => progress.push(m));
     expect(progress.some((m) => m.includes("목표(약 4,000자)보다 짧습니다"))).toBe(true);
   });
+
+  it("고른 말투와 문장 끝이 어긋나면 말투만 고쳐 한 번 다시 쓴다", async () => {
+    const sentences = (end: string) => ["접수는 하루", "대상은 세대주", "서류는 미리 준비", "결과는 다음 주 발표", "문의는 콜센터", "일정을 꼭 확인"].map((x) => x + end);
+    const withBody = (end: string) => ({ ...postOf(0), blocks: [{ type: "paragraph", text: sentences(end).join("\n") }] });
+    claude.results.push(withBody("해요."), withBody("합니다."));
+    const progress: string[] = [];
+    const post = await writePost(input({ targetChars: 2500, tone: "info" }), (m) => progress.push(m));
+    expect(claude.calls).toHaveLength(2);
+    expect(claude.calls[1].prompt).toContain("선택한 말투(정보형)와 맞지 않습니다");
+    expect(claude.calls[1].prompt).toContain("합니다체(~니다) 문장이 0%뿐입니다");
+    expect(progress.some((m) => m.includes("말투가 정보형과 다릅니다"))).toBe(true);
+    expect((post.blocks[0] as { text: string }).text).toContain("합니다.");
+  });
+  it("말투가 맞으면 다시 쓰지 않고, 말투를 고르지 않은 작업은 검사하지 않는다", async () => {
+    const body = (end: string) => ({ ...postOf(0), blocks: [{ type: "paragraph", text: ["가", "나", "다", "라", "마", "바"].map((x) => `${x}는 중요${end}`).join("\n") }] });
+    claude.results.push(body("합니다."));
+    await writePost(input({ targetChars: 2500, tone: "info" }));
+    expect(claude.calls).toHaveLength(1);
+    claude.calls = [];
+    claude.results.push(body("해요."));
+    await writePost(input()); // 말투 없음
+    expect(claude.calls).toHaveLength(1);
+  });
+  it("글 쓰기 요청 끝에 말투 확인이 붙고, 지시에 문장 끝 규칙과 예시가 들어 있다", async () => {
+    claude.results.push(postOf(2500));
+    await writePost(input({ targetChars: 2500, tone: "friendly" }));
+    const { system, prompt } = claude.calls[0];
+    expect(prompt).toContain("## 말투 최종 확인 (친근형)");
+    expect(system).toContain("'요'로 끝나야 하고");
+    expect(system).toContain("가장 중요한 요구입니다");
+  });
 });

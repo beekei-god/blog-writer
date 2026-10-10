@@ -5,18 +5,19 @@ export const STATUS_LABEL: Record<Job["status"], string> = {
   researching: "자료 조사 중",
   writing: "글 작성 중",
   generating_images: "이미지 생성 중",
-  draft_ready: "초안 검토",
+  draft_ready: "초안검토",
   posting: "블로그 임시저장 중",
   failed: "실패",
 };
 
 /** 블로그 하나에서의 글 상태 이름 */
-export const BLOG_STATUS_LABEL: Record<BlogStatus, string> = { posted: "임시저장 완료", scheduled: "발행 예약", published: "발행완료" };
+export const BLOG_STATUS_LABEL: Record<BlogStatus, string> = { posted: "임시저장", scheduled: "발행예약", published: "발행완료" };
 /** 글 상태 직접 바꾸기의 선택지 이름 */
-export const MANUAL_STATUS_LABEL: Record<ManualStatus, string> = { none: "올리지 않음", ...BLOG_STATUS_LABEL };
+export const MANUAL_STATUS_LABEL: Record<ManualStatus, string> = { none: "초안검토", ...BLOG_STATUS_LABEL };
 
-/** 글 하나의 상태 이름 (진행 단계 이름과 같게 쓴다. 올리는 블로그와 관계없이 같다) */
-export const statusLabel = (job: Pick<Job, "status" | "postingTo">) => STATUS_LABEL[job.status];
+/** 글 하나의 상태 이름. 올리는 중이면 블로그 이름을 붙여 "네이버 임시저장 중"처럼 완료 배지("네이버 임시저장")와 같은 형식으로 쓴다 */
+export const statusLabel = (job: Pick<Job, "status" | "postingTo">) =>
+  job.status === "posting" && job.postingTo ? `${PLATFORM_SHORT_LABEL[job.postingTo]} 임시저장 중` : STATUS_LABEL[job.status];
 
 export const PLATFORM_LABEL: Record<Platform, string> = { naver: "네이버 블로그", tistory: "티스토리", wordpress: "워드프레스" };
 /** 문장 안에서 쓰는 짧은 이름 ("네이버 블로그 ID", "네이버 로그인 창") */

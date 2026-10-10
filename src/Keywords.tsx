@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { KeywordRow, KeywordSection } from "../shared/types";
 import { api, type KeywordResult } from "./api";
 import { errorText } from "./labels";
+import { Sentences } from "./Sentences";
 
 type SortKey = "total" | "pc" | "mobile" | "keyword";
 const COMP_ORDER: Record<KeywordRow["competition"], number> = { 낮음: 0, 중간: 1, 높음: 2, "알 수 없음": 3 };
@@ -76,7 +77,7 @@ export function Keywords({
   const table = (sec: KeywordSection, rows: KeywordRow[]) => {
     const max = Math.max(1, ...sec.rows.map((r) => r.total));
     return rows.length === 0 ? (
-      <p className="hint">조건에 맞는 키워드가 없습니다.</p>
+      <Sentences className="hint">조건에 맞는 키워드가 없습니다.</Sentences>
     ) : (
       <div className="keyword-table-wrap">
         <table className="keyword-table">
@@ -134,10 +135,10 @@ export function Keywords({
       <header>
         <div>
           <h2>키워드 탐색</h2>
-          <p className="hint small">
+          <Sentences className="hint small">
             키워드를 넣으면 연관 키워드와 <b>최근 한 달 월간 검색량</b>(네이버, PC·모바일), 경쟁 정도를 보여 줍니다. 비워 두면 지금 뜨는 검색어와 최근 주제 추천의 분야를 기준으로
             찾습니다. 검색량이 큰 키워드를 골라 새 글의 주제로 쓰거나, 그 키워드를 분야로 <b>주제 추천</b>을 받을 수 있습니다.
-          </p>
+          </Sentences>
         </div>
       </header>
 
@@ -208,15 +209,15 @@ export function Keywords({
                   </span>
                 </h3>
               </div>
-              {sec.note && <p className="hint small">{sec.note}</p>}
-              {sec.seeds.length > 0 && sec.id !== "input" && <p className="hint small">조회한 키워드: {sec.seeds.join(", ")}</p>}
+              {sec.note && <Sentences className="hint small">{sec.note}</Sentences>}
+              {sec.seeds.length > 0 && sec.id !== "input" && <Sentences className="hint small">조회한 키워드: {sec.seeds.join(", ")}</Sentences>}
               {sec.error ? <p className="error small">{sec.error}</p> : table(sec, rows)}
             </section>
           ))}
-          <p className="hint small">
+          <Sentences className="hint small">
             검색량은 네이버 검색광고 키워드 도구의 최근 한 달 값입니다(10 미만은 “&lt;10”이고 합계에는 5로 계산). 경쟁 정도는 광고 입찰 경쟁이라 블로그 글 경쟁과 같지 않으니 참고만 하세요.
             “지금 뜨는 검색어”는 구글 트렌드 기준이라 한국 블로그 분야와 맞지 않는 검색어(스포츠 경기 등)도 섞여 있습니다.
-          </p>
+          </Sentences>
         </>
       )}
     </div>

@@ -1,22 +1,26 @@
 import { MAX_TAGS, type ImageOptions, type Post, type PostBlock, type Source, type TagDetail, type WritingOptions, type WritingTone } from "../shared/types";
 import { countBodyChars, DEFAULT_TARGET_CHARS, maxBodyChars, targetRange } from "../shared/length";
+import { toneName, toneProblem } from "../shared/tone";
 import { runClaude } from "./claude";
 import { PostSchema, POST_JSON_SCHEMA } from "./schema";
 
 /** 말투별 지시. 모든 말투가 글쓰기 규칙의 존댓말과 "확인된 사실만" 규칙을 그대로 지킨다. */
 export const TONE_GUIDE: Record<WritingTone, string> = {
-  info: "정보형 (존댓말 + 칼럼체): 합니다체(~입니다, ~합니다)로 통일하세요. 신문 칼럼처럼 차분하고 객관적으로, 배경 → 핵심 사실 → 의미·주의점 순서로 논리 있게 풀어 쓰세요. 감탄사·유행어·과한 이모티콘은 쓰지 마세요.",
+  info: "정보형 (존댓말 + 칼럼체): 합니다체로 통일하세요. 본문 문장(소제목·표 칸 제외)은 모두 '~입니다', '~합니다', '~됩니다', '~있습니다'처럼 '니다'로 끝나야 하고, '~요', '~해요', '~이에요', '~죠'와 반말('~한다', '~이다')은 한 문장도 쓰지 마세요. 신문 칼럼처럼 차분하고 객관적으로, 배경 → 핵심 사실 → 의미·주의점 순서로 논리 있게 풀어 쓰세요. 감탄사·유행어·이모티콘·질문으로 말 걸기('~하시죠?')는 쓰지 마세요. 예: '이번 청약은 무주택 세대주만 신청할 수 있습니다. 접수는 10월 6일 하루 동안 진행됩니다.'",
   friendly:
-    "친근형 (해요체 + 수다형): 해요체(~해요, ~이에요)로 통일하세요. 옆에서 수다 떨듯 편하게 독자에게 말을 걸어 주세요(예: '이 부분 은근 헷갈리시죠?', '여기서 꼭 챙길 게 하나 있어요'). 가벼운 감탄과 공감 표현은 좋지만 정보는 정확하게 전하고, 반말은 쓰지 마세요.",
+    "친근형 (해요체 + 수다형): 해요체로 통일하세요. 본문 문장(소제목·표 칸 제외)은 모두 '~해요', '~이에요', '~있어요', '~죠', '~거든요'처럼 '요'로 끝나야 하고, '~입니다', '~합니다', '~한다' 같은 합니다체·반말은 한 문장도 쓰지 마세요. 옆에서 수다 떨듯 독자에게 자주 말을 걸고('이 부분 은근 헷갈리시죠?', '여기서 꼭 챙길 게 하나 있어요'), 가벼운 감탄과 공감 표현('와, 생각보다 간단하죠?')을 곳곳에 넣으세요. 정보는 정확하게 전하세요. 예: '먼저 자격부터 볼게요. 무주택 세대주라면 신청할 수 있어요. 생각보다 조건이 간단하죠?'",
   story:
-    "스토리형 (스토리텔링 + 일기체 + 유머): 존댓말 일기체(~했어요, ~더라고요)로 쓰세요. 독자가 겪을 법한 상황이나 장면으로 시작해 이야기 흐름 속에서 정보를 하나씩 풀고, 가볍고 재치 있는 유머를 곳곳에 넣으세요. 도입부 2~3문장 안에 핵심 답도 함께 밝히세요. 글쓴이가 실제로 겪은 일처럼 경험·후기·대화를 지어내지 말고, '이런 상황이라면' 같은 가정이나 독자의 입장으로 이야기를 풀어 주세요. 사실·숫자·날짜는 정확하게 쓰고, 반말('~했다')은 쓰지 마세요.",
+    "스토리형 (스토리텔링 + 일기체 + 유머): 존댓말 일기체로 쓰세요. 본문 문장(소제목·표 칸 제외)은 모두 '~했어요', '~더라고요', '~였어요', '~있었어요', '~거든요'처럼 '요'로 끝나야 하고, '~입니다', '~합니다', '~했다' 같은 합니다체·반말은 한 문장도 쓰지 마세요. 독자가 겪을 법한 상황이나 장면으로 시작해 이야기 흐름 속에서 정보를 하나씩 풀고, 가볍고 재치 있는 유머나 혼잣말('그때 알았어요, 달력부터 봐야 한다는 걸')을 곳곳에 넣으세요. 도입부 2~3문장 안에 핵심 답도 함께 밝히세요. 글쓴이가 실제로 겪은 일처럼 경험·후기·대화를 지어내지 말고, '이런 상황이라면' 같은 가정이나 독자의 입장으로 이야기를 풀어 주세요. 사실·숫자·날짜는 정확하게 쓰세요. 예: '아침에 공고를 열었더니 접수일이 딱 하루뿐이더라고요. 달력부터 확인했어요.'",
   summary:
-    "정리형 (Q&A + 요약 리스트): 소제목을 독자가 검색할 법한 질문으로 쓰고(예: '❓ 신청 자격은 어떻게 되나요?'), 소제목 바로 아래 첫 문단에서 결론을 한두 문장으로 먼저 답하세요. 설명은 짧은 문장과 목록·표 위주로 정리하고, 글 끝 핵심 요약은 목록으로 쓰세요. 어미는 해요체 또는 합니다체 중 하나로 통일하세요.",
+    "정리형 (Q&A + 요약 리스트): 소제목을 독자가 검색할 법한 질문으로 쓰고(예: '❓ 신청 자격은 어떻게 되나요?'), 소제목 바로 아래 첫 문단에서 결론을 한두 문장으로 먼저 답하세요. 설명은 짧은 문장과 목록·표 위주로 정리하고, 글 끝 핵심 요약은 목록으로 쓰세요. 어미는 해요체('~해요') 또는 합니다체('~합니다') 중 하나로 글 전체를 통일하고 섞지 마세요. 반말('~한다')은 쓰지 마세요.",
 };
 
 /** 말투 지시 (고르지 않은 예전 작업은 글쓰기 규칙대로라 빈 문자열) */
 export const toneSection = (tone?: WritingTone) =>
-  tone ? `\n## 말투 (글쓰기 규칙의 문체보다 우선, 존댓말과 확인된 사실만 쓰는 규칙은 그대로 지킬 것)\n- ${TONE_GUIDE[tone]}\n` : "";
+  tone ? `\n## 말투 (가장 중요한 요구입니다. 글쓰기 규칙의 문체보다 우선하며, 존댓말과 확인된 사실만 쓰는 규칙은 그대로 지킬 것)\n- ${TONE_GUIDE[tone]}\n` : "";
+
+/** 글 쓰기 요청의 맨 끝에 한 번 더 붙이는 말투 확인 (긴 지시 앞부분이 잊히지 않게) */
+const toneReminder = (tone?: WritingTone) => (tone ? `\n\n## 말투 최종 확인 (${toneName(tone)})\n- ${TONE_GUIDE[tone]}\n- 다 쓴 뒤 모든 문장의 끝을 이 말투로 다시 확인하고, 어긋난 문장은 고쳐서 내세요.` : "");
 
 const BASE_SYSTEM = (rules: string, today: string, writing?: WritingOptions) => {
   const target = writing?.targetChars ?? DEFAULT_TARGET_CHARS;
@@ -156,7 +160,7 @@ ${relList || "(이번 키워드에는 없음 → 이 출처의 태그는 만들�
 ${input.notes}
 
 ## 리서치 출처
-${sourceList || "(없음)"}`;
+${sourceList || "(없음)"}${toneReminder(input.writing?.tone)}`;
 
   const raw = await runClaude<unknown>({
     system: systemFor(input),
@@ -170,6 +174,7 @@ ${sourceList || "(없음)"}`;
 
   let parsed = ParsedPostSchema.parse(raw);
 
+  parsed = await enforceTone(parsed, input, onProgress);
   parsed = await enforceLength(parsed, input, onProgress);
   const finalChars = countBodyChars(parsed);
   const target = input.writing?.targetChars ?? DEFAULT_TARGET_CHARS;
@@ -208,6 +213,41 @@ const systemFor = (input: Pick<WriteInput, "rules" | "today" | "options" | "writ
 const UPDATE_LINE = /^(최종|마지막)?\s*(업데이트|수정|갱신|작성|확인)\s*(일|날짜|일자)?\s*[:：]?\s*\d{4}\s*[.\-/년]/;
 export function stripUpdateLines(blocks: PostBlock[]): PostBlock[] {
   return blocks.filter((b) => !(b.type === "paragraph" && b.text.length <= 40 && UPDATE_LINE.test(b.text.replace(/\*\*/g, "").trim())));
+}
+
+/**
+ * 결과 문장 끝이 고른 말투와 어긋나면(예: 합니다체를 골랐는데 해요체가 섞임) 사실·구성은 그대로 두고 말투만 고쳐 다시 쓰게 한다 (1번).
+ * 말투를 고르지 않은 작업이거나, 문장이 너무 적어 판단하기 어려우면 아무것도 하지 않는다.
+ */
+export async function enforceTone(
+  parsed: ParsedPost,
+  input: Pick<WriteInput, "rules" | "today" | "options" | "jobId" | "writing">,
+  onProgress: (m: string) => void,
+): Promise<ParsedPost> {
+  const tone = input.writing?.tone;
+  if (!tone) return parsed;
+  const problem = toneProblem(parsed, tone);
+  if (!problem) return parsed;
+  onProgress(`말투가 ${toneName(tone)}과 다릅니다 (${problem}). 말투만 고쳐 다시 쓰는 중`);
+  const rewritten = await runClaude<unknown>({
+    system: systemFor(input),
+    prompt: `아래 블로그 글(JSON)의 문장 끝이 선택한 말투(${toneName(tone)})와 맞지 않습니다. ${problem}.
+같은 JSON 구조로, 본문의 모든 문장(소제목·표 칸 제외)을 선택한 말투로 고쳐서 다시 내 주세요.
+- 사실·숫자·날짜·출처·링크는 바꾸거나 새로 만들지 마세요. 문장 수와 분량, 소제목·표·목록 구성도 그대로 두세요.
+- 이미지 블록(basis·prompt·alt), 제목, 제목 후보, 태그, 태그 근거, 뺀 항목은 그대로 두세요.
+- 말투 지시를 한 문장도 빠짐없이 지키세요: ${TONE_GUIDE[tone]}
+
+${JSON.stringify(parsed)}`,
+    schema: POST_JSON_SCHEMA,
+    effort: "medium",
+    timeoutMs: 10 * 60_000,
+    stage: "writing",
+    jobId: input.jobId,
+  });
+  const fixed = ParsedPostSchema.parse(rewritten);
+  const left = toneProblem(fixed, tone);
+  if (left) onProgress(`말투를 고쳐 다시 썼지만 아직 다릅니다 (${left}). 초안 화면에서 확인해 주세요.`);
+  return fixed;
 }
 
 /** 분량 초과 시 사실은 유지한 채 줄여 다시 쓰게 한다 (최대 2번). */

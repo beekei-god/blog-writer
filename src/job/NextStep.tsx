@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { MANUAL_STATUSES, NAVER_MINUTE_STEP, PLATFORMS, type BlogCategory, type Job, type ManualStatus, type Platform, type PublishMode } from "../../shared/types";
-import { BLOG_STATUS_LABEL, blogStatusText, MANUAL_STATUS_LABEL, PLATFORM_LABEL, PUBLISH_MODE_LABEL } from "../../shared/labels";
+import { MANUAL_STATUSES, NAVER_MINUTE_STEP, PLATFORMS, type BlogCategory, type BlogState, type Job, type ManualStatus, type Platform, type PublishMode } from "../../shared/types";
+import { blogStatusText, MANUAL_STATUS_LABEL, PLATFORM_LABEL, PUBLISH_MODE_LABEL } from "../../shared/labels";
 import { api, type CategoryList } from "../api";
 import { errorText, statusLabel } from "../labels";
 
@@ -10,35 +10,54 @@ export type PostOpts = { mode?: PublishMode; scheduledAt?: string; category?: Bl
 
 /**
  * 블로그마다 글 상태를 직접 바꾼다 (앱이 블로그에 올리거나 발행하지는 않고 표시만 바꾼다). 다른 블로그의 상태는 그대로다.
- * 올리지 않음으로 되돌릴 때는 블로그에 올라간 글은 그대로이니 확인을 받는다.
+ * 초안검토로 되돌릴 때는 블로그에 올라간 글은 그대로이니 확인을 받는다.
  */
+/** 카드 안내: 발행예약이면 실제 예약 시각, 그 밖에는 상태를 표시한 날짜와 시각 */
+function stateNote(b: BlogState | undefined): string {
+  if (!b) return "아직 올리지 않음";
+  const fmt = (iso: string) => new Date(iso).toLocaleString("ko-KR", { month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" });
+  if (b.status === "scheduled") return b.scheduledAt ? `${fmt(b.scheduledAt)} 발행예약` : "예약 시각 기록 없음";
+  return `${fmt(b.at)} 표시`;
+}
+
 export function StatusPicker({ job, onSetStatus }: { job: Job; onSetStatus: (platform: Platform, status: ManualStatus) => void }) {
   const pick = (p: Platform, s: ManualStatus) => {
     const current = job.blogs?.[p]?.status ?? "none";
     if (s === current) return;
-    if (s === "none" && !confirm(`${PLATFORM_LABEL[p]}에 올리지 않은 글로 되돌릴까요?\n블로그에 이미 저장·발행된 글은 그대로 남습니다.`)) return;
+    if (s === "none" && !confirm(`${PLATFORM_LABEL[p]} 상태를 초안검토로 되돌릴까요?\n블로그에 이미 저장·발행된 글은 그대로 남습니다.`)) return;
     onSetStatus(p, s);
   };
   return (
-    <div className="status-picker">
-      <span className="field-label">블로그별 글 상태</span>
-      {PLATFORMS.map((p) => {
-        const current = job.blogs?.[p]?.status ?? "none";
-        return (
-          <div key={p} className="option-row">
-            <span>{PLATFORM_LABEL[p]}</span>
-            <div className="segmented" role="radiogroup" aria-label={`${PLATFORM_LABEL[p]} 글 상태`}>
-              {MANUAL_STATUSES.map((s) => (
-                <button key={s} type="button" className={current === s ? "on" : ""} onClick={() => pick(p, s)}>
-                  {MANUAL_STATUS_LABEL[s]}
-                </button>
-              ))}
+    <section className="blog-card status-picker" aria-label="블로그별 글 상태">
+      <div className="blog-card-head">
+        <h3>블로그별 글 상태</h3>
+        <span className="hint small">블로그마다 이 글이 어떤 상태인지 표시합니다. 표시만 바꾸고, 블로그에 올리거나 발행하지는 않습니다.</span>
+      </div>
+      <div className="blog-state-grid">
+        {PLATFORMS.map((p) => {
+          const b = job.blogs?.[p];
+          const current: ManualStatus = b?.status ?? "none";
+          return (
+            <div key={p} className={`blog-state-card ${current}`}>
+              <span className="blog-state-name">{PLATFORM_LABEL[p]}</span>
+              {/* 지금 상태: 목록 배지와 같은 색 */}
+              <span className={`badge blog-state-badge ${current === "none" ? "draft_ready" : current}`}>{MANUAL_STATUS_LABEL[current]}</span>
+              <span className="hint small blog-state-at">{stateNote(b)}</span>
+              <label className="blog-state-select">
+                <span className="sr-only">{PLATFORM_LABEL[p]} 상태 변경</span>
+                <select value={current} onChange={(e) => pick(p, e.target.value as ManualStatus)}>
+                  {MANUAL_STATUSES.map((s) => (
+                    <option key={s} value={s}>
+                      {MANUAL_STATUS_LABEL[s]}
+                    </option>
+                  ))}
+                </select>
+              </label>
             </div>
-            {current === "scheduled" && <span className="hint small">지금은 {BLOG_STATUS_LABEL.scheduled} 상태입니다.</span>}
-          </div>
-        );
-      })}
-    </div>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 
@@ -181,19 +200,19 @@ function ChromeBlogNext({
       <div>
         {status === "posted" ? (
           <>
-            <b>{target}에 임시저장했습니다.</b> 크롬 창에서 내용을 확인하고 직접 발행하거나, 아래에서 다시 올릴 수 있습니다. 다시 올리면 이전 글을 고치지 않고 블로그에 새 글이 하나 더 생깁니다. 이전 글은 블로그에서 직접 지워 주세요.
+            <b>{target}에 임시저장했습니다.</b> <br/>크롬 창에서 내용을 확인하고 직접 발행하거나, 아래에서 다시 올릴 수 있습니다. 다시 올리면 이전 글을 고치지 않고 블로그에 새 글이 하나 더 생깁니다. 이전 글은 블로그에서 직접 지워 주세요.
           </>
         ) : status === "scheduled" ? (
           <>
-            <b>{target}에 발행 예약했습니다.</b> 예약 시각은 진행 로그에서 볼 수 있습니다. 다시 올리면 블로그에 새 글이 하나 더 생깁니다.
+            <b>{target}에 발행예약했습니다.</b> <br/>예약 시각은 진행 로그에서 볼 수 있습니다. 다시 올리면 블로그에 새 글이 하나 더 생깁니다.
           </>
         ) : (
           <>
-            <b>초안이 준비됐습니다.</b> 아래에서 내용을 검토하고 고친 뒤 {target}에 올리세요. 평소 쓰는 크롬에서 입력하며, 늘 임시저장을 먼저 한 뒤 고른 방식대로 발행합니다.
+            <b>초안이 준비됐습니다.</b> <br/>아래에서 내용을 검토하고 고친 뒤 {target}에 올리세요. 평소 쓰는 크롬에서 입력하며, 늘 임시저장을 먼저 한 뒤 고른 방식대로 발행합니다.
           </>
         )}
-        <PublishModeFields pm={pm} hints={CHROME_MODE_HINT} />
         <CategoryField cats={cats} platform={platform} mode={pm.mode} />
+        <PublishModeFields pm={pm} hints={CHROME_MODE_HINT} />
         {!blogReady && (
           <p className="hint small">
             블로그 ID가 없어 아직 올릴 수 없습니다.{" "}
@@ -202,11 +221,12 @@ function ChromeBlogNext({
             </button>
           </p>
         )}
-      </div>
-      <div className="actions">
-        <button className={again ? "" : "primary"} onClick={go} disabled={!blogReady || !!pm.problem}>
-          {again ? `다시 올리기 (${PUBLISH_MODE_LABEL[pm.mode]})` : `${target}에 ${PUBLISH_MODE_LABEL[pm.mode]}`}
-        </button>
+        {/* 영역 맨 아래 왼쪽: 올리기·다시 올리기 */}
+        <div className="publish-footer">
+          <button className="primary" onClick={go} disabled={!blogReady || !!pm.problem}>
+            {again ? `다시 올리기 (${PUBLISH_MODE_LABEL[pm.mode]})` : `${target}에 ${PUBLISH_MODE_LABEL[pm.mode]}`}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -343,21 +363,24 @@ function CategoryField({ cats, platform, mode }: { cats: ReturnType<typeof useCa
 function PublishModeFields({ pm, hints }: { pm: ReturnType<typeof usePublishMode>; hints: Record<PublishMode, string> }) {
   return (
     <div className="wp-publish">
-      <div className="segmented" role="radiogroup" aria-label="올리는 방식">
-        {(Object.keys(PUBLISH_MODE_LABEL) as PublishMode[]).map((m) => (
-          <button key={m} type="button" className={pm.mode === m ? "on" : ""} onClick={() => pm.setMode(m)}>
-            {PUBLISH_MODE_LABEL[m]}
-          </button>
-        ))}
+      {/* 올리는 방식 오른쪽에 공개 시각, 설명은 그 아래 */}
+      <div className="publish-row">
+        <div className="segmented" role="radiogroup" aria-label="올리는 방식">
+          {(Object.keys(PUBLISH_MODE_LABEL) as PublishMode[]).map((m) => (
+            <button key={m} type="button" className={pm.mode === m ? "on" : ""} onClick={() => pm.setMode(m)}>
+              {PUBLISH_MODE_LABEL[m]}
+            </button>
+          ))}
+        </div>
+        {pm.mode === "schedule" && (
+          <label className="publish-when">
+            <span className="field-label">공개 시각</span>
+            <input type="datetime-local" step={pm.minuteStep * 60} value={pm.when} onChange={(e) => pm.setWhen(e.target.value)} />
+          </label>
+        )}
       </div>
-      <span className="hint small">{hints[pm.mode]}</span>
-      {pm.mode === "schedule" && (
-        <label className="mini-label">
-          공개 시각
-          <input type="datetime-local" step={pm.minuteStep * 60} value={pm.when} onChange={(e) => pm.setWhen(e.target.value)} />
-          {pm.problem && <span className="error small">{pm.problem}</span>}
-        </label>
-      )}
+      <span className="hint small publish-hint">{hints[pm.mode]}</span>
+      {pm.mode === "schedule" && pm.problem && <span className="error small publish-hint">{pm.problem}</span>}
     </div>
   );
 }
@@ -403,15 +426,15 @@ function WordPressNext({
           </>
         ) : status === "scheduled" ? (
           <>
-            <b>워드프레스에 예약했습니다.</b> {wp?.scheduledAt ? `${new Date(wp.scheduledAt).toLocaleString("ko-KR")}에 공개됩니다.` : ""} {link} 다시 등록하면 같은 글을 갱신합니다.
+            <b>워드프레스에 예약했습니다.</b> <br/>{wp?.scheduledAt ? `${new Date(wp.scheduledAt).toLocaleString("ko-KR")}에 공개됩니다.` : ""} {link} 다시 등록하면 같은 글을 갱신합니다.
           </>
         ) : (
           <>
             <b>초안이 준비됐습니다.</b> 아래에서 내용을 검토하고 고친 뒤 워드프레스에 올리세요. API로 올리므로 크롬이 필요 없습니다.
           </>
         )}
-        <PublishModeFields pm={pm} hints={WP_MODE_HINT} />
         <CategoryField cats={cats} platform="wordpress" mode={mode} />
+        <PublishModeFields pm={pm} hints={WP_MODE_HINT} />
         {!blogReady && (
           <p className="hint small">
             워드프레스 사이트 주소가 없어 아직 올릴 수 없습니다.{" "}
@@ -420,11 +443,12 @@ function WordPressNext({
             </button>
           </p>
         )}
-      </div>
-      <div className="actions">
-        <button className={registered ? "" : "primary"} onClick={go} disabled={!blogReady || !!pm.problem}>
-          {registered ? `다시 등록 (${PUBLISH_MODE_LABEL[mode]})` : `워드프레스에 ${PUBLISH_MODE_LABEL[mode]}`}
-        </button>
+        {/* 영역 맨 아래 왼쪽: 올리기·다시 등록 */}
+        <div className="publish-footer">
+          <button className="primary" onClick={go} disabled={!blogReady || !!pm.problem}>
+            {registered ? `다시 등록 (${PUBLISH_MODE_LABEL[mode]})` : `워드프레스에 ${PUBLISH_MODE_LABEL[mode]}`}
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -199,6 +199,42 @@ export function JobDetail({ job, ready, onChange, onDeleted, onOpenSettings }: P
   const targetChars = targetCharsOf(job);
   const maxChars = maxBodyChars(targetChars);
 
+  // 블로그에 올리기 (초안이 있고 진행 중이 아니면 본문 아래 작성 리포트 위, 그 밖에는 위쪽 안내로 보인다)
+  const nextStep = (
+    <NextStep
+      job={job}
+      hasDraft={!!draft}
+      // 올릴 블로그를 고르기 전에는 "연결된 블로그가 하나라도 있는지"를 본다
+      blogReady={dest ? ready[dest] : ready.naver || ready.tistory || ready.wordpress}
+      platform={dest}
+      destPicker={
+        draft && !busy ? (
+          <div className="dest-picker">
+            <span className="field-label">올릴 곳</span>
+            <div className="segmented" role="radiogroup" aria-label="올릴 곳">
+              {(Object.keys(PLATFORM_LABEL) as Platform[]).map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  className={dest === p ? "on" : ""}
+                  title={ready[p] ? undefined : "설정에서 먼저 연결하세요"}
+                  onClick={() => setDestPick(p)}
+                >
+                  {PLATFORM_LABEL[p]}
+                  {!ready[p] && <span className="failed-mark"> · 미설정</span>}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null
+      }
+      busy={busy}
+      onPost={postToBlog}
+      onRetry={retry}
+      onOpenSettings={onOpenSettings}
+    />
+  );
+
   return (
     <div className="detail">
       <header>
@@ -224,7 +260,6 @@ export function JobDetail({ job, ready, onChange, onDeleted, onOpenSettings }: P
       </header>
 
       <Progress job={job} />
-      {draft && !busy && <StatusPicker job={job} onSetStatus={(platform, status) => run(() => api.setBlogStatus(job.id, platform, status))} />}
 
       {busy && lastLog && (
         <p className="current-activity">
@@ -244,49 +279,9 @@ export function JobDetail({ job, ready, onChange, onDeleted, onOpenSettings }: P
         </div>
       )}
 
-      <NextStep
-        job={job}
-        hasDraft={!!draft}
-        // 올릴 블로그를 고르기 전에는 "연결된 블로그가 하나라도 있는지"를 본다
-        blogReady={dest ? ready[dest] : ready.naver || ready.tistory || ready.wordpress}
-        platform={dest}
-        destPicker={
-          draft && !busy ? (
-            <div className="dest-picker">
-              <span className="field-label">올릴 곳</span>
-              <div className="segmented" role="radiogroup" aria-label="올릴 곳">
-                {(Object.keys(PLATFORM_LABEL) as Platform[]).map((p) => (
-                  <button
-                    key={p}
-                    type="button"
-                    className={dest === p ? "on" : ""}
-                    title={ready[p] ? undefined : "설정에서 먼저 연결하세요"}
-                    onClick={() => setDestPick(p)}
-                  >
-                    {PLATFORM_LABEL[p]}
-                    {!ready[p] && <span className="failed-mark"> · 미설정</span>}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : null
-        }
-        busy={busy}
-        onPost={postToBlog}
-        onRetry={retry}
-        onOpenSettings={onOpenSettings}
-      />
-
-      <details className="logs">
-        <summary>진행 로그 ({job.logs.length})</summary>
-        <ol>
-          {job.logs.map((l, i) => (
-            <li key={i}>
-              <time>{new Date(l.at).toLocaleTimeString("ko-KR")}</time> {l.message}
-            </li>
-          ))}
-        </ol>
-      </details>
+      {/* 블로그별 글 상태(표시)는 위쪽에, 블로그에 올리기(실행)는 본문 아래 작성 리포트 위에 둔다 */}
+      {draft && !busy && <StatusPicker job={job} onSetStatus={(platform, status) => run(() => api.setBlogStatus(job.id, platform, status))} />}
+      {(!draft || busy) && nextStep}
 
       {draft && (
         <>
@@ -303,24 +298,11 @@ export function JobDetail({ job, ready, onChange, onDeleted, onOpenSettings }: P
               본문 {chars.toLocaleString()} / 목표 약 {targetChars.toLocaleString()}자
               {chars > maxChars && " · 분량 초과"}
             </span>
+            {/* 맨 오른쪽: 자료 조사부터 다시 하기 */}
+            <button className="draft-bar-retry" onClick={retry} disabled={busy}>
+              자료 조사부터 다시 하기
+            </button>
           </div>
-
-          <EditByPrompt
-            job={job}
-            draft={draft}
-            selected={selected}
-            disabled={busy}
-            lastLog={lastLog}
-            onStart={(prompt, range, writing) =>
-              run(async () => {
-                await flush();
-                await api.editPost(job.id, prompt, range, writing);
-              })
-            }
-            onApply={() => void run(() => api.applyEdit(job.id))}
-            onDiscard={() => void run(() => api.discardEdit(job.id))}
-            onCancel={cancel}
-          />
 
           {!draft.thumbnail && !busy && (
             <div className="thumb-missing">
@@ -381,51 +363,52 @@ export function JobDetail({ job, ready, onChange, onDeleted, onOpenSettings }: P
             />
           )}
 
-          <Report post={draft} onChange={edit} disabled={busy} />
+          {/* 프롬프트로 글 고치기: 본문을 보고 고친 뒤 블로그에 올린다 */}
+          <EditByPrompt
+            job={job}
+            draft={draft}
+            selected={selected}
+            disabled={busy}
+            lastLog={lastLog}
+            onStart={(prompt, range, writing) =>
+              run(async () => {
+                await flush();
+                await api.editPost(job.id, prompt, range, writing);
+              })
+            }
+            onApply={() => void run(() => api.applyEdit(job.id))}
+            onDiscard={() => void run(() => api.discardEdit(job.id))}
+            onCancel={cancel}
+          />
+
+          {!busy && (
+            <section className="blog-card publish-card" aria-label="블로그에 올리기">
+              <div className="blog-card-head">
+                <h3>블로그에 올리기</h3>
+                <span className="hint small">본문을 확인한 뒤 올릴 곳과 방식을 골라 이 글을 블로그에 올립니다.</span>
+              </div>
+              {nextStep}
+            </section>
+          )}
+
         </>
       )}
 
-      {job.sources.length > 0 && (
-        <details>
-          <summary>수집한 출처 ({job.sources.length})</summary>
-          <ul className="sources">
-            {job.sources.map((s) => (
-              <li key={s.url}>
-                {s.kind && <span className={`kind-badge ${s.kind}`}>{SOURCE_KIND[s.kind]}</span>}
-                <a href={s.url} target="_blank" rel="noreferrer noopener">
-                  {s.title || s.url}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </details>
-      )}
+      <Report post={draft ?? undefined} rulesSnapshot={job.rulesSnapshot} sources={job.sources} researchNotes={job.researchNotes} />
 
-      {job.researchNotes && (
-        <details>
-          <summary>리서치 노트</summary>
-          <pre className="notes">{job.researchNotes}</pre>
-        </details>
-      )}
+      <details className="logs">
+        <summary>진행 로그 ({job.logs.length})</summary>
+        <ol>
+          {job.logs.map((l, i) => (
+            <li key={i}>
+              <time>{new Date(l.at).toLocaleTimeString("ko-KR")}</time> {l.message}
+            </li>
+          ))}
+        </ol>
+      </details>
 
       <JobUsage jobId={job.id} status={job.status} />
-
-      {job.rulesSnapshot && (
-        <details>
-          <summary>이 글에 적용된 글쓰기 규칙</summary>
-          <pre className="notes">{job.rulesSnapshot}</pre>
-        </details>
-      )}
-
-      {draft && (
-        <div className="footer-actions">
-          <button onClick={retry} disabled={busy}>
-            자료 조사부터 다시 하기
-          </button>
-        </div>
-      )}
     </div>
   );
 }
 
-const SOURCE_KIND = { official: "공식", press: "언론", blog: "블로그·참고용", other: "기타" } as const;

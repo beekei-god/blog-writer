@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { MODEL_CHOICES, RECOMMENDED_MODELS, STAGES, blogIdOf, type ModelChoice, type Settings } from "../shared/types";
 import { api, type DatalabStatus, type WordPressStatus } from "./api";
-import { BlockedSites } from "./BlockedSites";
-import { ExtensionStatus } from "./ExtensionStatus";
+import { LoginWindow } from "./LoginWindow";
+import { ClaudeAuth } from "./ClaudeAuth";
 import { ImageApiSettings } from "./ImageApiSettings";
 import { SearchAdSettings } from "./SearchAdSettings";
 import { errorText, MODEL_CHOICE_LABEL, MODEL_REASON, prettyModel, STAGE_HINT, STAGE_LABEL } from "./labels";
 import { PLATFORM_LABEL } from "../shared/labels";
+import { Sentences } from "./Sentences";
 
 
 /** 네이버·티스토리 블로그 ID 칸 (워드프레스는 카드에서 따로 그린다) */
@@ -32,7 +33,33 @@ const SETTINGS_FIELDS: Record<SettingsGroup, (keyof Settings)[]> = {
   models: ["models"],
 };
 
-export function SettingsPanel({ onSaved, defaultModel }: { onSaved: (s: Settings) => void; defaultModel: string | null }) {
+/** 설정 구분: Claude 설정 / 블로그 설정 / 기능 설정(검색광고·데이터랩·이미지 API) */
+type SettingsTab = "claude" | "blog" | "feature";
+const SETTINGS_TABS: { key: SettingsTab; label: string }[] = [
+  { key: "claude", label: "Claude 설정" },
+  { key: "blog", label: "블로그 설정" },
+  { key: "feature", label: "기능 설정" },
+];
+
+export function SettingsPanel({ onSaved, defaultModel, onUsage }: { onSaved: (s: Settings) => void; defaultModel: string | null; onUsage?: (check: boolean) => void }) {
+  // 설정 구분: Claude 설정이 먼저, 마지막에 본 구분을 기억한다
+  const [group, setGroup] = useState<SettingsTab>(() => {
+    try {
+      const saved = localStorage.getItem("settingsGroup");
+      return saved === "blog" || saved === "feature" ? saved : "claude";
+    } catch {
+      return "claude";
+    }
+  });
+  const pickGroup = (g: SettingsTab) => {
+    setGroup(g);
+    try {
+      localStorage.setItem("settingsGroup", g);
+    } catch {
+      /* 저장하지 못해도 화면은 동작한다 */
+    }
+  };
+
   const [s, setS] = useState<Settings | null>(null);
   const [saved, setSaved] = useState<Settings | null>(null);
   // 카드(그룹)마다 따로 저장하고 결과 문구도 따로 둔다 ("load"는 불러오기 실패용)
@@ -146,9 +173,84 @@ export function SettingsPanel({ onSaved, defaultModel }: { onSaved: (s: Settings
         </div>
       </header>
 
-      <p className="hint">
+      <div className="segmented settings-tabs" role="tablist" aria-label="설정 구분">
+        {SETTINGS_TABS.map((t) => (
+          <button key={t.key} type="button" role="tab" aria-selected={group === t.key} className={group === t.key ? "on" : ""} onClick={() => pickGroup(t.key)}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {group === "claude" && (
+        <>
+      <section className="card">
+        <h3 className="card-title">Claude 계정 설정</h3>
+        <ClaudeAuth onUsage={onUsage} />
+      </section>
+
+      <section className="card">
+        <div className="card-head">
+          <h3 className="card-title">Claude 모델 설정</h3>
+          <button
+            type="button"
+            disabled={STAGES.every((st) => s.models[st] === RECOMMENDED_MODELS[st])}
+            onClick={() => setS({ ...s, models: { ...RECOMMENDED_MODELS } })}
+          >
+            모두 추천 모델로
+          </button>
+        </div>
+        <Sentences className="hint small">
+          단계마다 쓸 모델을 고릅니다. 처음에는 단계별 <b>추천</b> 모델이 설정되어 있습니다. 좋은 모델일수록 결과가 낫지만 플랜 한도를 빨리 씁니다.
+          "Claude Code 설정"은 Claude Code에 설정된 모델{defaultModel ? `(지금은 ${prettyModel(defaultModel)})` : ""}을 따릅니다. 바꾸면 다음 작업부터
+          적용됩니다.
+        </Sentences>
+        {STAGES.map((stage) => {
+          const rec = RECOMMENDED_MODELS[stage];
+          return (
+            <div className="model-row" key={stage}>
+              <div className="model-info">
+                <span className="field-label">{STAGE_LABEL[stage]}</span>
+                <Sentences className="hint small">{STAGE_HINT[stage]}</Sentences>
+                <p className="model-reason">
+                  추천 {rec === "default" ? "Claude Code 설정" : MODEL_CHOICE_LABEL[rec].name}: {MODEL_REASON[stage]}
+                </p>
+              </div>
+              <div className="segmented">
+                {MODEL_CHOICES.map((m: ModelChoice) => (
+                  <button
+                    key={m}
+                    type="button"
+                    className={`${s.models[stage] === m ? "on" : ""} ${m === rec ? "rec" : ""}`}
+                    title={m === "default" ? "Claude Code에 설정된 모델" : MODEL_CHOICE_LABEL[m].hint}
+                    onClick={() => setS({ ...s, models: { ...s.models, [stage]: m } })}
+                  >
+                    {m === "default" ? "Claude Code 설정" : MODEL_CHOICE_LABEL[m].name}
+                    {m === rec && <span className="rec-badge">추천</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+        <Sentences className="hint small">
+          Fable: {MODEL_CHOICE_LABEL.fable.hint} · Opus: {MODEL_CHOICE_LABEL.opus.hint} · Sonnet: {MODEL_CHOICE_LABEL.sonnet.hint} · Haiku:{" "}
+          {MODEL_CHOICE_LABEL.haiku.hint}
+        </Sentences>
+        <div className="form-actions">
+          <button className="primary" onClick={() => saveGroup("models")} disabled={!dirtyOf("models")}>
+            저장
+          </button>
+          {msgs.models && <span className={msgs.models.ok ? "ok-text" : "error"}>{msgs.models.text}</span>}
+        </div>
+      </section>
+        </>
+      )}
+
+      {group === "blog" && (
+        <>
+      <Sentences className="hint">
         블로그는 각각 따로 설정해 둡니다. 글을 올릴 때마다 글 화면에서 올릴 블로그를 직접 고릅니다 (기본 블로그는 없습니다).
-      </p>
+      </Sentences>
 
       {(["naver", "tistory"] as const).map((p) => {
         const field = p === "naver" ? "naverBlogId" : "tistoryBlogId";
@@ -158,14 +260,18 @@ export function SettingsPanel({ onSaved, defaultModel }: { onSaved: (s: Settings
           <section className="card" key={p}>
             <h3 className="card-title">{PLATFORM_LABEL[p]} 설정</h3>
             <p className={`status-line ${connected ? "on" : ""}`}>{connected ? `● 설정됨 (${blogIdOf(saved ?? s, p)})` : "○ 설정 안 됨"}</p>
-            <label className="field">
+            <div className="field">
               <span className="field-label">{info.label}</span>
-              <input value={s[field] ?? ""} placeholder={info.placeholder} onChange={(e) => setS({ ...s, [field]: e.target.value || undefined })} />
+              <div className="input-row">
+                <input aria-label={info.label} value={s[field] ?? ""} placeholder={info.placeholder} onChange={(e) => setS({ ...s, [field]: e.target.value || undefined })} />
+                {/* 로그인 창 열기: 블로그 입력칸 오른쪽 */}
+                <LoginWindow platform={p} compact />
+              </div>
               <span className="hint small">{info.help}</span>
-            </label>
-            <p className="hint small">
-              글을 올릴 때 임시저장·예약발행·자동발행 중에서 고릅니다 (늘 임시저장을 먼저 합니다). 평소 쓰는 크롬에서 {PLATFORM_LABEL[p]}에 로그인해 두세요 (아래 "Claude in Chrome" 참고).
-            </p>
+            </div>
+            <Sentences className="hint small">
+              글을 올릴 때 임시저장·예약발행·자동발행 중에서 고릅니다 (늘 임시저장을 먼저 합니다). 평소 쓰는 크롬에서 {PLATFORM_LABEL[p]}에 로그인해 두세요. 로그인 창 열기 버튼을 클릭해 로그인을 해주세요. 한 번 로그인하면 유지됩니다.
+            </Sentences>
             <div className="form-actions">
               <button className="primary" onClick={() => saveGroup(p)} disabled={!dirtyOf(p)}>
                 저장
@@ -197,10 +303,10 @@ export function SettingsPanel({ onSaved, defaultModel }: { onSaved: (s: Settings
         <p className={`status-line ${wp?.configured ? "on" : ""}`}>
           {wp?.configured ? `● 연결됨 (${wp.username})` : "○ 연결 안 됨"}
         </p>
-        <p className="hint small">
+        <Sentences className="hint small">
           wp-admin → 사용자 → 프로필 → "애플리케이션 비밀번호"에서 만든 값을 넣으세요. 로그인 비밀번호가 아닙니다. https 사이트에서만 쓸 수 있고, 값은 이 컴퓨터에만 저장되며
           화면으로 다시 보이지 않습니다.
-        </p>
+        </Sentences>
         <div className="key-inputs">
           <input value={wpUser} onChange={(e) => setWpUser(e.target.value)} placeholder="사용자명" autoComplete="off" />
           <input type="password" value={wpPass} onChange={(e) => setWpPass(e.target.value)} placeholder="Application Password" autoComplete="off" />
@@ -217,9 +323,15 @@ export function SettingsPanel({ onSaved, defaultModel }: { onSaved: (s: Settings
           {wpMsg && <span className={wpMsg.ok ? "ok-text" : "error"}>{wpMsg.text}</span>}
         </div>
         {wp?.configured && (
-          <p className="hint small">카테고리는 글을 올릴 때마다 글 화면에서 고릅니다. 태그는 글마다 이름으로 찾고, 없으면 만듭니다.</p>
+          <Sentences className="hint small">카테고리는 글을 올릴 때마다 글 화면에서 고릅니다. 태그는 글마다 이름으로 찾고, 없으면 만듭니다.</Sentences>
         )}
       </section>
+        </>
+      )}
+
+      {group === "feature" && (
+        <>
+      <SearchAdSettings />
 
       <section className="card">
         <h3 className="card-title">
@@ -228,10 +340,13 @@ export function SettingsPanel({ onSaved, defaultModel }: { onSaved: (s: Settings
         <p className={`status-line ${datalab?.configured ? "on" : ""}`}>
           {datalab?.configured ? `● 연결됨 (Client ID ${datalab.clientIdHint})` : "○ 연결 안 됨"}
         </p>
-        <p className="hint small">
+        <Sentences className="hint small">
           연결하면 주제 추천에서 후보마다 최근 검색 관심도를 비교해 순위를 매깁니다. 네이버 클라우드 플랫폼의 NAVER API HUB에서 Application을
           등록하고 "검색어 트렌드" API를 사용 설정한 뒤 받은 Client ID/Secret을 넣으세요. 키는 이 컴퓨터에만 저장됩니다.
-        </p>
+        </Sentences>
+        <Sentences className="hint small">
+          <b>설정하지 않으면</b> 주제 추천은 그대로 되지만, 후보의 검색 관심도를 비교하지 못해 순위 없이 찾은 순서대로 보여 줍니다. 글 작성과 키워드 탐색, 블로그 올리기에는 영향이 없습니다.
+        </Sentences>
         <div className="key-inputs">
           <input value={keyId} onChange={(e) => setKeyId(e.target.value)} placeholder="Client ID" autoComplete="off" />
           <input type="password" value={keySecret} onChange={(e) => setKeySecret(e.target.value)} placeholder="Client Secret" autoComplete="off" />
@@ -249,97 +364,9 @@ export function SettingsPanel({ onSaved, defaultModel }: { onSaved: (s: Settings
         </div>
       </section>
 
-      <SearchAdSettings />
-
       <ImageApiSettings />
-
-      <section className="card">
-        <div className="card-head">
-          <h3 className="card-title">Claude 모델 설정</h3>
-          <button
-            type="button"
-            disabled={STAGES.every((st) => s.models[st] === RECOMMENDED_MODELS[st])}
-            onClick={() => setS({ ...s, models: { ...RECOMMENDED_MODELS } })}
-          >
-            모두 추천 모델로
-          </button>
-        </div>
-        <p className="hint small">
-          단계마다 쓸 모델을 고릅니다. 처음에는 단계별 <b>추천</b> 모델이 설정되어 있습니다. 좋은 모델일수록 결과가 낫지만 플랜 한도를 빨리 씁니다.
-          "Claude Code 설정"은 Claude Code에 설정된 모델{defaultModel ? `(지금은 ${prettyModel(defaultModel)})` : ""}을 따릅니다. 바꾸면 다음 작업부터
-          적용됩니다.
-        </p>
-        {STAGES.map((stage) => {
-          const rec = RECOMMENDED_MODELS[stage];
-          return (
-            <div className="model-row" key={stage}>
-              <div className="model-info">
-                <span className="field-label">{STAGE_LABEL[stage]}</span>
-                <p className="hint small">{STAGE_HINT[stage]}</p>
-                <p className="model-reason">
-                  추천 {rec === "default" ? "Claude Code 설정" : MODEL_CHOICE_LABEL[rec].name}: {MODEL_REASON[stage]}
-                </p>
-              </div>
-              <div className="segmented">
-                {MODEL_CHOICES.map((m: ModelChoice) => (
-                  <button
-                    key={m}
-                    type="button"
-                    className={`${s.models[stage] === m ? "on" : ""} ${m === rec ? "rec" : ""}`}
-                    title={m === "default" ? "Claude Code에 설정된 모델" : MODEL_CHOICE_LABEL[m].hint}
-                    onClick={() => setS({ ...s, models: { ...s.models, [stage]: m } })}
-                  >
-                    {m === "default" ? "Claude Code 설정" : MODEL_CHOICE_LABEL[m].name}
-                    {m === rec && <span className="rec-badge">추천</span>}
-                  </button>
-                ))}
-              </div>
-            </div>
-          );
-        })}
-        <p className="hint small">
-          Fable: {MODEL_CHOICE_LABEL.fable.hint} · Opus: {MODEL_CHOICE_LABEL.opus.hint} · Sonnet: {MODEL_CHOICE_LABEL.sonnet.hint} · Haiku:{" "}
-          {MODEL_CHOICE_LABEL.haiku.hint}
-        </p>
-        <div className="form-actions">
-          <button className="primary" onClick={() => saveGroup("models")} disabled={!dirtyOf("models")}>
-            저장
-          </button>
-          {msgs.models && <span className={msgs.models.ok ? "ok-text" : "error"}>{msgs.models.text}</span>}
-        </div>
-      </section>
-
-      <section className="card">
-        <h3 className="card-title">Claude in Chrome</h3>
-        <div className="explain">
-          <p>
-            <b>왜 설정해야 하나요?</b> 네이버·티스토리는 글을 올릴 수 있는 공개 API가 없어서, 이 앱은 평소 쓰는 크롬에서 글쓰기 화면을 대신 조작해 임시저장하고, 고른 방식대로 발행합니다.
-            Gemini·ChatGPT로 이미지를 만들 때도 같은 크롬(로그인된 상태 그대로)을 씁니다. 이 조작을 Claude가 하려면 크롬에 <b>Claude in Chrome 확장 프로그램</b>이
-            연결되어 있어야 합니다.
-          </p>
-          <ul>
-            <li>
-              <b>필요한 경우</b>: 네이버·티스토리에 글을 올릴 때, Gemini·ChatGPT로 이미지를 만들 때
-            </li>
-            <li>
-              <b>필요 없는 경우</b>: 워드프레스(API로 올림), Claude(SVG)로 만드는 이미지, 자료 조사와 글 작성
-            </li>
-            <li>
-              <b>설정하지 않으면</b>: 필요한 작업이 "확장 프로그램에 연결하지 못했습니다" 오류로 실패합니다. 작업 중에는 Claude가 연 탭 그룹을 건드리지 마세요.
-            </li>
-          </ul>
-        </div>
-
-        <div className="sub-section">
-          <h4 className="sub-title">1. 확장 프로그램 연결</h4>
-          <ExtensionStatus />
-        </div>
-
-        <div className="sub-section">
-          <h4 className="sub-title">2. 확장이 막는 블로그 (대체 방법)</h4>
-          <BlockedSites />
-        </div>
-      </section>
+        </>
+      )}
     </div>
   );
 }

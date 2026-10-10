@@ -262,7 +262,7 @@ export type JobStatus = "researching" | "writing" | "generating_images" | "draft
 
 /**
  * 블로그 하나에서의 글 상태
- * - posted: 임시저장 완료
+ * - posted: 임시저장
  * - scheduled: 예약발행을 걸어 둠 (예약 시각에 블로그가 공개한다)
  * - published: 발행완료 (앱이 자동발행했거나, 사용자가 직접 발행한 뒤 표시함)
  */
@@ -271,6 +271,8 @@ export interface BlogState {
   status: BlogStatus;
   /** 이 상태가 된 시각 (ISO) */
   at: string;
+  /** 발행예약(scheduled)일 때 실제 예약 시각 (ISO). 직접 표시해서 시각을 모르면 null */
+  scheduledAt?: string | null;
 }
 /** 블로그별 상태 (올리지 않은 블로그는 없다) */
 export type BlogStates = Partial<Record<Platform, BlogState>>;
@@ -292,8 +294,8 @@ export interface WordPressRecord {
 
 export const BUSY_STATUSES: JobStatus[] = ["researching", "writing", "generating_images", "posting"];
 
-/** 블로그마다 사용자가 직접 고를 수 있는 상태 (앱이 블로그에 올리거나 발행하지는 않고 표시만 바꾼다). none은 그 블로그에 올리지 않음 */
-export const MANUAL_STATUSES = ["none", "posted", "published"] as const;
+/** 블로그마다 사용자가 직접 고를 수 있는 상태 (앱이 블로그에 올리거나 발행하지는 않고 표시만 바꾼다). none은 그 블로그에 아직 올리지 않은 초안검토 상태 */
+export const MANUAL_STATUSES = ["none", "posted", "scheduled", "published"] as const;
 export type ManualStatus = (typeof MANUAL_STATUSES)[number];
 
 /** 키워드 탐색 결과 한 줄 (네이버 검색광고 키워드 도구). 월간 검색량이 10 미만이면 값은 5로 두고 `lowPc`·`lowMobile`로 표시한다 */
@@ -362,7 +364,7 @@ export interface Job {
   imageOptions: ImageOptions;
   /** 이 작업을 만들 때 고른 분량·말투. 예전 작업에는 없다 (기본값: 2,500자, 글쓰기 규칙대로의 말투) */
   writingOptions?: WritingOptions;
-  /** 블로그별 상태 (임시저장 완료·발행 예약·발행완료). 한 블로그에 올려도 다른 블로그의 상태는 그대로다 */
+  /** 블로그별 상태 (임시저장·발행예약·발행완료). 한 블로그에 올려도 다른 블로그의 상태는 그대로다 */
   blogs?: BlogStates;
   /** 블로그에 올리는 중(status "posting")일 때 올리는 블로그. 화면 안내 문구가 크롬 작성인지 워드프레스 등록인지 구분한다 */
   postingTo?: Platform;

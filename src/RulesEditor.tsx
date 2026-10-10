@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { api, type Rules } from "./api";
 import { setLeaveGuard } from "./leaveGuard";
 import { errorText } from "./labels";
+import { Sentences } from "./Sentences";
 
 export function RulesEditor() {
   const [rules, setRules] = useState<Rules | null>(null);
@@ -57,12 +58,12 @@ export function RulesEditor() {
       <header>
         <div>
           <h2>글쓰기 규칙</h2>
-          <p className="hint small">
+          <Sentences className="hint small">
             {rules.isDefault
               ? "기본 규칙을 사용 중입니다."
               : `수정본 사용 중 · 마지막 수정 ${new Date(rules.updatedAt!).toLocaleString("ko-KR")}`}
             {" "}· 리서치와 글 작성 단계에 그대로 전달되며, 저장하면 다음 작업부터 적용됩니다 (진행 중인 작업에는 적용되지 않음).
-          </p>
+          </Sentences>
         </div>
         <div className="actions">
           {dirty && <span className="save-state pending">저장 안 됨</span>}
@@ -77,7 +78,7 @@ export function RulesEditor() {
           </button>
         </div>
       </header>
-      {msg && <p className="hint">{msg}</p>}
+      {msg && <Sentences className="hint">{msg}</Sentences>}
       <textarea className="rules-text" value={draft} onChange={(e) => setDraft(e.target.value)} spellCheck={false} />
     </div>
   );

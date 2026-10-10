@@ -139,6 +139,18 @@ describe("워드프레스 등록 (가짜 사이트)", () => {
     expect(saved.blogs?.naver).toEqual(naver);
     expect(saved.blogs?.wordpress?.status).toBe("posted");
   });
+  it("예약발행하면 그 블로그 상태에 실제 예약 시각을 남긴다", async () => {
+    fakeWordPress(standard);
+    const job = await createJob("주제", { thumbnail: false, bodyImages: 0, provider: "claude", style: "flat" });
+    await updateJob(job.id, (j) => {
+      j.status = "draft_ready";
+      j.post = { ...post, thumbnail: undefined, blocks: [{ type: "paragraph", text: "본문" }] };
+    });
+    const at = new Date(Date.now() + 2 * 3600_000).toISOString();
+    await runPost(job.id, { platform: "wordpress", mode: "schedule", scheduledAt: at });
+    const wp = (await getJob(job.id))!.blogs?.wordpress;
+    expect(wp).toMatchObject({ status: "scheduled", scheduledAt: at });
+  });
   it("이미 올린 글은 갱신하고, 올린 이미지는 다시 올리지 않는다", async () => {
     fakeWordPress((c) => (c.method === "GET" && /\/wp\/v2\/media\/\d+/.test(c.url) ? { json: { id: 10, source_url: "https://wp.example/up.png" } } : standard(c)));
     const existing = { postId: 100, link: "", mode: "draft" as const, mediaIds: { "thumbnail-1.png": { id: 10, url: "" }, "body-1-1.png": { id: 20, url: "" } } };

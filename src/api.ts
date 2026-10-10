@@ -43,11 +43,15 @@ export interface LoginWindowStatus {
   platform: "naver" | "tistory" | null;
   automationRunning: boolean;
 }
-/** fallback: 막힌 뒤 실제로 쓰는 경로. user-chrome=평소 크롬(AppleScript), app-chrome=앱 전용 크롬 자동 조작 */
-export type BlockedSites = Partial<
-  Record<"naver" | "tistory" | "wordpress", { at: string; detail: string; fallback?: "user-chrome" | "app-chrome" }>
->;
-
+export interface ClaudeAuthStatus {
+  loggedIn: boolean;
+  email: string | null;
+  organization: string | null;
+  method: string | null;
+  loginRunning: boolean;
+  loginUrl: string | null;
+  loginError: string | null;
+}
 export interface ExtensionStatusInfo {
   installed: boolean;
   connected: boolean | null;
@@ -144,7 +148,7 @@ export const api = {
   getCategories: (platform: Platform) => req<CategoryList>(`/api/categories/${platform}`),
   /** 네이버·티스토리: 블로그 에디터에서 카테고리 목록을 읽어 온다 (글은 저장하지 않는다) */
   refreshCategories: (platform: Platform) => req<CategoryList>(`/api/categories/${platform}/refresh`, { method: "POST" }),
-  /** 블로그 하나의 상태를 직접 바꾼다 (올리지 않음·임시저장 완료·발행완료). 다른 블로그의 상태는 그대로 */
+  /** 블로그 하나의 상태를 직접 바꾼다 (초안검토·임시저장·발행예약·발행완료). 다른 블로그의 상태는 그대로 */
   setBlogStatus: (id: string, platform: Platform, status: ManualStatus) =>
     req<Job>(`/api/jobs/${id}/blogs/${platform}/status`, { method: "PUT", body: JSON.stringify({ status }) }),
   /** 제목 후보만 새로 만든다 (글에는 넣지 않고 돌려준다) */
@@ -156,11 +160,16 @@ export const api = {
   openLoginWindow: (platform: "naver" | "tistory") =>
     req<LoginWindowStatus>("/api/browser/login", { method: "POST", body: JSON.stringify({ platform }) }),
   closeLoginWindow: () => req<LoginWindowStatus>("/api/browser/login/close", { method: "POST" }),
-  getBlockedSites: () => req<BlockedSites>("/api/blocked-sites"),
-  clearBlockedSites: () => req<BlockedSites>("/api/blocked-sites", { method: "DELETE" }),
   getExtension: () => req<ExtensionStatusInfo>("/api/chrome-extension"),
   checkExtension: () => req<ExtensionStatusInfo>("/api/chrome-extension/check", { method: "POST" }),
   getUsage: () => req<UsageSummary>("/api/usage"),
+  /** Claude Code 로그인 상태 (계정 표시용 값만) */
+  /** Claude in Chrome 확장 프로그램의 로그인(설정) 화면을 평소 쓰는 크롬에서 연다. 설치되어 있지 않으면 설치 페이지를 연다 */
+  openExtensionOptions: () => req<{ ok: true; opened: "options" | "install" }>("/api/chrome-extension/open-options", { method: "POST" }),
+  getClaudeAuth: () => req<ClaudeAuthStatus>("/api/claude/auth"),
+  /** 로그인 창을 연다. switchAccount면 지금 계정에서 로그아웃한 뒤 다른 계정으로 로그인 */
+  loginClaude: (switchAccount = false) => req<ClaudeAuthStatus>("/api/claude/auth/login", { method: "POST", body: JSON.stringify({ switch: switchAccount }) }),
+  cancelClaudeLogin: () => req<ClaudeAuthStatus>("/api/claude/auth/cancel", { method: "POST" }),
   checkPlan: () => req<UsageSummary>("/api/usage/check", { method: "POST" }),
   getJobUsage: (id: string) => req<{ model: string; totals: TokenTotals }[]>(`/api/jobs/${id}/usage`),
 };

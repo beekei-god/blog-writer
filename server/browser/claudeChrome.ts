@@ -8,6 +8,8 @@ import path from "node:path";
  */
 const EXTENSION_ID = "fcoeoabgfenejglbffodgkkbkcdhcgfn";
 export const INSTALL_URL = "https://claude.ai/chrome";
+/** 확장 프로그램의 설정(로그인) 화면. 웹 페이지의 링크로는 열 수 없어 서버가 크롬에 직접 연다 */
+export const EXTENSION_OPTIONS_URL = `chrome-extension://${EXTENSION_ID}/options.html`;
 
 export type ExtensionProblem = "not_installed" | "not_connected";
 

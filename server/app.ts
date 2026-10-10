@@ -8,6 +8,7 @@ import { router as keywordsRouter } from "./routes/keywords";
 import { router as recommendationsRouter } from "./routes/recommendations";
 import { router as settingsRouter } from "./routes/settings";
 import { router as usageRouter } from "./routes/usage";
+import { router as claudeAuthRouter } from "./routes/claudeAuth";
 
 /** API 앱. 서버 시작(복구·listen)은 index.ts가 한다. */
 export function createApp() {
@@ -31,7 +32,7 @@ export function createApp() {
   });
   app.use(express.json({ limit: "2mb" }));
 
-  for (const router of [settingsRouter, browserRouter, usageRouter, recommendationsRouter, jobsRouter, imagesRouter, categoriesRouter, editRouter, keywordsRouter]) app.use(router);
+  for (const router of [settingsRouter, browserRouter, usageRouter, claudeAuthRouter, recommendationsRouter, jobsRouter, imagesRouter, categoriesRouter, editRouter, keywordsRouter]) app.use(router);
 
   app.use(((err, _req, res, _next) => {
     // JSON 파싱 오류 등 body-parser 오류는 4xx 상태를 그대로 돌려준다.

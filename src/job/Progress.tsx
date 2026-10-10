@@ -9,8 +9,8 @@ export function Progress({ job }: { job: Job }) {
     { key: "researching", label: "자료 조사" },
     { key: "writing", label: "글 작성" },
     ...(wantImages ? [{ key: "generating_images" as const, label: "이미지 생성" }] : []),
-    { key: "draft_ready", label: "초안 검토" },
-    // 블로그에 올리는 중(posting)과 임시저장 완료(posted)는 한 단계다.
+    { key: "draft_ready", label: "초안검토" },
+    // 블로그에 올리는 중(posting)과 임시저장(posted)는 한 단계다.
     { key: "posted", label: "블로그 임시저장" },
     { key: "published", label: "블로그 발행완료" },
   ];
@@ -23,7 +23,7 @@ export function Progress({ job }: { job: Job }) {
     failed = true;
     current = job.researchNotes ? 1 : 0;
   } else {
-    // 올리는 중은 블로그 임시저장 단계를 진행 중으로, 발행 예약은 그 단계까지 끝난 것으로 본다.
+    // 올리는 중은 블로그 임시저장 단계를 진행 중으로, 발행예약은 그 단계까지 끝난 것으로 본다.
     const key = job.status === "posting" || blog === "scheduled" ? "posted" : (blog ?? job.status);
     current = steps.findIndex((s) => s.key === key);
   }

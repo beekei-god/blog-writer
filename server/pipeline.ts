@@ -26,9 +26,9 @@ const running = new Set<string>();
 // Claude in Chrome 작업(블로그 작성, Gemini·ChatGPT 이미지)은 같은 크롬을 쓰므로 하나씩 실행한다.
 export const enqueueBrowser = serialQueue();
 
-/** 그 블로그의 상태만 바꾼다 (다른 블로그의 상태는 그대로). 글 자체는 초안 검토로 돌아온다 */
-function setBlogStatus(j: Job, p: Platform, status: BlogStatus) {
-  j.blogs = { ...j.blogs, [p]: { status, at: new Date().toISOString() } };
+/** 그 블로그의 상태만 바꾼다 (다른 블로그의 상태는 그대로). 글 자체는 초안검토로 돌아온다 */
+function setBlogStatus(j: Job, p: Platform, status: BlogStatus, scheduledAt?: string) {
+  j.blogs = { ...j.blogs, [p]: { status, at: new Date().toISOString(), ...(status === "scheduled" ? { scheduledAt: scheduledAt ?? null } : {}) } };
   j.status = "draft_ready";
 }
 
@@ -429,7 +429,7 @@ async function doWordPressPost(id: string, mode: PublishMode, scheduledAt?: stri
     const status: BlogStatus = r.wpStatus === "publish" ? "published" : r.wpStatus === "future" ? "scheduled" : "posted";
     await updateJob(id, (j) => {
       j.wordpress = { postId: r.postId, link: r.link, mode: r.mode, scheduledAt: r.scheduledAt, mediaIds: r.mediaIds };
-      setBlogStatus(j, "wordpress", status);
+      setBlogStatus(j, "wordpress", status, r.scheduledAt ?? scheduledAt);
     });
     const done = { published: "발행했습니다", scheduled: "예약했습니다", posted: "임시저장했습니다" }[status];
     await log(id, `워드프레스에 ${done}: ${r.link}`);
@@ -445,7 +445,7 @@ async function doWordPressPost(id: string, mode: PublishMode, scheduledAt?: stri
 
 /**
  * 크롬으로 네이버·티스토리에 올린다. 늘 임시저장을 먼저 하고, 예약발행·자동발행이면 이어서 발행 창에서 발행한다.
- * 발행 창에서 멈추면(PublishStepError) 글은 임시저장된 채이므로 상태를 임시저장 완료로 두고 이유를 오류로 남긴다.
+ * 발행 창에서 멈추면(PublishStepError) 글은 임시저장된 채이므로 상태를 임시저장로 두고 이유를 오류로 남긴다.
  */
 async function doPost(id: string, platform: Platform, publish: PublishRequest) {
   try {
@@ -494,7 +494,7 @@ async function doPost(id: string, platform: Platform, publish: PublishRequest) {
     }
     const status: BlogStatus = publish.mode === "publish" ? "published" : publish.mode === "schedule" ? "scheduled" : "posted";
     if (publish.mode !== "draft") await log(id, `${PLATFORM_LABEL[platform]}에 ${publishedText(publish)}.`);
-    await updateJob(id, (j) => setBlogStatus(j, platform, status));
+    await updateJob(id, (j) => setBlogStatus(j, platform, status, publish.scheduledAt));
   } catch (e) {
     if (e instanceof PublishStepError) {
       // 임시저장까지는 됐다.

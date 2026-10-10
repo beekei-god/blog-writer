@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { STAGES, type PlanWindow, type Settings, type TokenTotals, type UsageSummary } from "../shared/types";
 import { api } from "./api";
+import { Sentences } from "./Sentences";
 import {
   errorText,
   fmtTokens,
@@ -52,7 +53,7 @@ export function Usage({ summary, settings, onSummary, onOpenSettings }: Props) {
       <header>
         <div>
           <h2>Claude 사용량</h2>
-          <p className="hint small">이 앱은 이 컴퓨터에 로그인된 Claude Code로 Claude를 부릅니다. API 요금은 나가지 않고, Claude 플랜 한도를 씁니다.</p>
+          <Sentences className="hint small">이 앱은 이 컴퓨터에 로그인된 Claude Code로 Claude를 부릅니다. API 요금은 나가지 않고, Claude 플랜 한도를 씁니다.</Sentences>
         </div>
       </header>
 
@@ -72,12 +73,12 @@ export function Usage({ summary, settings, onSummary, onOpenSettings }: Props) {
             <Meter label="주간 한도 (7일)" w={plan.sevenDay} />
           </div>
         ) : (
-          <p className="hint">아직 확인한 값이 없습니다. "지금 확인"을 누르거나 글을 하나 만들면 표시됩니다.</p>
+          <Sentences className="hint">아직 확인한 값이 없습니다. "지금 확인"을 누르거나 글을 하나 만들면 표시됩니다.</Sentences>
         )}
-        <p className="hint small">
+        <Sentences className="hint small">
           계정 전체 사용량입니다. 이 앱뿐 아니라 터미널의 Claude Code 등 같은 계정으로 쓴 양이 모두 포함됩니다. "지금 확인"은 Haiku로 아주 짧은
           요청을 한 번 보내서 최신 값을 받아 옵니다.
-        </p>
+        </Sentences>
         {error && <p className="error">{error}</p>}
       </section>
 
@@ -88,7 +89,7 @@ export function Usage({ summary, settings, onSummary, onOpenSettings }: Props) {
           <Tile label={`이번 주 (${summary.weekStart.slice(5).replace("-", "/")} 월요일부터)`} t={summary.week} />
         </div>
         <DailyBars days={summary.days} />
-        <p className="hint small">중지하거나 시간 초과로 끊긴 호출의 토큰은 기록되지 않아 실제보다 적게 보일 수 있습니다.</p>
+        <Sentences className="hint small">중지하거나 시간 초과로 끊긴 호출의 토큰은 기록되지 않아 실제보다 적게 보일 수 있습니다.</Sentences>
       </section>
 
       <section className="card">
@@ -163,7 +164,7 @@ export function Usage({ summary, settings, onSummary, onOpenSettings }: Props) {
               </tbody>
             </table>
           </div>
-          <p className="hint small">정가 환산은 같은 양을 API로 썼을 때의 금액입니다. 구독 플랜에는 따로 청구되지 않습니다.</p>
+          <Sentences className="hint small">정가 환산은 같은 양을 API로 썼을 때의 금액입니다. 구독 플랜에는 따로 청구되지 않습니다.</Sentences>
         </section>
       )}
     </div>

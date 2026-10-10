@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Recommendation, TopicCandidate } from "../shared/types";
 import { api } from "./api";
 import { errorText } from "./labels";
+import { Sentences } from "./Sentences";
 
 const EVIDENCE_KIND = { news: "뉴스", stat: "통계", official: "공식" } as const;
 
@@ -133,10 +134,10 @@ export function Recommend({
       <header>
         <div>
           <h2>주제 추천</h2>
-          <p className="hint small">
+          <Sentences className="hint small">
             입력한 분야에서 최근 뉴스·통계를 찾아 주제 후보를 만들고, 네이버 자동완성과 데이터랩 검색 관심도로 순위를 매깁니다.
             관심도는 기준 키워드의 최근 4주 평균을 100으로 놓은 상대값이고, ▲▼는 최근 7일과 그 전 3주의 비교입니다.
-          </p>
+          </Sentences>
         </div>
       </header>
       {datalabConfigured === false && (

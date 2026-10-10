@@ -163,7 +163,7 @@ describe("카테고리 목록", () => {
 
 describe("블로그별 수기 상태 변경", () => {
   const set = (id: string, platform: string, status: string) => call("PUT", `/api/jobs/${id}/blogs/${platform}/status`, { status });
-  it("블로그마다 올리지 않음·임시저장 완료·발행완료를 오가고, 다른 블로그의 상태는 그대로", async () => {
+  it("블로그마다 초안검토·임시저장·발행예약·발행완료를 오가고, 다른 블로그의 상태는 그대로", async () => {
     const id = await draftJob();
     const r = await set(id, "naver", "published");
     expect(r.status).toBe(200);
@@ -173,18 +173,23 @@ describe("블로그별 수기 상태 변경", () => {
     const back = await set(id, "naver", "none");
     expect(back.body.blogs).toEqual({ wordpress: expect.objectContaining({ status: "posted" }) });
     expect(back.body.status).toBe("draft_ready"); // 글 자체의 상태는 그대로
-    await updateJob(id, (j) => void (j.blogs = { tistory: { status: "scheduled", at: "x" } }));
+    const sch = await set(id, "tistory", "scheduled"); // 발행예약도 직접 표시할 수 있다
+    expect(sch.body.blogs.tistory.status).toBe("scheduled");
+    expect((await getJob(id))?.logs.at(-1)?.message).toBe("티스토리 상태를 발행예약(으)로 표시했습니다.");
+    expect(sch.body.blogs.tistory.scheduledAt).toBeNull(); // 직접 표시한 예약은 시각을 모른다 (예전 글처럼 채우지 않는다)
     expect((await set(id, "tistory", "posted")).body.blogs.tistory.status).toBe("posted");
+    expect((await set(id, "tistory", "none")).body.blogs.tistory).toBeUndefined();
   });
   it("같은 상태, 초안이 없는 글, 진행 중인 글은 거절", async () => {
     const id = await draftJob();
-    expect((await set(id, "naver", "none")).body.error).toBe("네이버 블로그에서 이미 올리지 않음 상태입니다.");
+    expect((await set(id, "naver", "none")).body.error).toBe("네이버 블로그에서 이미 초안검토 상태입니다.");
     await updateJob(id, (j) => void delete j.post);
     expect((await set(id, "naver", "published")).body.error).toBe("초안이 없는 글은 블로그 상태를 바꿀 수 없습니다.");
   });
   it("수기로 고를 수 없는 상태·없는 블로그", async () => {
     const id = await draftJob();
-    expect((await set(id, "naver", "scheduled")).status).toBe(400);
+    expect((await set(id, "naver", "posting")).status).toBe(400);
+    expect((await set(id, "naver", "failed")).status).toBe(400);
     expect((await set(id, "blogger", "posted")).status).toBe(400);
   });
 });
@@ -202,10 +207,26 @@ describe("예전 글의 상태 옮기기", () => {
     expect(j?.status).toBe("draft_ready");
     expect(j?.blogs).toEqual({ naver: expect.objectContaining({ status: "published" }), wordpress: expect.objectContaining({ status: "published" }) });
   });
-  it("임시저장 완료·발행 예약은 마지막으로 올린 블로그 → 워드프레스 기록 → 네이버 순으로", async () => {
+  it("임시저장·발행예약은 마지막으로 올린 블로그 → 워드프레스 기록 → 네이버 순으로", async () => {
     expect((await legacy("posted", { postingTo: "tistory" }))?.blogs).toEqual({ tistory: expect.objectContaining({ status: "posted" }) });
     expect((await legacy("scheduled", { wordpress: { postId: 1, link: "l", mode: "schedule" } }))?.blogs).toEqual({ wordpress: expect.objectContaining({ status: "scheduled" }) });
     expect((await legacy("posted"))?.blogs).toEqual({ naver: expect.objectContaining({ status: "posted" }) });
+  });
+  it("예약 시각을 저장하기 전에 예약한 글은 10월 11일 오전 5시(한국 시간)로 채운다", async () => {
+    const naver = await legacy("scheduled", { postingTo: "naver" });
+    expect(naver?.blogs?.naver).toMatchObject({ status: "scheduled", scheduledAt: "2026-10-10T20:00:00.000Z" });
+    expect(new Date(naver!.blogs!.naver!.scheduledAt!).toLocaleString("sv-SE", { timeZone: "Asia/Seoul" })).toBe("2026-10-11 05:00:00");
+    // 새 형식으로 저장된 글이라도 scheduledAt 키가 없으면 같이 채운다
+    const id = await draftJob();
+    const file = path.join(DATA_DIR, "jobs", `${id}.json`);
+    const raw = JSON.parse(await fs.readFile(file, "utf8"));
+    await fs.writeFile(file, JSON.stringify({ ...raw, blogs: { tistory: { status: "scheduled", at: "2026-10-09T00:00:00.000Z" } } }));
+    expect((await getJob(id))?.blogs?.tistory?.scheduledAt).toBe("2026-10-10T20:00:00.000Z");
+  });
+  it("예약했던 워드프레스 글은 예약 시각도 옮긴다", async () => {
+    const at = "2026-10-20T00:00:00.000Z";
+    const j = await legacy("scheduled", { wordpress: { postId: 1, link: "l", mode: "schedule", scheduledAt: at } });
+    expect(j?.blogs?.wordpress).toMatchObject({ status: "scheduled", scheduledAt: at });
   });
   it("목록에서도 옮긴 상태로 읽는다", async () => {
     const j = await legacy("posted", { postingTo: "tistory" });

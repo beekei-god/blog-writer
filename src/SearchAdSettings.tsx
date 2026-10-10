@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api, type SearchAdStatus } from "./api";
 import { errorText } from "./labels";
+import { Sentences } from "./Sentences";
 
 /** 네이버 검색광고 API 키 (키워드 탐색의 월간 검색량). 키는 이 컴퓨터에만 저장하고 화면으로는 돌려받지 않는다 */
 export function SearchAdSettings() {
@@ -54,13 +55,17 @@ export function SearchAdSettings() {
       <p className={`status-line ${status?.configured ? "on" : ""}`}>
         {status?.configured ? `● 연결됨 (고객 ID ${status.customerIdHint}${status.fromEnv ? ", .env" : ""})` : "○ 연결 안 됨"}
       </p>
-      <p className="hint small">
+      <Sentences className="hint small">
         네이버 검색광고(searchad.naver.com) 계정은 무료로 만들 수 있습니다. 로그인한 뒤 도구 → API 사용 관리에서 액세스 라이선스(API 키)와 비밀키를
         발급받고, 고객 ID는 같은 화면(또는 계정 정보)에서 확인하세요. 광고를 집행하지 않아도 키워드 도구는 쓸 수 있습니다. 데이터랩·개발자센터 키와는
         다른 키입니다. 키는 이 컴퓨터에만 저장됩니다.
-      </p>
+      </Sentences>
+      <Sentences className="hint small">
+        <b>설정하지 않으면</b> "키워드 탐색"에서 월간 검색량을 조회할 수 없고 조회 버튼이 비활성화됩니다. 글 작성과 주제 추천, 블로그 올리기에는 영향이 없습니다.
+      </Sentences>
       <div className="key-inputs">
         <input value={customerId} onChange={(e) => setCustomerId(e.target.value)} placeholder="고객 ID" autoComplete="off" />
+        <br/>
         <input value={apiKey} onChange={(e) => setApiKey(e.target.value)} placeholder="액세스 라이선스 (API 키)" autoComplete="off" />
         <input type="password" value={secretKey} onChange={(e) => setSecretKey(e.target.value)} placeholder="비밀키" autoComplete="off" />
       </div>

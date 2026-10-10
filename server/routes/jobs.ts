@@ -185,7 +185,7 @@ router.post(
 );
 
 // 초안이 있는 글은 블로그마다 상태를 직접 바꾼다 (앱이 블로그에 올리거나 발행하지는 않고 표시만 바꾼다).
-// 올리지 않음·임시저장 완료·발행완료 중에서 고르고, 다른 블로그의 상태는 그대로 둔다. 발행 예약은 앱이 예약발행했을 때만 생긴다.
+// 초안검토(올리지 않음)·임시저장·발행예약·발행완료 중에서 고르고, 다른 블로그의 상태는 그대로 둔다.
 router.put(
   "/api/jobs/:id/blogs/:platform/status",
   wrap(async (req, res) => {
@@ -205,7 +205,11 @@ router.put(
     const next = await updateJob(id, (j) => {
       const blogs = { ...j.blogs };
       if (status === "none") delete blogs[platform];
-      else blogs[platform] = { status, at: new Date().toISOString() };
+      else {
+        // 워드프레스는 앱이 예약발행한 기록이 있으면 그 예약 시각을 쓴다
+        const scheduledAt = status === "scheduled" && platform === "wordpress" ? j.wordpress?.scheduledAt : undefined;
+        blogs[platform] = { status, at: new Date().toISOString(), ...(status === "scheduled" ? { scheduledAt: scheduledAt ?? null } : {}) };
+      }
       j.blogs = blogs;
       j.error = undefined;
     });

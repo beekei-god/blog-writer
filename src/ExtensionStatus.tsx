@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api, type ExtensionStatusInfo } from "./api";
 import { errorText, timeAgo } from "./labels";
+import { Sentences } from "./Sentences";
 
 /** Claude in Chrome 확장 프로그램 설치·연결 상태와 연결 방법 */
 export function ExtensionStatus({ compact }: { compact?: boolean }) {
@@ -58,11 +59,11 @@ export function ExtensionStatus({ compact }: { compact?: boolean }) {
           <li>크롬을 켜 둔 채 "연결 확인"을 누르세요.</li>
         </ol>
       )}
-      {s.connected === false && s.detail && !compact && <p className="hint small">마지막 오류: {s.detail}</p>}
+      {s.connected === false && s.detail && !compact && <Sentences className="hint small">마지막 오류: {s.detail}</Sentences>}
       {state === "ok" && !compact && (
-        <p className="hint small">
+        <Sentences className="hint small">
           블로그 작성과 Gemini·ChatGPT 이미지는 평소 쓰는 크롬에서 Claude가 진행합니다. 블로그·Gemini·ChatGPT 로그인은 그 크롬에서 해 두세요.
-        </p>
+        </Sentences>
       )}
       {error && <p className="error">{error}</p>}
     </div>

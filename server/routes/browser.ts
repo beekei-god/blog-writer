@@ -3,8 +3,8 @@ import { z } from "zod";
 import { errorText, PLATFORM_SHORT_LABEL } from "../../shared/labels";
 import { settingsFor, type Platform, type PostSettings } from "../../shared/types";
 import { clearBlocked, getBlockedSites } from "../browser/blockedSites";
-import { extensionStatus, INSTALL_URL, rememberConnection } from "../browser/claudeChrome";
-import { closeLoginWindow, isLoginWindowOpen, loginWindowFor, openLoginWindow } from "../browser/loginWindow";
+import { EXTENSION_OPTIONS_URL, extensionStatus, INSTALL_URL, rememberConnection } from "../browser/claudeChrome";
+import { closeLoginWindow, isLoginWindowOpen, loginWindowFor, openInUserChrome, openLoginWindow } from "../browser/loginWindow";
 import { closeAutomationWindow, isAutomationRunning } from "../browser/runner";
 import { userChromeSupported } from "../browser/userChrome";
 import { runClaude } from "../claude";
@@ -15,6 +15,20 @@ import { wrap } from "./util";
 export const router = Router();
 
 // ───── Claude in Chrome 확장 프로그램 ─────
+// Claude in Chrome 확장 프로그램의 로그인(설정) 화면을 평소 쓰는 크롬에서 연다.
+// 확장 프로그램이 설치되어 있지 않으면 설치 페이지를 대신 연다 (opened: "install").
+router.post(
+  "/api/chrome-extension/open-options",
+  wrap(async (_req, res) => {
+    const installed = (await extensionStatus()).installed;
+    try {
+      openInUserChrome(installed ? EXTENSION_OPTIONS_URL : INSTALL_URL);
+    } catch (e) {
+      return void res.status(400).json({ error: errorText(e) });
+    }
+    res.json({ ok: true, opened: installed ? "options" : "install" });
+  }),
+);
 router.get("/api/chrome-extension", wrap(async (_req, res) => res.json({ ...(await extensionStatus()), installUrl: INSTALL_URL })));
 
 // 실제로 연결되는지 확인: Haiku로 연결된 브라우저 목록만 조회한다 (화면은 조작하지 않음).
