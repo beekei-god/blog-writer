@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import type { FrameLocator, Locator, Page } from "playwright-core";
+import { placeLines } from "../../shared/place";
 import { MAX_TAGS, type Platform, type Post, type PostBlock, type PostSettings } from "../../shared/types";
 import { sleep } from "../fsutil";
 import { jobImagePath } from "../store";
@@ -69,6 +70,8 @@ function plainLines(b: PostBlock): string[] {
       return b.items.map((it) => `• ${it}`);
     case "table":
       return tableAsLines(b);
+    case "place":
+      return placeLines(b);
     case "image":
       return [];
   }

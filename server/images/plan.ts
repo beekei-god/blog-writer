@@ -56,6 +56,8 @@ function bodyOutline(post: Post): string {
           return `[${i}] ${b.items.map((it) => `- ${it.replace(/\*\*/g, "")}`).join(" / ")}`;
         case "table":
           return `[${i}] (표) ${[b.headers, ...b.rows].map((r) => r.join(" | ")).join(" ; ")}`;
+        case "place":
+          return `[${i}] (장소) ${b.name}${b.address ? ` · ${b.address}` : ""}`;
         case "image":
           return `[${i}] <이미지 자리>`;
       }

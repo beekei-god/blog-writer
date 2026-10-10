@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { MAX_TAGS, type BlogCategory, type Post, type PostBlock, type PublishMode, type Settings, type WordPressRecord } from "../shared/types";
-import { esc, plain, rich, skippedImageLabel, tableHtml } from "../shared/postHtml";
+import { esc, placeHtml, plain, rich, skippedImageLabel, tableHtml } from "../shared/postHtml";
 import { currentSignal, throwIfCancelled } from "./cancel";
 import { getWordPressAuth, type WordPressAuth } from "./secrets";
 import { getSettings, jobImageDir } from "./store";
@@ -218,6 +218,9 @@ export function postToBlocks(post: Pick<Post, "blocks">, imageOf: (file: string)
         break;
       case "table":
         out.push(`<!-- wp:html -->\n${wpTableHtml(b)}\n<!-- /wp:html -->`);
+        break;
+      case "place":
+        out.push(`<!-- wp:html -->\n${placeHtml(b)}\n<!-- /wp:html -->`);
         break;
       case "image": {
         const m = b.file ? imageOf(b.file) : undefined;

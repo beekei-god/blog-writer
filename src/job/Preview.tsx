@@ -1,4 +1,5 @@
 import { bodyImageKey, type Post } from "../../shared/types";
+import { placeMapUrl } from "../../shared/place";
 import { splitUrl } from "../../shared/postHtml";
 import { type ImageToolsProps, PreviewImage } from "./images";
 
@@ -121,6 +122,16 @@ export function Preview({
                     ))}
                   </tbody>
                 </table>
+              </div>
+            );
+          case "place":
+            return (
+              <div className="place-card" key={i}>
+                <strong>📍 {b.name}</strong>
+                {b.address && <span>{b.address}</span>}
+                <a href={placeMapUrl(b)} target="_blank" rel="noreferrer noopener">
+                  네이버 지도에서 보기
+                </a>
               </div>
             );
           case "image":

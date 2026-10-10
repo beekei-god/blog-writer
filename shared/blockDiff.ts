@@ -13,6 +13,8 @@ export function blockText(b: PostBlock): string {
       return b.items.map((it) => `• ${it}`).join("\n");
     case "table":
       return [b.headers, ...b.rows].map((r) => r.join(" | ")).join("\n");
+    case "place":
+      return `[장소: ${b.name}${b.address ? ` · ${b.address}` : ""}]`;
     case "image":
       return `[이미지: ${b.alt || b.prompt.slice(0, 30)}]`;
   }

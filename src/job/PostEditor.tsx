@@ -1,4 +1,5 @@
 import { Fragment, useState } from "react";
+import { placeMapUrl } from "../../shared/place";
 import { MAX_BODY_IMAGES, MAX_TAGS, bodyImageKey, type ImageSpec, type Post, type PostBlock } from "../../shared/types";
 import { FailedPlaceholder, ImageTools, type ImageToolsProps } from "./images";
 import { imageUrl } from "../api";
@@ -89,8 +90,8 @@ function ImageEditor({
           rows={thumbnail ? 5 : 1}
           disabled={disabled}
           value={spec.headline ?? ""}
-          maxLength={60}
-          placeholder={thumbnail ? "줄바꿈하면 2줄로 들어갑니다" : "예: 계약금 10% · 잔금 90%"}
+          maxLength={120}
+          placeholder={thumbnail ? "한 줄에 하나씩: 제목 / 부제 / 핵심 포인트 (줄바꿈이 그대로 줄이 됩니다)" : "예: 계약금 10% · 잔금 90%"}
           onChange={(e) => onChange({ ...spec, headline: e.target.value || undefined, userEdited: true })}
         />
       </label>
@@ -141,7 +142,7 @@ export function PostEditor({
     onChange({ ...post, blocks: post.blocks.filter((_, j) => j !== i) });
   };
   const imageCount = post.blocks.filter((b) => b.type === "image").length;
-  const kindLabel = { heading: "소제목", paragraph: "문단", list: "목록", quote: "인용", table: "표", image: "이미지" } as const;
+  const kindLabel = { heading: "소제목", paragraph: "문단", list: "목록", quote: "인용", table: "표", place: "장소", image: "이미지" } as const;
 
   return (
     <section className="editor">
@@ -195,6 +196,27 @@ export function PostEditor({
               tools={tools}
               onChange={(spec) => setBlock(i, { type: "image", ...spec })}
             />
+          ) : b.type === "place" ? (
+            <div className="place-editor">
+              <input
+                disabled={disabled}
+                value={b.name}
+                placeholder="장소 이름 (예: 래미안 원베일리)"
+                onChange={(e) => setBlock(i, { ...b, name: e.target.value })}
+              />
+              <input
+                disabled={disabled}
+                value={b.address ?? ""}
+                placeholder="주소 (선택)"
+                onChange={(e) => setBlock(i, { ...b, address: e.target.value || undefined })}
+              />
+              <p className="hint small">
+                네이버 지도 링크로 본문에 들어갑니다.{" "}
+                <a href={placeMapUrl(b)} target="_blank" rel="noreferrer noopener">
+                  지도에서 확인
+                </a>
+              </p>
+            </div>
           ) : b.type === "table" ? (
             <div>
               <textarea
@@ -239,6 +261,15 @@ export function PostEditor({
               onClick={() => tools.onAdd(i)}
             >
               ＋ 여기에 이미지 추가
+            </button>
+            <button
+              type="button"
+              className="ghost"
+              disabled={disabled}
+              title="이 블록 아래에 장소(네이버 지도 링크)를 추가합니다"
+              onClick={() => onChange({ ...post, blocks: [...post.blocks.slice(0, i + 1), { type: "place", name: "", address: undefined }, ...post.blocks.slice(i + 1)] })}
+            >
+              ＋ 여기에 장소 추가
             </button>
           </div>
         )}

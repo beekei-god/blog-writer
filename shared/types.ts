@@ -214,6 +214,8 @@ export type PostBlock =
   | { type: "quote"; text: string }
   /** 모든 칸이 채워진 표 (빈 칸이 생기는 행은 작성 단계에서 뺀다) */
   | { type: "table"; headers: string[]; rows: string[][] }
+  /** 글이 다루는 장소(청약 단지, 건물, 매장 등). 장소 이름·주소와 네이버 지도 링크로 보인다 */
+  | { type: "place"; name: string; address?: string }
   | ({ type: "image" } & ImageSpec);
 
 /** "함께 많이 찾는"은 예전 연관검색어 자리를 대신하는 네이버 검색 영역 */

@@ -2018,3 +2018,18 @@ a.button-link:hover { filter: brightness(0.97); }
 .input-row > button { flex: 0 0 auto; }
 .login-hint-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
 .login-hint-row .warn-text { flex: 1 1 260px; min-width: 0; font-size: 13px; }
+
+.place-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 16px 0;
+  padding: 12px 16px;
+  border: 1px solid var(--line, #d5dae3);
+  border-radius: 8px;
+}
+.place-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}

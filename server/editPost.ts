@@ -35,6 +35,7 @@ const BLOCKS_SCHEMA = {
         required: ["type", "headers", "rows"],
         properties: { type: { const: "table" }, headers: strArr, rows: { type: "array", items: strArr } },
       },
+      { type: "object", additionalProperties: false, required: ["type", "name", "address"], properties: { type: { const: "place" }, name: { type: "string" }, address: { type: "string" } } },
       { type: "object", additionalProperties: false, required: ["type", "ref"], properties: { type: { const: "image" }, ref: { type: "string" } } },
     ],
   },
@@ -59,6 +60,7 @@ const ResultSchema = z.object({
       z.object({ type: z.literal("quote"), text: z.string() }),
       z.object({ type: z.literal("list"), items: z.array(z.string()) }),
       z.object({ type: z.literal("table"), headers: z.array(z.string()), rows: z.array(z.array(z.string())) }),
+      z.object({ type: z.literal("place"), name: z.string(), address: z.string().optional() }),
       z.object({ type: z.literal("image"), ref: z.string() }),
     ]),
   ),
@@ -84,7 +86,7 @@ ${rules}
 - 링크는 확인한 URL만, "기관/페이지 이름: https://..." 형태의 일반 텍스트로 쓰세요. 새로 참고한 자료는 글 끝 "참고 자료" 목록에 더하세요(그 목록이 고치는 범위 안에 있을 때).
 - 분량: 본문은 공백 포함 ${maxBodyChars(writing?.targetChars ?? DEFAULT_TARGET_CHARS).toLocaleString()}자를 넘기지 마세요(제목·이미지·"참고 자료" 목록은 제외, 글쓰기 규칙에 적힌 분량보다 우선). 지금 본문은 ${chars.toLocaleString()}자입니다. 내용을 더하면 덜 중요한 문장을 줄여 맞추세요.
 - 이미지 블록({"type":"image","ref":"img-1"}…)은 새로 만들거나 지우지 마세요. 보이는 이미지 블록을 빠짐없이 한 번씩, ref를 그대로 blocks에 넣으세요. 위치는 요청에 맞게 옮겨도 됩니다.
-- blocks 종류: heading(소제목), paragraph(문단), list(목록), quote(인용), table(표), image(이미지).
+- blocks 종류: heading(소제목), paragraph(문단), list(목록), quote(인용), table(표), place(장소: name·address, 지도 링크로 보임; 고치는 중에 지우거나 옮기지 말 것), image(이미지).
 - paragraph 안에서는 문장이 끝날 때마다 줄바꿈 문자(\\n)로 줄을 나누세요. 한 문단은 2~4줄이고, 문단 사이에 빈 문단을 만들지 마세요.
 - 굵은 글씨는 텍스트 안에서 **이렇게** 표시합니다. 그 밖의 마크다운 문법(#, *, [링크](url), 표 문법)은 쓰지 마세요. 표는 table 블록으로 만들고, headers와 모든 rows는 칸 수가 같고 모든 칸이 채워져 있어야 합니다.
 - note에는 무엇을 어떻게 고쳤는지 한두 문장으로 쓰세요. 고칠 것이 없다고 판단하면 그 이유를 쓰고 블록은 그대로 돌려주세요.

@@ -1,3 +1,4 @@
+import { placeLines, placeMapUrl } from "./place";
 import { MAX_TAGS, type ImageSpec, type Post, type PostBlock } from "./types";
 
 /**
@@ -42,6 +43,14 @@ export function tableHtml(b: TableBlock, cellExtra = "", tableExtra = ""): strin
   const head = `<tr>${b.headers.map((h) => `<th style="${th}">${rich(h)}</th>`).join("")}</tr>`;
   const body = b.rows.map((r) => `<tr>${r.map((c) => `<td style="${cell}">${rich(c)}</td>`).join("")}</tr>`).join("");
   return `<table style="border-collapse:collapse;${tableExtra}${border}"><thead>${head}</thead><tbody>${body}</tbody></table>`;
+}
+
+/** 장소 카드: 장소 이름(굵게), 주소, 네이버 지도 링크. 한 문단 안의 줄바꿈으로 놓는다 */
+export function placeHtml(b: Extract<PostBlock, { type: "place" }>): string {
+  const [name, ...rest] = placeLines(b);
+  const url = placeMapUrl(b);
+  const lines = rest.map((l) => (l.startsWith("네이버 지도:") ? `네이버 지도: <a href="${esc(url)}">${esc(url)}</a>` : esc(l)));
+  return `<p><strong>${esc(name)}</strong><br>${lines.join("<br>")}</p>`;
 }
 
 /** 만들지 못해 건너뛴 이미지를 로그에 남길 때의 이름 */

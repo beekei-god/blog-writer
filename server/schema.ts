@@ -40,6 +40,7 @@ export const PostSchema = z.object({
       z.object({ type: z.literal("list"), items: z.array(z.string()) }),
       z.object({ type: z.literal("quote"), text: z.string() }),
       z.object({ type: z.literal("table"), headers: z.array(z.string()), rows: z.array(z.array(z.string())) }),
+      z.object({ type: z.literal("place"), name: z.string(), address: z.string().optional() }),
       z.object({ type: z.literal("image"), ...ImageSpecShape }),
     ]),
   ),
@@ -155,6 +156,12 @@ export const POST_JSON_SCHEMA = {
               headers: strArr,
               rows: { type: "array", items: strArr },
             },
+          },
+          {
+            type: "object",
+            additionalProperties: false,
+            required: ["type", "name", "address"],
+            properties: { type: { const: "place" }, name: { type: "string" }, address: { type: "string" } },
           },
           // 이미지는 basis를 prompt보다 먼저 쓰게 해서, 본문의 어느 내용을 그리는지 정한 뒤 프롬프트를 쓰도록 유도한다.
           {

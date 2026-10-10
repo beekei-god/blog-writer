@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { placeLines } from "../../shared/place";
 import { type Post, type PostBlock, type PostSettings } from "../../shared/types";
 import { sleep } from "../fsutil";
 import { jobImageDir } from "../store";
@@ -147,7 +148,8 @@ const imageCount = () => document.querySelectorAll('.se-component.se-image').len
 // 소제목은 일반 문단으로 붙인 뒤 문단 서식을 "소제목"으로 바꾼다.
 const blockHtml = (b: Exclude<PostBlock, { type: "image" }>) => pasteBlockHtml(b, "p");
 
-type Segment = { kind: "html"; html: string; text: string } | { kind: "image"; file: string; alt: string };
+/** place: 장소 카드(글자·링크) 뒤에 네이버 에디터의 "장소" 첨부(지도 카드)를 붙인다 */
+type Segment = { kind: "html"; html: string; text: string } | { kind: "image"; file: string; alt: string } | { kind: "place"; name: string };
 
 function segmentsOf(post: Post, jobId: string, log: (m: string) => void): { segments: Segment[]; headings: string[] } {
   const dir = jobImageDir(jobId);
@@ -181,8 +183,15 @@ function segmentsOf(post: Post, jobId: string, log: (m: string) => void): { segm
         text.push("");
       }
     }
+    if (b.type === "place" && !b.name.trim()) continue; // 이름이 없는 장소는 건너뛴다
     html.push(blockHtml(b));
-    text.push(b.type === "list" ? b.items.join("\n") : b.type === "table" ? b.headers.join("\t") : b.text);
+    text.push(
+      b.type === "list" ? b.items.join("\n") : b.type === "table" ? b.headers.join("\t") : b.type === "place" ? placeLines(b).join("\n") : b.text,
+    );
+    if (b.type === "place") {
+      flush();
+      segments.push({ kind: "place", name: b.name.trim() });
+    }
   }
   // 태그 입력란은 발행 창에만 있어서 본문 끝에 #태그 줄로 넣는다.
   // 본문과 태그 사이에는 빈 줄을 TAG_GAP_LINES개 둔다. 이미지 뒤에서도 지워지지 않도록 공백 문자가 든 문단으로 넣는다.
@@ -231,6 +240,83 @@ async function waitFor<T>(fn: () => Promise<T | null | false>, timeoutMs: number
   return null;
 }
 
+// ───────────────────────── 장소 첨부 ─────────────────────────
+
+const PLACE_COUNT = `document.querySelectorAll('.se-component[class*="placesMap"], .se-component.se-map').length`;
+
+/**
+ * SmartEditor ONE의 "장소" 첨부로 지도 카드를 넣는다: 툴바의 장소 버튼 → 검색창에 이름 입력 → 첫 결과 추가 → 확인.
+ * 에디터 화면이 바뀌면 실패할 수 있어서 어느 단계에서든 막히면 팝업을 닫고 false를 돌려준다
+ * (본문에는 이미 장소 이름·주소·지도 링크 카드가 들어가 있다).
+ */
+async function attachNaverPlace(tab: Tab, name: string, log: (m: string) => void): Promise<boolean> {
+  const before = await runJs<number>(tab, `return ${PLACE_COUNT};`);
+  const closePopup = () =>
+    runJs(tab, `
+      const b = [...document.querySelectorAll('.se-popup button, [class*="popup"] button')].find(x => x.offsetParent && /^(취소|닫기)$/.test((x.innerText || '').trim()) || (x.offsetParent && /close|cancel/.test(x.className.toString())));
+      if (b) b.click(); document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); return true;`).catch(() => {});
+  try {
+    const opened = await runJs<boolean>(tab, `
+      caretToEnd();
+      const btn = document.querySelector('button.se-map-toolbar-button, button[data-name="map"], button[data-name="places"]')
+        || [...document.querySelectorAll('button')].find(b => b.offsetParent && /장소/.test((b.getAttribute('aria-label') || '') + (b.title || '') + (b.innerText || '')) && /toolbar/.test(b.className.toString()));
+      if (!btn) return false;
+      btn.click(); return true;`);
+    if (!opened) return false;
+    // 검색창에 이름을 넣고 검색
+    const searched = await waitFor(
+      () =>
+        runJs<boolean>(tab, `
+          const input = [...document.querySelectorAll('input')].find(i => i.offsetParent && /장소|검색/.test(i.placeholder || '') && i.closest('.se-popup, [class*="popup"], [class*="layer"]'));
+          if (!input) return false;
+          const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+          set.call(input, ${JSON.stringify(name)});
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          for (const type of ['keydown', 'keypress', 'keyup']) input.dispatchEvent(new KeyboardEvent(type, { key: 'Enter', code: 'Enter', keyCode: 13, bubbles: true }));
+          const go = input.parentElement && input.parentElement.querySelector('button');
+          if (go && go.offsetParent) go.click();
+          return true;`),
+      8000,
+      500,
+    );
+    if (!searched) {
+      await closePopup();
+      return false;
+    }
+    // 첫 검색 결과의 "추가"를 누르고, 확인 버튼이 있으면 누른다
+    const added = await waitFor(
+      () =>
+        runJs<boolean>(tab, `
+          const pop = document.querySelector('.se-popup, [class*="popup"][class*="map"], [class*="layer"]');
+          const root = pop || document;
+          const add = [...root.querySelectorAll('button')].find(b => b.offsetParent && /^(추가|선택)$/.test((b.innerText || '').trim()));
+          if (!add) return false;
+          add.click(); return true;`),
+      12_000,
+      800,
+    );
+    if (!added) {
+      await closePopup();
+      return false;
+    }
+    await sleep(800);
+    await runJs(tab, `
+      const ok = [...document.querySelectorAll('button')].find(b => b.offsetParent && /^(확인|완료)$/.test((b.innerText || '').trim()) && b.closest('.se-popup, [class*="popup"], [class*="layer"]'));
+      if (ok) ok.click(); return true;`);
+    const done = await waitFor(async () => ((await runJs<number>(tab, `return ${PLACE_COUNT};`)) > before ? true : null), 10_000);
+    if (!done) {
+      await closePopup();
+      return false;
+    }
+    await sleep(1200);
+    return true;
+  } catch (e) {
+    log(`장소 첨부 중 오류: ${errorText(e)}`);
+    await closePopup();
+    return false;
+  }
+}
+
 // ───────────────────────── 입력 결과 검사 ─────────────────────────
 
 /** 비교용으로 서식 기호·공백·이모지를 뺀 글자 */
@@ -266,6 +352,11 @@ function expectedAtoms(post: Post): { atoms: Atom[]; boldChars: number; links: n
         links += urlsIn(it).length;
         atoms.push({ k: "p", t: normText(it), list: true });
       }
+    } else if (b.type === "place") {
+      if (!b.name.trim()) continue;
+      // 장소 카드는 한 문단 안의 줄바꿈이라 네이버에서 줄마다 문단이 되고, 지도 주소는 링크로 바뀐다.
+      for (const line of placeLines(b)) atoms.push({ k: "p", t: normText(line) });
+      links += 1;
     } else {
       for (const c of [...b.headers, ...b.rows.flat()]) links += urlsIn(c).length;
       atoms.push({ k: "table", t: "" });
@@ -466,6 +557,12 @@ export async function postNaverInUserChrome(
         const dt = new DataTransfer(); dt.setData('text/html', ${JSON.stringify(seg.html)}); dt.setData('text/plain', ${JSON.stringify(seg.text)});
         paste(dt); return true;`);
       await sleep(800);
+      continue;
+    }
+    if (seg.kind === "place") {
+      log(`네이버 장소 첨부: ${seg.name}`);
+      if (await attachNaverPlace(tab, seg.name, log)) log("장소 첨부 완료");
+      else problems.push(`장소 "${seg.name}"를 네이버 장소로 첨부하지 못해 이름·주소·지도 링크만 넣었습니다.`);
       continue;
     }
     // 이미지: base64 조각으로 페이지에 넘긴 뒤 파일 붙여넣기 → 네이버가 업로드한다.
