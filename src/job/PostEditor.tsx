@@ -83,10 +83,10 @@ function ImageEditor({
       {spec.basis && <p className="basis">이 이미지가 그리는 본문: “{spec.basis}”</p>}
       <label className="mini-label">
         {thumbnail
-          ? "이미지 안 문구 (썸네일 가운데에 크게 들어가는 글자, 8~16자 권장 · 본문에 있는 사실만)"
+          ? "이미지 안 문구 (썸네일에 들어가는 글자: 첫 줄 제목 8~16자, 둘째 줄 부제, 다음 줄부터 핵심 포인트 · 본문에 있는 사실만)"
           : "이미지 안 문구 (이미지에 제목·라벨처럼 들어가는 글자, 4~20자 · 비우면 글자 없이)"}
         <textarea
-          rows={thumbnail ? 2 : 1}
+          rows={thumbnail ? 5 : 1}
           disabled={disabled}
           value={spec.headline ?? ""}
           maxLength={60}

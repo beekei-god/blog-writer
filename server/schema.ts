@@ -10,7 +10,7 @@ export const MethodEnum = z.enum(["api", "chrome"]);
 const ImageSpecShape = {
   basis: z.string().optional(),
   // 모델이 길게 써도 글 전체가 실패하지 않도록 잘라서 받는다.
-  headline: z.string().transform((s) => s.slice(0, 60)).optional(),
+  headline: z.string().transform((s) => s.slice(0, 120)).optional(),
   userEdited: z.boolean().optional(),
   prompt: z.string(),
   alt: z.string(),
