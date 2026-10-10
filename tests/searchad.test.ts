@@ -1,3 +1,4 @@
+process.env.SEARCHAD_GAP_MS = "0";
 import type { AddressInfo } from "node:net";
 import type { Server } from "node:http";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
@@ -30,6 +31,8 @@ describe("네이버 검색광고 키워드 도구", () => {
     // 가운뎃점·슬래시는 구분자로 본다 (분야 이름이 "청약·부동산" 꼴이다). 개수는 splitHints가 자르지 않는다
     expect(splitHints("청약·부동산 / 재테크|a")).toEqual(["청약", "부동산", "재테크", "a"]);
     expect(splitHints("a,b,c,d,e,f,g")).toHaveLength(7);
+    // 특수문자는 뺀다 (검색광고가 hintKeywords를 400으로 거부한다)
+    expect(splitHints("K-pop, 삼성전자(주), A&B, \"따옴표\"")).toEqual(["Kpop", "삼성전자주", "AB", "따옴표"]);
   });
   it("응답을 검색량 큰 순으로 정리하고, 입력한 키워드 표시와 경쟁 정도를 붙인다", () => {
     const rows = toRows(
@@ -114,11 +117,31 @@ describe("키 저장과 요청", () => {
     expect(r.body.sections[0].rows[1].seed).toBe(true);
     expect(new URL(String(fetchMock.mock.calls[0][0])).searchParams.get("hintKeywords")).toBe("청약일정,분양");
 
-    fetchMock.mockResolvedValueOnce(reply(429, {}));
+    // 429는 몇 번 다시 시도한 뒤에야 알린다 (처음 + 3번)
+    fetchMock.mockClear();
+    fetchMock.mockResolvedValue(reply(429, {}));
     expect((await call("GET", "/api/keywords?q=a")).body.error).toContain("호출 한도");
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+    fetchMock.mockReset();
+    fetchMock.mockResolvedValueOnce(reply(429, {})).mockResolvedValueOnce(reply(200, { keywordList: [] }));
+    expect((await call("GET", "/api/keywords?q=a")).status).toBe(200);
     fetchMock.mockResolvedValueOnce(reply(500, { message: "boom" }));
     const e = await call("GET", "/api/keywords?q=a");
     expect(e.status).toBe(400);
     expect(e.body.error).toContain("검색광고 API 오류 500");
+  });
+  it("탐색: 묶음이 400으로 거부되면 하나씩 나눠 맞는 것만 쓰고, 전부 거부되면 오류를 알려 준다", async () => {
+    await saveSearchAdKeys(KEYS);
+    const bad = { code: 11001, message: "hintKeywords 파라미터가 유효하지 않습니다.", status: "BAD_REQUEST" };
+    fetchMock.mockResolvedValueOnce(reply(400, bad)); // 묶음
+    fetchMock.mockResolvedValueOnce(reply(200, { keywordList: [{ relKeyword: "청약", monthlyPcQcCnt: 10, monthlyMobileQcCnt: 20, compIdx: "낮음" }] }));
+    fetchMock.mockResolvedValueOnce(reply(400, bad)); // 거부된 키워드
+    const r = await call("GET", `/api/keywords?q=${encodeURIComponent("청약, 분양")}`);
+    expect(r.status).toBe(200);
+    expect(r.body.sections[0].rows.map((x: { keyword: string }) => x.keyword)).toEqual(["청약"]);
+
+    fetchMock.mockResolvedValue(reply(400, bad));
+    const e = await call("GET", `/api/keywords?q=${encodeURIComponent("청약, 분양")}`);
+    expect(e.body.error).toContain("검색광고 API 오류 400");
   });
 });

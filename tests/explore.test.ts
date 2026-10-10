@@ -1,3 +1,4 @@
+process.env.SEARCHAD_GAP_MS = "0";
 import type { AddressInfo } from "node:net";
 import type { Server } from "node:http";
 import fs from "node:fs/promises";
