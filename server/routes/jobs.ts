@@ -1,15 +1,18 @@
 import { Router } from "express";
 import { z } from "zod";
-import { errorText, PLATFORM_SHORT_LABEL, STATUS_LABEL } from "../../shared/labels";
-import { canSetStatus, imageSpecsOf, MANUAL_STATUSES, MAX_LINKS, NAVER_MINUTE_STEP, settingsFor, type ImageSpec, type ManualStatus, type Post } from "../../shared/types";
+import { errorText, MANUAL_STATUS_LABEL, PLATFORM_LABEL, PLATFORM_SHORT_LABEL } from "../../shared/labels";
+import { MAX_TARGET_CHARS, MIN_TARGET_CHARS } from "../../shared/length";
+import { imageSpecsOf, MANUAL_STATUSES, PLATFORMS, MAX_LINKS, NAVER_MINUTE_STEP, settingsFor, type ImageSpec, type Post } from "../../shared/types";
 import { extensionStatus, INSTALL_URL } from "../browser/claudeChrome";
 import { cancelJob } from "../cancel";
 import { isRunning, runDraft, runPost } from "../pipeline";
 import { saveLastCategory } from "../categories";
-import { BlogCategorySchema, ImageOptionsSchema, PostSchema } from "../schema";
+import { BlogCategorySchema, ImageOptionsSchema, PostSchema, WritingOptionsSchema } from "../schema";
 import { createJob, deleteJob, getJob, getSettings, listJobs, log, saveSettings, updateJob } from "../store";
 import { checkSchedule, normalizeSite, wordpressSiteOf } from "../wordpress";
 import { isCompleteTable } from "../writer";
+import { regenerateTitles } from "../titles";
+import { getRules, todayKST } from "../rules";
 import { markBusy, wordpressStatus, wrap } from "./util";
 
 /** 글(작업): 만들기·읽기·초안 수정·블로그 등록·상태 변경·중지·다시 시도·삭제 */
@@ -48,6 +51,8 @@ router.post(
       .object({
         topic: z.string().trim().min(2).max(300),
         images: ImageOptionsSchema,
+        /** 분량·말투. 없으면 마지막으로 쓴 값 */
+        writing: WritingOptionsSchema.optional(),
         links: z.array(z.string().trim().url().regex(/^https?:\/\//i)).max(MAX_LINKS).default([]),
       })
       .safeParse(req.body);
@@ -60,13 +65,17 @@ router.post(
             ? issue.code === "too_big"
               ? "주제는 300자 이하로 입력하세요."
               : "주제를 2자 이상 입력하세요."
-            : issue.message;
+            : issue.path[0] === "writing"
+              ? `본문 분량은 ${MIN_TARGET_CHARS.toLocaleString()}~${MAX_TARGET_CHARS.toLocaleString()}자 사이로, 말투는 목록에서 고르세요.`
+              : issue.message;
       return void res.status(400).json({ error: msg });
     }
     const { topic, images, links } = parsed.data;
-    // 마지막으로 쓴 이미지 옵션을 다음 작업의 기본값으로 기억한다.
-    await saveSettings({ ...(await getSettings()), images });
-    const job = await createJob(topic, images, links);
+    const settings = await getSettings();
+    const writing = parsed.data.writing ?? settings.writing;
+    // 마지막으로 쓴 이미지·분량·말투 옵션을 다음 작업의 기본값으로 기억한다.
+    await saveSettings({ ...settings, images, writing });
+    const job = await createJob(topic, images, links, writing);
     void runDraft(job.id);
     res.status(201).json(job);
   }),
@@ -95,6 +104,21 @@ router.put(
     });
     if (!job) return void res.status(404).json({ error: "not found" });
     res.json(job);
+  }),
+);
+
+// 제목 후보만 새로 만든다. 글에는 넣지 않고 돌려준다 (화면이 후보로 보여 주고, 저장은 화면의 자동 저장으로 한다)
+router.post(
+  "/api/jobs/:id/titles",
+  wrap(async (req, res) => {
+    const job = await getJob(String(req.params.id));
+    if (!job) return void res.status(404).json({ error: "not found" });
+    if (!job.post) return void res.status(400).json({ error: "초안이 없습니다." });
+    if (isRunning(job.id)) return void res.status(409).json({ error: "진행 중인 작업이 끝난 뒤에 다시 만들어 주세요." });
+    const rules = job.rulesSnapshot ?? (await getRules()).content;
+    const titleCandidates = await regenerateTitles({ post: job.post, topic: job.topic, rules, today: todayKST(), jobId: job.id });
+    await log(job.id, `제목 후보를 다시 만들었습니다: ${titleCandidates.join(" / ")}`);
+    res.json({ titleCandidates });
   }),
 );
 
@@ -160,31 +184,32 @@ router.post(
   }),
 );
 
-// 초안 검토 이후의 글은 사용자가 상태를 직접 바꾼다 (앱이 블로그에 올리거나 발행하지는 않는다).
-// 초안 검토·블로그 임시저장 완료·블로그 발행 예약·블로그 발행완료인 글을 초안 검토·블로그 임시저장 완료·블로그 발행완료 중 다른 상태로.
-const MANUAL_LOG: Record<ManualStatus, string> = {
-  published: "블로그 발행완료로 표시했습니다.",
-  posted: "블로그 임시저장 완료로 표시했습니다.",
-  draft_ready: "초안 검토로 되돌렸습니다.",
-};
+// 초안이 있는 글은 블로그마다 상태를 직접 바꾼다 (앱이 블로그에 올리거나 발행하지는 않고 표시만 바꾼다).
+// 올리지 않음·임시저장 완료·발행완료 중에서 고르고, 다른 블로그의 상태는 그대로 둔다. 발행 예약은 앱이 예약발행했을 때만 생긴다.
 router.put(
-  "/api/jobs/:id/status",
+  "/api/jobs/:id/blogs/:platform/status",
   wrap(async (req, res) => {
+    const platform = PLATFORMS.find((p) => p === req.params.platform);
     const parsed = z.object({ status: z.enum(MANUAL_STATUSES) }).safeParse(req.body);
-    if (!parsed.success) return void res.status(400).json({ error: "요청 형식이 올바르지 않습니다." });
+    if (!platform || !parsed.success) return void res.status(400).json({ error: "요청 형식이 올바르지 않습니다." });
     const id = String(req.params.id);
     const job = await getJob(id);
     if (!job) return void res.status(404).json({ error: "not found" });
     if (isRunning(id)) return void res.status(409).json({ error: "이미 진행 중입니다." });
     const { status } = parsed.data;
-    if (!canSetStatus(job.status) || job.status === status) {
-      return void res.status(400).json({ error: `${STATUS_LABEL[job.status]} 상태의 글은 ${STATUS_LABEL[status]}(으)로 바꿀 수 없습니다.` });
+    const current = job.blogs?.[platform]?.status ?? "none";
+    if (!job.post) return void res.status(400).json({ error: "초안이 없는 글은 블로그 상태를 바꿀 수 없습니다." });
+    if (current === status) {
+      return void res.status(400).json({ error: `${PLATFORM_LABEL[platform]}에서 이미 ${MANUAL_STATUS_LABEL[status]} 상태입니다.` });
     }
     const next = await updateJob(id, (j) => {
-      j.status = status;
+      const blogs = { ...j.blogs };
+      if (status === "none") delete blogs[platform];
+      else blogs[platform] = { status, at: new Date().toISOString() };
+      j.blogs = blogs;
       j.error = undefined;
     });
-    await log(id, MANUAL_LOG[status]);
+    await log(id, `${PLATFORM_LABEL[platform]} 상태를 ${MANUAL_STATUS_LABEL[status]}(으)로 표시했습니다.`);
     res.json(next);
   }),
 );

@@ -9,6 +9,8 @@ import {
   type ImageProvider,
   type ImageStyle,
 } from "../shared/types";
+import { DEFAULT_TARGET_CHARS } from "../shared/length";
+import { draftOf, parseWriting, WritingPicker, type WritingDraft } from "./WritingPicker";
 import { api, type ImageApiStatus } from "./api";
 import { MethodPicker, ProviderPicker, shownMethod, StylePicker, useImageApi } from "./job/images";
 import { errorText, PROVIDER_HINT, PROVIDER_LABEL } from "./labels";
@@ -50,6 +52,12 @@ export function NewJob({ topic, links, onTopicChange, onLinksChange, onCreated, 
     thumbnailProvider: "claude",
     thumbnailStyle: "flat",
   });
+  const [writing, setWriting] = useState<WritingDraft>(draftOf({ targetChars: DEFAULT_TARGET_CHARS, tone: "info" }));
+  const writingTouched = useRef(false);
+  const changeWriting = (next: WritingDraft) => {
+    writingTouched.current = true;
+    setWriting(next);
+  };
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   // 사용자가 이미지 옵션을 이미 바꿨으면 늦게 도착한 저장값으로 덮어쓰지 않는다.
@@ -59,11 +67,12 @@ export function NewJob({ topic, links, onTopicChange, onLinksChange, onCreated, 
     setImages(fn);
   };
 
-  // 마지막으로 쓴 이미지 옵션을 기본값으로 (썸네일은 항상 켬)
+  // 마지막으로 쓴 이미지 옵션(썸네일은 항상 켬)과 분량·말투를 기본값으로
   useEffect(() => {
     api
       .getSettings()
       .then((s) => {
+        if (!writingTouched.current && s.writing) setWriting(draftOf(s.writing));
         if (touched.current) return;
         const o = s.images;
         const tp = o.thumbnailProvider ?? o.provider;
@@ -88,13 +97,15 @@ export function NewJob({ topic, links, onTopicChange, onLinksChange, onCreated, 
 
   const linkList = links.split("\n").map((l) => l.trim()).filter(Boolean);
   const linkError = linkProblem(linkList);
+  const parsedWriting = parseWriting(writing);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     setSubmitting(true);
     try {
-      const job = await api.createJob(topic.trim(), images, linkList);
+      if (!parsedWriting.writing) return;
+      const job = await api.createJob(topic.trim(), images, linkList, parsedWriting.writing);
       onTopicChange("");
       onLinksChange("");
       onCreated(job.id);
@@ -149,6 +160,11 @@ export function NewJob({ topic, links, onTopicChange, onLinksChange, onCreated, 
           />
           {linkError && <span className="error small">{linkError}</span>}
         </label>
+      </section>
+
+      <section className="card">
+        <h3 className="card-title">분량과 말투</h3>
+        <WritingPicker value={writing} onChange={changeWriting} />
       </section>
 
       <section className="card">
@@ -217,7 +233,7 @@ export function NewJob({ topic, links, onTopicChange, onLinksChange, onCreated, 
 
       {error && <p className="error">{error}</p>}
       <div className="form-actions">
-        <button type="submit" className="primary big" disabled={submitting || topic.trim().length < 2 || !!linkError}>
+        <button type="submit" className="primary big" disabled={submitting || topic.trim().length < 2 || !!linkError || !!parsedWriting.error}>
           {submitting ? "시작하는 중..." : "딥서칭 시작"}
         </button>
         {topic.trim().length < 2 && <span className="hint small">주제를 2자 이상 입력하세요.</span>}

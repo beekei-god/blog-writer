@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { applyProposal, EDIT_PROMPT_MAX } from "../editPost";
+import { WritingOptionsSchema } from "../schema";
 import { isRunning, startEdit } from "../pipeline";
 import { getJob, log, updateJob } from "../store";
 import { wrap } from "./util";
@@ -13,19 +14,25 @@ router.post(
   wrap(async (req, res) => {
     const body = z
       .object({
-        prompt: z.string().trim().min(2).max(EDIT_PROMPT_MAX),
+        prompt: z.string().trim().max(EDIT_PROMPT_MAX).default(""),
         /** 고칠 블록 범위 (처음·끝 포함). 없으면 글 전체 */
         range: z.object({ start: z.number().int().min(0), end: z.number().int().min(0) }).optional(),
+        /** 이 분량·말투로 글 전체를 다시 쓴다. 이때 prompt는 추가 요청이라 비어 있어도 된다 */
+        writing: WritingOptionsSchema.optional(),
       })
       .safeParse(req.body ?? {});
-    if (!body.success) return void res.status(400).json({ error: `고칠 내용을 2자 이상 ${EDIT_PROMPT_MAX.toLocaleString()}자 이하로 써 주세요.` });
-    const { prompt, range } = body.data;
+    if (body.success && body.data.writing && body.data.range) return void res.status(400).json({ error: "분량·말투를 바꿀 때는 글 전체를 다시 씁니다." });
+    if (body.error?.issues[0]?.path[0] === "writing") return void res.status(400).json({ error: "분량·말투 값이 올바르지 않습니다." });
+    if (!body.success || (!body.data.writing && body.data.prompt.length < 2)) {
+      return void res.status(400).json({ error: `고칠 내용을 2자 이상 ${EDIT_PROMPT_MAX.toLocaleString()}자 이하로 써 주세요.` });
+    }
+    const { prompt, range, writing } = body.data;
     const job = await getJob(String(req.params.id));
     if (!job?.post) return void res.status(400).json({ error: "초안이 없습니다." });
     if (range && (range.end < range.start || range.end >= job.post.blocks.length)) {
       return void res.status(400).json({ error: "고칠 부분을 찾지 못했습니다. 화면을 새로고침해 주세요." });
     }
-    if (!(await startEdit(job.id, { prompt, range }))) return void res.status(409).json({ error: "진행 중인 작업이 끝난 뒤에 시작해 주세요." });
+    if (!(await startEdit(job.id, { prompt, range, writing }))) return void res.status(409).json({ error: "진행 중인 작업이 끝난 뒤에 시작해 주세요." });
     res.status(202).json({ ok: true });
   }),
 );
@@ -44,6 +51,7 @@ router.post(
       const post = j.post && applyProposal(j.post, proposal);
       if (!post) return;
       j.post = post;
+      if (proposal.writing) j.writingOptions = proposal.writing; // 다시 쓴 분량·말투가 이 글의 목표가 된다
       delete j.editProposal;
       applied = true;
     });

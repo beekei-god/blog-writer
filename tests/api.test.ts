@@ -28,10 +28,10 @@ const call = async (method: string, url: string, body?: unknown, headers: Record
 };
 
 const IMAGES = { thumbnail: false, bodyImages: 0, provider: "claude" as const, style: "flat" as const };
-async function draftJob(status: "draft_ready" | "posted" = "draft_ready") {
+async function draftJob() {
   const job = await createJob("테스트 주제", IMAGES);
   await updateJob(job.id, (j) => {
-    j.status = status;
+    j.status = "draft_ready";
     j.post = { title: "제목", summary: "요약", tags: [], thumbnail: { prompt: "t", alt: "a" }, blocks: [{ type: "paragraph", text: "본문" }, { type: "image", prompt: "p", alt: "" }] };
   });
   return job.id;
@@ -82,6 +82,18 @@ describe("새 글", () => {
     expect((await call("POST", "/api/jobs", { topic: "a", images: IMAGES })).body.error).toBe("주제를 2자 이상 입력하세요.");
     expect((await call("POST", "/api/jobs", { topic: "x".repeat(301), images: IMAGES })).body.error).toBe("주제는 300자 이하로 입력하세요.");
     expect((await call("POST", "/api/jobs", { topic: "정상 주제", images: IMAGES, links: ["ftp://x"] })).body.error).toBe("참고 링크는 http(s)로 시작하는 주소여야 합니다.");
+  });
+  it("분량·말투를 검사한다", async () => {
+    const msg = "본문 분량은 1,000~8,000자 사이로, 말투는 목록에서 고르세요.";
+    expect((await call("POST", "/api/jobs", { topic: "정상 주제", images: IMAGES, writing: { targetChars: 900, tone: "info" } })).body.error).toBe(msg);
+    expect((await call("POST", "/api/jobs", { topic: "정상 주제", images: IMAGES, writing: { targetChars: 8001, tone: "info" } })).body.error).toBe(msg);
+    expect((await call("POST", "/api/jobs", { topic: "정상 주제", images: IMAGES, writing: { targetChars: 2500, tone: "poem" } })).body.error).toBe(msg);
+  });
+  it("설정 화면에서 저장해도 기억한 분량·말투는 그대로", async () => {
+    const current = await getSettings();
+    await saveSettings({ ...current, writing: { targetChars: 4000, tone: "story" } });
+    expect((await call("PUT", "/api/settings", { images: IMAGES, models: current.models })).status).toBe(200);
+    expect((await getSettings()).writing).toEqual({ targetChars: 4000, tone: "story" });
   });
 });
 
@@ -149,29 +161,56 @@ describe("카테고리 목록", () => {
   });
 });
 
-describe("수기 상태 변경", () => {
-  it("초안 검토 이후의 글은 초안 검토·임시저장 완료·발행완료 사이를 오갈 수 있다", async () => {
+describe("블로그별 수기 상태 변경", () => {
+  const set = (id: string, platform: string, status: string) => call("PUT", `/api/jobs/${id}/blogs/${platform}/status`, { status });
+  it("블로그마다 올리지 않음·임시저장 완료·발행완료를 오가고, 다른 블로그의 상태는 그대로", async () => {
     const id = await draftJob();
-    const r = await call("PUT", `/api/jobs/${id}/status`, { status: "published" });
+    const r = await set(id, "naver", "published");
     expect(r.status).toBe(200);
-    expect(r.body.status).toBe("published");
-    expect((await getJob(id))?.logs.at(-1)?.message).toBe("블로그 발행완료로 표시했습니다.");
-    expect((await call("PUT", `/api/jobs/${id}/status`, { status: "posted" })).body.status).toBe("posted");
-    expect((await getJob(id))?.logs.at(-1)?.message).toBe("블로그 임시저장 완료로 표시했습니다.");
-    expect((await call("PUT", `/api/jobs/${id}/status`, { status: "draft_ready" })).body.status).toBe("draft_ready");
-    expect((await call("PUT", `/api/jobs/${id}/status`, { status: "posted" })).body.status).toBe("posted");
-    await updateJob(id, (j) => void (j.status = "scheduled"));
-    expect((await call("PUT", `/api/jobs/${id}/status`, { status: "posted" })).body.status).toBe("posted");
+    expect(r.body.blogs.naver.status).toBe("published");
+    expect((await getJob(id))?.logs.at(-1)?.message).toBe("네이버 블로그 상태를 발행완료(으)로 표시했습니다.");
+    expect((await set(id, "wordpress", "posted")).body.blogs).toMatchObject({ naver: { status: "published" }, wordpress: { status: "posted" } });
+    const back = await set(id, "naver", "none");
+    expect(back.body.blogs).toEqual({ wordpress: expect.objectContaining({ status: "posted" }) });
+    expect(back.body.status).toBe("draft_ready"); // 글 자체의 상태는 그대로
+    await updateJob(id, (j) => void (j.blogs = { tistory: { status: "scheduled", at: "x" } }));
+    expect((await set(id, "tistory", "posted")).body.blogs.tistory.status).toBe("posted");
   });
-  it("같은 상태나 초안 검토 전의 글은 거절", async () => {
+  it("같은 상태, 초안이 없는 글, 진행 중인 글은 거절", async () => {
     const id = await draftJob();
-    expect((await call("PUT", `/api/jobs/${id}/status`, { status: "draft_ready" })).body.error).toBe("초안 검토 상태의 글은 초안 검토(으)로 바꿀 수 없습니다.");
-    await updateJob(id, (j) => void (j.status = "failed"));
-    expect((await call("PUT", `/api/jobs/${id}/status`, { status: "published" })).body.error).toBe("실패 상태의 글은 블로그 발행완료(으)로 바꿀 수 없습니다.");
+    expect((await set(id, "naver", "none")).body.error).toBe("네이버 블로그에서 이미 올리지 않음 상태입니다.");
+    await updateJob(id, (j) => void delete j.post);
+    expect((await set(id, "naver", "published")).body.error).toBe("초안이 없는 글은 블로그 상태를 바꿀 수 없습니다.");
   });
-  it("수기로 바꿀 수 없는 상태 값", async () => {
-    const id = await draftJob("posted");
-    expect((await call("PUT", `/api/jobs/${id}/status`, { status: "scheduled" })).status).toBe(400);
+  it("수기로 고를 수 없는 상태·없는 블로그", async () => {
+    const id = await draftJob();
+    expect((await set(id, "naver", "scheduled")).status).toBe(400);
+    expect((await set(id, "blogger", "posted")).status).toBe(400);
+  });
+});
+
+describe("예전 글의 상태 옮기기", () => {
+  const legacy = async (status: string, extra: Record<string, unknown> = {}) => {
+    const id = await draftJob();
+    const file = path.join(DATA_DIR, "jobs", `${id}.json`);
+    const raw = JSON.parse(await fs.readFile(file, "utf8"));
+    await fs.writeFile(file, JSON.stringify({ ...raw, status, ...extra }));
+    return getJob(id);
+  };
+  it("발행완료는 네이버·워드프레스 모두 발행완료", async () => {
+    const j = await legacy("published", { postingTo: "tistory" });
+    expect(j?.status).toBe("draft_ready");
+    expect(j?.blogs).toEqual({ naver: expect.objectContaining({ status: "published" }), wordpress: expect.objectContaining({ status: "published" }) });
+  });
+  it("임시저장 완료·발행 예약은 마지막으로 올린 블로그 → 워드프레스 기록 → 네이버 순으로", async () => {
+    expect((await legacy("posted", { postingTo: "tistory" }))?.blogs).toEqual({ tistory: expect.objectContaining({ status: "posted" }) });
+    expect((await legacy("scheduled", { wordpress: { postId: 1, link: "l", mode: "schedule" } }))?.blogs).toEqual({ wordpress: expect.objectContaining({ status: "scheduled" }) });
+    expect((await legacy("posted"))?.blogs).toEqual({ naver: expect.objectContaining({ status: "posted" }) });
+  });
+  it("목록에서도 옮긴 상태로 읽는다", async () => {
+    const j = await legacy("posted", { postingTo: "tistory" });
+    const listed = (await call("GET", "/api/jobs")).body.find((x: { id: string }) => x.id === j!.id);
+    expect(listed).toMatchObject({ status: "draft_ready", blogs: { tistory: { status: "posted" } } });
   });
 });
 

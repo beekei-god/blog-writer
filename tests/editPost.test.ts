@@ -75,6 +75,33 @@ describe("프롬프트로 글 고치기 (Claude 호출)", () => {
     expect(claude.calls[0].schema.required).toEqual(["title", "summary", "note", "blocks"]);
     expect(r.charsAfter).toBeGreaterThan(0);
   });
+  it("작업에서 고른 분량 상한과 말투로 고친다 (없으면 3,000자, 말투 지시 없음)", async () => {
+    claude.result = { title: "제목", summary: "요약", note: "고침", blocks: [...post().blocks.slice(0, 2), { type: "paragraph", text: "바뀐 내용" }, { type: "image", ref: "img-1" }, ...post().blocks.slice(4)] };
+    await proposeEdit({ ...base, post: post(), prompt: "고쳐 줘", writing: { targetChars: 4000, tone: "friendly" } });
+    expect(claude.calls[0].system).toContain("4,800자를 넘기지 마세요");
+    expect(claude.calls[0].system).toContain("친근형");
+    await proposeEdit({ ...base, post: post(), prompt: "고쳐 줘" });
+    expect(claude.calls[1].system).toContain("3,000자를 넘기지 마세요");
+    expect(claude.calls[1].system).not.toContain("## 말투");
+  });
+  it("분량·말투를 바꿔 다시 쓰면 새 목표·말투와 조사 자료를 함께 보여 준다", async () => {
+    claude.result = { title: "제목", summary: "요약", note: "다시 씀", blocks: [...post().blocks.slice(0, 2), { type: "paragraph", text: "바뀐 내용" }, { type: "image", ref: "img-1" }, ...post().blocks.slice(4)] };
+    await proposeEdit({
+      ...base,
+      post: post(),
+      prompt: "",
+      writing: { targetChars: 6000, tone: "summary" },
+      rewrite: { notes: "조사 노트 내용", sources: [{ title: "공식", url: "https://a.example" }] },
+    });
+    const { system, prompt } = claude.calls[0];
+    expect(system).toContain("## 다시 쓰기");
+    expect(system).toContain("약 6,000자(5,400~6,600자)");
+    expect(system).toContain("7,200자를 넘기지 마세요");
+    expect(system).toContain("정리형");
+    expect(prompt).toContain("분량·말투만 바꿔 다시 써 주세요");
+    expect(prompt).toContain("조사 노트 내용");
+    expect(prompt).toContain("공식: https://a.example");
+  });
   it("이미지 블록을 빼거나 늘리거나 모르는 ref를 쓰면 쓸 수 없다", async () => {
     for (const blocks of [
       [{ type: "paragraph", text: "x" }], // 이미지 빠짐
@@ -166,6 +193,26 @@ describe("프롬프트로 글 고치기 (요청)", () => {
     const empty = (await createJob("주제", { thumbnail: false, bodyImages: 0, provider: "claude", style: "flat" })).id;
     expect((await call("POST", `/api/jobs/${empty}/edit`, { prompt: "고쳐 줘" })).body.error).toBe("초안이 없습니다.");
     expect((await call("POST", `/api/jobs/${id}/edit/apply`)).status).toBe(400);
+    // 분량·말투 다시 쓰기: 글 전체만, 값 검사
+    const writing = { targetChars: 4000, tone: "story" };
+    expect((await call("POST", `/api/jobs/${id}/edit`, { writing, range: { start: 0, end: 1 } })).body.error).toBe("분량·말투를 바꿀 때는 글 전체를 다시 씁니다.");
+    expect((await call("POST", `/api/jobs/${id}/edit`, { writing: { targetChars: 500, tone: "story" } })).body.error).toBe("분량·말투 값이 올바르지 않습니다.");
+  });
+  it("분량·말투 다시 쓰기: 요청 없이 시작하고, 적용하면 글의 분량·말투도 바뀐다", async () => {
+    const id = await draft();
+    await updateJob(id, (j) => void (j.researchNotes = "저장된 조사 노트"));
+    claude.result = { title: "새 제목", summary: "요약", note: "다시 썼습니다", blocks: [...post().blocks.slice(0, 2), { type: "paragraph", text: "새 말투" }, { type: "image", ref: "img-1" }, ...post().blocks.slice(4)] };
+    const writing = { targetChars: 4000, tone: "story" as const };
+    expect((await call("POST", `/api/jobs/${id}/edit`, { writing })).status).toBe(202);
+    await until(async () => (await getJob(id))!.editProposal?.status === "ready");
+    expect((await getJob(id))!.editProposal).toMatchObject({ writing, prompt: "" });
+    expect((await getJob(id))!.writingOptions).toBeUndefined(); // 적용 전에는 그대로
+    expect(claude.calls.at(-1)!.prompt).toContain("저장된 조사 노트");
+    const applied = await call("POST", `/api/jobs/${id}/edit/apply`);
+    expect(applied.status).toBe(200);
+    expect(applied.body.writingOptions).toEqual(writing);
+    expect(applied.body.post.blocks[2]).toEqual({ type: "paragraph", text: "새 말투" });
+    expect(applied.body.post.blocks[3]).toMatchObject({ type: "image", file: "body-3-1.png" });
   });
   it("시작 → 제안 → 적용: 만드는 동안 글 수정은 막히고, 적용하면 글이 바뀐다", async () => {
     const id = await draft();

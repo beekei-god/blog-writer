@@ -55,6 +55,17 @@ export interface ImageOptions {
   thumbnailMethod?: ImageMethod;
 }
 
+/** 본문 말투: 정보형(존댓말 칼럼체), 친근형(해요체 수다형), 스토리형(스토리텔링·일기체·유머), 정리형(Q&A·요약 리스트) */
+export type WritingTone = "info" | "friendly" | "story" | "summary";
+export const WRITING_TONES: WritingTone[] = ["info", "friendly", "story", "summary"];
+
+/** 글 작성 옵션 (작업마다 고른다) */
+export interface WritingOptions {
+  /** 본문 목표 글자수 (공백 포함 근사값) */
+  targetChars: number;
+  tone: WritingTone;
+}
+
 /** 고른 AI에서 쓸 수 있는 스타일로 맞춘다 (Claude는 플랫만 가능). */
 export const fitStyle = (provider: ImageProvider, style: ImageStyle): ImageStyle =>
   STYLES_BY_PROVIDER[provider].includes(style) ? style : STYLES_BY_PROVIDER[provider][0];
@@ -146,6 +157,8 @@ export interface Settings {
   tistoryBlogId?: string;
   /** 새 작업의 이미지 생성 기본값 (마지막으로 쓴 값을 기억. 새 글 폼은 썸네일만 항상 켠 채로 연다) */
   images: ImageOptions;
+  /** 새 작업의 분량·말투 기본값 (마지막으로 쓴 값을 기억) */
+  writing: WritingOptions;
   /** 단계별 Claude 모델 */
   models: StageModels;
   /** 워드프레스 사이트 주소 (https://...). 네이버·티스토리 설정과 따로 두어, 기본 블로그가 달라도 글마다 워드프레스에 올릴 수 있다 */
@@ -244,18 +257,24 @@ export interface Source {
   kind?: SourceKind;
 }
 
-export type JobStatus =
-  | "researching"
-  | "writing"
-  | "generating_images"
-  | "draft_ready"
-  | "posting"
-  | "posted"
-  /** 블로그에 예약 발행을 걸어 둔 상태 (예약 시각에 블로그가 공개한다) */
-  | "scheduled"
-  /** 블로그에 발행한 상태 (앱이 자동발행했거나, 사용자가 직접 발행한 뒤 "블로그 발행완료"로 표시함) */
-  | "published"
-  | "failed";
+/** 글 자체의 진행 상태. 블로그에 올린 결과는 블로그마다 따로 `Job.blogs`에 둔다 */
+export type JobStatus = "researching" | "writing" | "generating_images" | "draft_ready" | "posting" | "failed";
+
+/**
+ * 블로그 하나에서의 글 상태
+ * - posted: 임시저장 완료
+ * - scheduled: 예약발행을 걸어 둠 (예약 시각에 블로그가 공개한다)
+ * - published: 발행완료 (앱이 자동발행했거나, 사용자가 직접 발행한 뒤 표시함)
+ */
+export type BlogStatus = "posted" | "scheduled" | "published";
+export interface BlogState {
+  status: BlogStatus;
+  /** 이 상태가 된 시각 (ISO) */
+  at: string;
+}
+/** 블로그별 상태 (올리지 않은 블로그는 없다) */
+export type BlogStates = Partial<Record<Platform, BlogState>>;
+export const PLATFORMS: Platform[] = ["naver", "tistory", "wordpress"];
 
 /** 워드프레스 API 등록 방식: 임시저장 / 예약발행 / 자동발행(바로 공개) */
 export type PublishMode = "draft" | "schedule" | "publish";
@@ -273,11 +292,9 @@ export interface WordPressRecord {
 
 export const BUSY_STATUSES: JobStatus[] = ["researching", "writing", "generating_images", "posting"];
 
-/** 사용자가 직접 고를 수 있는 글 상태 (앱이 블로그에 올리거나 발행하지는 않고 표시만 바꾼다) */
-export const MANUAL_STATUSES = ["draft_ready", "posted", "published"] as const;
+/** 블로그마다 사용자가 직접 고를 수 있는 상태 (앱이 블로그에 올리거나 발행하지는 않고 표시만 바꾼다). none은 그 블로그에 올리지 않음 */
+export const MANUAL_STATUSES = ["none", "posted", "published"] as const;
 export type ManualStatus = (typeof MANUAL_STATUSES)[number];
-/** 이 상태(초안 검토 이후)의 글만 상태를 직접 바꿀 수 있다 */
-export const canSetStatus = (status: JobStatus) => (["draft_ready", "posted", "scheduled", "published"] as JobStatus[]).includes(status);
 
 /** 키워드 탐색 결과 한 줄 (네이버 검색광고 키워드 도구). 월간 검색량이 10 미만이면 값은 5로 두고 `lowPc`·`lowMobile`로 표시한다 */
 export interface KeywordRow {
@@ -312,8 +329,10 @@ export interface KeywordSection {
 
 /** 프롬프트로 글을 고치는 제안. 고친 결과를 "적용"하기 전까지 글은 바뀌지 않는다 */
 export interface EditProposal {
-  /** 사용자가 쓴 수정 요청 */
+  /** 사용자가 쓴 수정 요청 (분량·말투를 바꿔 다시 쓰기에서는 추가 요청이라 비어 있을 수 있다) */
   prompt: string;
+  /** 분량·말투를 바꿔 글 전체를 다시 쓰는 제안이면 새 분량·말투. 적용하면 작업의 분량·말투도 이것으로 바뀐다 */
+  writing?: WritingOptions;
   /** 고치는 블록 범위 (처음·끝 포함). 글 전체를 고치면 없다 */
   range?: { start: number; end: number };
   status: "running" | "ready" | "failed";
@@ -341,6 +360,10 @@ export interface Job {
   status: JobStatus;
   /** 이 작업을 만들 때 선택한 이미지 옵션 */
   imageOptions: ImageOptions;
+  /** 이 작업을 만들 때 고른 분량·말투. 예전 작업에는 없다 (기본값: 2,500자, 글쓰기 규칙대로의 말투) */
+  writingOptions?: WritingOptions;
+  /** 블로그별 상태 (임시저장 완료·발행 예약·발행완료). 한 블로그에 올려도 다른 블로그의 상태는 그대로다 */
+  blogs?: BlogStates;
   /** 블로그에 올리는 중(status "posting")일 때 올리는 블로그. 화면 안내 문구가 크롬 작성인지 워드프레스 등록인지 구분한다 */
   postingTo?: Platform;
   /** 지금 만들고 있는 이미지 ("thumbnail" 또는 "body-<블록 번호>"). 화면에서 그 이미지만 진행 중으로 보인다 */

@@ -123,6 +123,7 @@ export function PostEditor({
   disabled,
   tools,
   selection,
+  titleSlot,
 }: {
   jobId: string;
   post: Post;
@@ -131,6 +132,8 @@ export function PostEditor({
   tools: ImageToolsProps;
   /** 프롬프트로 고칠 블록 고르기 (고른 블록 번호와 토글) */
   selection?: { selected: number[]; toggle: (i: number) => void };
+  /** 제목 칸 바로 아래에 둘 것 (제목 후보 고르기) */
+  titleSlot?: React.ReactNode;
 }) {
   const setBlock = (i: number, b: PostBlock) => onChange({ ...post, blocks: post.blocks.map((x, j) => (j === i ? b : x)) });
   const removeBlock = (i: number) => {
@@ -146,6 +149,7 @@ export function PostEditor({
         제목
         <input className="title-input" value={post.title} disabled={disabled} onChange={(e) => onChange({ ...post, title: e.target.value })} />
       </label>
+      {titleSlot}
       <label className="mini-label">
         태그
         <TagInput tags={post.tags} disabled={disabled} onChange={(tags) => onChange({ ...post, tags })} />

@@ -3,7 +3,8 @@ import path from "node:path";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import type { Post } from "../shared/types";
 import { saveWordPressAuth } from "../server/secrets";
-import { getSettings, jobImageDir, saveSettings } from "../server/store";
+import { createJob, getJob, getSettings, jobImageDir, saveSettings, updateJob } from "../server/store";
+import { runPost } from "../server/pipeline";
 import { checkSchedule, normalizeSite, postToBlocks, publishToWordPress, testWordPress, WordPressError } from "../server/wordpress";
 
 describe("사이트 주소", () => {
@@ -123,6 +124,21 @@ describe("워드프레스 등록 (가짜 사이트)", () => {
     expect(none.body).not.toHaveProperty("categories");
   });
 
+  it("워드프레스에 올리면 워드프레스 상태만 바뀌고 다른 블로그의 상태는 그대로 (BR: 블로그별 글 상태)", async () => {
+    fakeWordPress(standard);
+    const job = await createJob("주제", { thumbnail: false, bodyImages: 0, provider: "claude", style: "flat" });
+    const naver = { status: "published" as const, at: "2026-10-01T00:00:00.000Z" };
+    await updateJob(job.id, (j) => {
+      j.status = "draft_ready";
+      j.post = { ...post, thumbnail: undefined, blocks: [{ type: "paragraph", text: "본문" }] };
+      j.blogs = { naver };
+    });
+    await runPost(job.id, { platform: "wordpress", mode: "draft" });
+    const saved = (await getJob(job.id))!;
+    expect(saved.status).toBe("draft_ready");
+    expect(saved.blogs?.naver).toEqual(naver);
+    expect(saved.blogs?.wordpress?.status).toBe("posted");
+  });
   it("이미 올린 글은 갱신하고, 올린 이미지는 다시 올리지 않는다", async () => {
     fakeWordPress((c) => (c.method === "GET" && /\/wp\/v2\/media\/\d+/.test(c.url) ? { json: { id: 10, source_url: "https://wp.example/up.png" } } : standard(c)));
     const existing = { postId: 100, link: "", mode: "draft" as const, mediaIds: { "thumbnail-1.png": { id: 10, url: "" }, "body-1-1.png": { id: 20, url: "" } } };

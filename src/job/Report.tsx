@@ -4,28 +4,13 @@ import type { Post } from "../../shared/types";
 
 /** 규칙에서 "사용자에게 알리라"고 한 내용: 본문에는 들어가지 않는 작성 리포트 */
 export function Report({ post, onChange, disabled }: { post: Post; onChange: (p: Post) => void; disabled: boolean }) {
-  const hasReport =
-    post.searchQuestion || post.titleCandidates?.length || post.omittedItems?.length || post.tagDetails?.length;
+  // 제목 후보는 본문 맨 위 제목 아래(TitlePicker)에서 고른다.
+  const hasReport = post.searchQuestion || post.omittedItems?.length || post.tagDetails?.length;
   if (!hasReport) return null;
 
   return (
     <section className="report">
       <h3>작성 리포트</h3>
-      {post.titleCandidates?.length ? (
-        <div className="report-item">
-          <b>제목 후보</b> <span className="hint small">눌러서 제목으로 바꿀 수 있습니다</span>
-          <ul className="title-candidates">
-            {post.titleCandidates.map((t) => (
-              <li key={t}>
-                <button className={t === post.title ? "active" : ""} disabled={disabled} onClick={() => onChange({ ...post, title: t })}>
-                  {t === post.title && "✓ "}
-                  {t} <span className="hint small">({t.length}자)</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
       {(post.searchQuestion || post.mainKeyword) && (
         <div className="report-item">
           {post.searchQuestion && (

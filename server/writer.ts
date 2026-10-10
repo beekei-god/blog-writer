@@ -1,10 +1,28 @@
-import { MAX_TAGS, type ImageOptions, type Post, type PostBlock, type Source, type TagDetail } from "../shared/types";
-import { countBodyChars, MAX_BODY_CHARS } from "../shared/length";
+import { MAX_TAGS, type ImageOptions, type Post, type PostBlock, type Source, type TagDetail, type WritingOptions, type WritingTone } from "../shared/types";
+import { countBodyChars, DEFAULT_TARGET_CHARS, maxBodyChars, targetRange } from "../shared/length";
 import { runClaude } from "./claude";
 import { PostSchema, POST_JSON_SCHEMA } from "./schema";
 
-const BASE_SYSTEM = (rules: string, today: string) => `당신은 한국어 블로그 작가입니다. 리서치 노트를 바탕으로 블로그 글 한 편을 씁니다.
-아래 "글쓰기 규칙"을 모든 항목에서 지키세요. 내용과 문체는 규칙이 우선하고, 출력 필드 구조는 아래 "출력 형식"을 따르세요.
+/** 말투별 지시. 모든 말투가 글쓰기 규칙의 존댓말과 "확인된 사실만" 규칙을 그대로 지킨다. */
+export const TONE_GUIDE: Record<WritingTone, string> = {
+  info: "정보형 (존댓말 + 칼럼체): 합니다체(~입니다, ~합니다)로 통일하세요. 신문 칼럼처럼 차분하고 객관적으로, 배경 → 핵심 사실 → 의미·주의점 순서로 논리 있게 풀어 쓰세요. 감탄사·유행어·과한 이모티콘은 쓰지 마세요.",
+  friendly:
+    "친근형 (해요체 + 수다형): 해요체(~해요, ~이에요)로 통일하세요. 옆에서 수다 떨듯 편하게 독자에게 말을 걸어 주세요(예: '이 부분 은근 헷갈리시죠?', '여기서 꼭 챙길 게 하나 있어요'). 가벼운 감탄과 공감 표현은 좋지만 정보는 정확하게 전하고, 반말은 쓰지 마세요.",
+  story:
+    "스토리형 (스토리텔링 + 일기체 + 유머): 존댓말 일기체(~했어요, ~더라고요)로 쓰세요. 독자가 겪을 법한 상황이나 장면으로 시작해 이야기 흐름 속에서 정보를 하나씩 풀고, 가볍고 재치 있는 유머를 곳곳에 넣으세요. 도입부 2~3문장 안에 핵심 답도 함께 밝히세요. 글쓴이가 실제로 겪은 일처럼 경험·후기·대화를 지어내지 말고, '이런 상황이라면' 같은 가정이나 독자의 입장으로 이야기를 풀어 주세요. 사실·숫자·날짜는 정확하게 쓰고, 반말('~했다')은 쓰지 마세요.",
+  summary:
+    "정리형 (Q&A + 요약 리스트): 소제목을 독자가 검색할 법한 질문으로 쓰고(예: '❓ 신청 자격은 어떻게 되나요?'), 소제목 바로 아래 첫 문단에서 결론을 한두 문장으로 먼저 답하세요. 설명은 짧은 문장과 목록·표 위주로 정리하고, 글 끝 핵심 요약은 목록으로 쓰세요. 어미는 해요체 또는 합니다체 중 하나로 통일하세요.",
+};
+
+/** 말투 지시 (고르지 않은 예전 작업은 글쓰기 규칙대로라 빈 문자열) */
+export const toneSection = (tone?: WritingTone) =>
+  tone ? `\n## 말투 (글쓰기 규칙의 문체보다 우선, 존댓말과 확인된 사실만 쓰는 규칙은 그대로 지킬 것)\n- ${TONE_GUIDE[tone]}\n` : "";
+
+const BASE_SYSTEM = (rules: string, today: string, writing?: WritingOptions) => {
+  const target = writing?.targetChars ?? DEFAULT_TARGET_CHARS;
+  const [lo, hi] = targetRange(target);
+  return `당신은 한국어 블로그 작가입니다. 리서치 노트를 바탕으로 블로그 글 한 편을 씁니다.
+아래 "글쓰기 규칙"을 모든 항목에서 지키세요. 내용과 문체는 규칙이 우선하고(분량${writing ? "과 말투" : ""}는 아래 항목이 규칙보다 우선), 출력 필드 구조는 아래 "출력 형식"을 따르세요.
 오늘 날짜는 ${today}(한국 시간)입니다.
 
 <글쓰기_규칙>
@@ -12,10 +30,11 @@ ${rules}
 </글쓰기_규칙>
 
 ## 분량 (반드시 지킬 것)
-- 본문은 공백 포함 ${MAX_BODY_CHARS.toLocaleString()}자를 넘기지 마세요. 2,300~2,800자를 목표로 하세요.
+- 본문 목표는 공백 포함 약 ${target.toLocaleString()}자입니다. ${lo.toLocaleString()}~${hi.toLocaleString()}자로 쓰고, ${maxBodyChars(target).toLocaleString()}자를 넘기지 마세요. 글쓰기 규칙에 적힌 분량보다 이 목표가 우선합니다.
 - 제목, 이미지, 글 끝 "참고 자료" 목록, 태그는 이 분량에 들어가지 않습니다.
 - 정보가 많으면 중요도가 낮은 섹션을 빼고, 빼낸 내용은 omittedItems에 "분량 때문에 뺌"으로 적으세요.
-
+- 확인된 자료가 목표를 채우기에 부족하면 지어내거나 같은 말을 되풀이하지 말고 짧게 끝내세요.
+${toneSection(writing?.tone)}
 ## 출력 형식
 - 사실은 리서치 노트에 출처와 함께 있는 것만 씁니다. 노트의 "찾지 못한 항목"은 본문에 쓰지 말고 omittedItems에 넣으세요.
 - blocks 종류: heading(소제목), paragraph(문단), list(목록), quote(인용), table(표), image(이미지).
@@ -31,6 +50,7 @@ ${rules}
   - "스마트블록 주제"는 이번에 수집하지 못했으므로 그 출처의 태그는 만들지 마세요.
   - 자동완성·함께 많이 찾는 목록에는 다른 지역·단지·상품 이야기도 섞여 있습니다. 이 글 내용과 실제로 맞는 표현만 고르세요.
   - "본문 고유명사"는 본문에 실제로 나오는 고유명사·지역명만 씁니다.`;
+};
 
 export const STYLE_GUIDE: Record<ImageOptions["style"], string> = {
   ghibli:
@@ -97,6 +117,8 @@ export interface WriteInput {
   autocomplete: Record<string, string[]>;
   related: Record<string, string[]>;
   options: ImageOptions;
+  /** 분량·말투 (없으면 기본 분량, 글쓰기 규칙대로의 말투) */
+  writing?: WritingOptions;
 }
 
 const KIND_LABEL: Record<NonNullable<Source["kind"]>, string> = {
@@ -150,8 +172,11 @@ ${sourceList || "(없음)"}`;
 
   parsed = await enforceLength(parsed, input, onProgress);
   const finalChars = countBodyChars(parsed);
-  if (finalChars > MAX_BODY_CHARS) {
+  const target = input.writing?.targetChars ?? DEFAULT_TARGET_CHARS;
+  if (finalChars > maxBodyChars(target)) {
     onProgress(`줄인 뒤에도 본문이 ${finalChars.toLocaleString()}자입니다. 초안 화면에서 직접 줄여 주세요.`);
+  } else if (finalChars < targetRange(target)[0]) {
+    onProgress(`본문이 ${finalChars.toLocaleString()}자로 목표(약 ${target.toLocaleString()}자)보다 짧습니다. 확인된 자료가 부족하면 짧아질 수 있습니다.`);
   }
   const verified = verifyTagSources(dedupeTags(parsed.tagDetails ?? []), input);
   if (verified.dropped.length) {
@@ -176,7 +201,8 @@ ${sourceList || "(없음)"}`;
 type ParsedPost = Omit<Post, "tags">;
 /** 모델이 내는 글 (태그는 tagDetails에서 따로 정한다) */
 const ParsedPostSchema = PostSchema.omit({ tags: true });
-const systemFor = (input: Pick<WriteInput, "rules" | "today" | "options">) => BASE_SYSTEM(input.rules, input.today) + imageInstructions(input.options);
+const systemFor = (input: Pick<WriteInput, "rules" | "today" | "options" | "writing">) =>
+  BASE_SYSTEM(input.rules, input.today, input.writing) + imageInstructions(input.options);
 
 /** "최종 업데이트: 2026.10.04" 같은 날짜 표시줄. 글쓰기 규칙에서 금지했지만 모델이 쓰더라도 본문에서 뺀다. */
 const UPDATE_LINE = /^(최종|마지막)?\s*(업데이트|수정|갱신|작성|확인)\s*(일|날짜|일자)?\s*[:：]?\s*\d{4}\s*[.\-/년]/;
@@ -187,17 +213,19 @@ export function stripUpdateLines(blocks: PostBlock[]): PostBlock[] {
 /** 분량 초과 시 사실은 유지한 채 줄여 다시 쓰게 한다 (최대 2번). */
 export async function enforceLength(
   parsed: ParsedPost,
-  input: Pick<WriteInput, "rules" | "today" | "options" | "jobId">,
+  input: Pick<WriteInput, "rules" | "today" | "options" | "jobId" | "writing">,
   onProgress: (m: string) => void,
 ): Promise<ParsedPost> {
+  const target = input.writing?.targetChars ?? DEFAULT_TARGET_CHARS;
+  const max = maxBodyChars(target);
   for (let attempt = 1; attempt <= 2; attempt++) {
     const chars = countBodyChars(parsed);
-    if (chars <= MAX_BODY_CHARS) break;
-    onProgress(`본문 ${chars.toLocaleString()}자 → ${MAX_BODY_CHARS.toLocaleString()}자 이내로 줄이는 중 (${attempt}차)`);
+    if (chars <= max) break;
+    onProgress(`본문 ${chars.toLocaleString()}자 → ${max.toLocaleString()}자 이내로 줄이는 중 (${attempt}차)`);
     const shortened = await runClaude<unknown>({
       system: systemFor(input),
-      prompt: `아래 블로그 글(JSON)의 본문이 공백 포함 ${chars.toLocaleString()}자로, 상한 ${MAX_BODY_CHARS.toLocaleString()}자를 넘습니다.
-2,500자 안팎이 되도록 줄여서 같은 JSON 구조로 다시 내 주세요.
+      prompt: `아래 블로그 글(JSON)의 본문이 공백 포함 ${chars.toLocaleString()}자로, 상한 ${max.toLocaleString()}자를 넘습니다.
+${target.toLocaleString()}자 안팎이 되도록 줄여서 같은 JSON 구조로 다시 내 주세요.
 - 글자수는 "참고 자료" 소제목 앞까지만, 공백 포함으로 셉니다.
 - 사실·숫자·날짜·출처는 바꾸거나 새로 만들지 마세요. 중복 설명, 긴 예시, 중요도가 낮은 섹션부터 줄이세요.
 - 표·목록은 유지하되 덜 중요한 행은 뺄 수 있습니다. 뺀 내용은 omittedItems에 "분량 때문에 뺌"으로 추가하세요.

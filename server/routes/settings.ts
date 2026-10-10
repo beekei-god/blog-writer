@@ -4,7 +4,7 @@ import { errorText } from "../../shared/labels";
 import { MODEL_CHOICES, STAGES, type ModelChoice, type Stage } from "../../shared/types";
 import { testDatalab } from "../datalab";
 import { getRules, resetRules, saveRules } from "../rules";
-import { ImageOptionsSchema } from "../schema";
+import { ImageOptionsSchema, WritingOptionsSchema } from "../schema";
 import { testImageApiKey } from "../images/api";
 import { getImageApiKey, getNaverKeys, getSearchAdKeys, saveImageApiKey, saveNaverKeys, saveSearchAdKeys, saveWordPressAuth } from "../secrets";
 import { testSearchAd } from "../searchad";
@@ -21,6 +21,8 @@ const SettingsSchema = z
     naverBlogId: z.string().trim().max(200).optional(),
     tistoryBlogId: z.string().trim().max(200).optional(),
     images: ImageOptionsSchema,
+    /** 새 작업의 분량·말투 기본값 (새 글을 만들 때 기억된다) */
+    writing: WritingOptionsSchema.optional(),
     wordpressUrl: z.string().trim().max(200).optional(),
     models: z.object(Object.fromEntries(STAGES.map((s) => [s, z.enum(MODEL_CHOICES)])) as Record<Stage, z.ZodEnum<{ [K in ModelChoice]: K }>>),
   })
@@ -41,8 +43,9 @@ router.put(
   wrap(async (req, res) => {
     const parsed = SettingsSchema.safeParse(req.body);
     if (!parsed.success) return void res.status(400).json({ error: parsed.error.issues[0].message });
-    await saveSettings(parsed.data);
-    res.json(parsed.data);
+    const next = { ...parsed.data, writing: parsed.data.writing ?? (await getSettings()).writing };
+    await saveSettings(next);
+    res.json(next);
   }),
 );
 

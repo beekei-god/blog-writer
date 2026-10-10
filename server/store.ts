@@ -4,7 +4,8 @@ import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { keyedQueue, readJson, writeJsonAtomic } from "./fsutil";
 import { BUSY_STATUSES, RECOMMENDED_MODELS } from "../shared/types";
-import type { ImageOptions, Job, Settings } from "../shared/types";
+import type { BlogStates, ImageOptions, Job, Settings, WritingOptions } from "../shared/types";
+import { DEFAULT_TARGET_CHARS } from "../shared/length";
 
 /** 프로젝트 루트 (이 파일 기준). 서버를 어느 폴더에서 실행해도 같은 경로를 쓴다. */
 export const PROJECT_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -18,6 +19,7 @@ export const CHROME_PROFILE_DIR = path.join(DATA_DIR, "chrome-profile");
 
 const DEFAULT_SETTINGS: Settings = {
   images: { thumbnail: true, bodyImages: 0, provider: "claude", style: "flat" },
+  writing: { targetChars: DEFAULT_TARGET_CHARS, tone: "info" },
   models: { ...RECOMMENDED_MODELS },
 };
 
@@ -33,6 +35,7 @@ export async function getSettings(): Promise<Settings> {
       ...DEFAULT_SETTINGS,
       ...stored,
       images: { ...DEFAULT_SETTINGS.images, ...stored.images },
+      writing: { ...DEFAULT_SETTINGS.writing, ...stored.writing },
       models: { ...DEFAULT_SETTINGS.models, ...stored.models },
     };
     // 예전에는 기본 블로그의 ID·주소를 blogId 하나에 넣었다. 그 블로그의 칸이 비어 있으면 값을 옮긴다.
@@ -55,7 +58,26 @@ export function saveSettings(s: Settings) {
 
 const jobFile = (id: string) => path.join(JOBS_DIR, `${path.basename(id)}.json`);
 
-export const getJob = (id: string) => readJson<Job | null>(jobFile(id), null);
+/**
+ * 예전 글은 블로그 상태를 글 상태 하나(posted·scheduled·published)로 가졌다. 읽을 때 블로그별 상태로 옮긴다 (파일은 다음에 저장할 때 바뀐다).
+ * - 발행완료: 네이버와 워드프레스 모두 발행완료
+ * - 임시저장 완료·발행 예약: 마지막으로 올린 블로그(없으면 워드프레스 기록이 있으면 워드프레스, 그것도 없으면 네이버)에 그 상태
+ */
+export function migrateJob(job: Job): Job {
+  const legacy = job.status as string;
+  if (legacy !== "posted" && legacy !== "scheduled" && legacy !== "published") return job;
+  const state = { status: legacy, at: job.updatedAt } as const;
+  const blogs: BlogStates =
+    legacy === "published"
+      ? { naver: state, wordpress: state, ...job.blogs }
+      : { [job.postingTo ?? (job.wordpress ? "wordpress" : "naver")]: state, ...job.blogs };
+  return { ...job, status: "draft_ready", blogs };
+}
+
+export const getJob = async (id: string) => {
+  const job = await readJson<Job | null>(jobFile(id), null);
+  return job && migrateJob(job);
+};
 
 export async function listJobs(): Promise<Job[]> {
   await fs.mkdir(JOBS_DIR, { recursive: true });
@@ -63,7 +85,7 @@ export async function listJobs(): Promise<Job[]> {
   const jobs = await Promise.all(
     files.map(async (f) => {
       try {
-        return JSON.parse(await fs.readFile(path.join(JOBS_DIR, f), "utf8")) as Job;
+        return migrateJob(JSON.parse(await fs.readFile(path.join(JOBS_DIR, f), "utf8")) as Job);
       } catch {
         return null;
       }
@@ -86,6 +108,7 @@ export async function createJob(
   topic: string,
   imageOptions: ImageOptions,
   links: string[] = [],
+  writingOptions?: WritingOptions,
 ): Promise<Job> {
   const now = new Date().toISOString();
   const job: Job = {
@@ -94,6 +117,7 @@ export async function createJob(
     links,
     status: "researching",
     imageOptions,
+    writingOptions,
     createdAt: now,
     updatedAt: now,
     sources: [],

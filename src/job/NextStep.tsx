@@ -1,34 +1,43 @@
 import { useEffect, useState } from "react";
-import { MANUAL_STATUSES, NAVER_MINUTE_STEP, type BlogCategory, type Job, type ManualStatus, type Platform, type PublishMode } from "../../shared/types";
-import { PLATFORM_LABEL, PUBLISH_MODE_LABEL } from "../../shared/labels";
+import { MANUAL_STATUSES, NAVER_MINUTE_STEP, PLATFORMS, type BlogCategory, type Job, type ManualStatus, type Platform, type PublishMode } from "../../shared/types";
+import { BLOG_STATUS_LABEL, blogStatusText, MANUAL_STATUS_LABEL, PLATFORM_LABEL, PUBLISH_MODE_LABEL } from "../../shared/labels";
 import { api, type CategoryList } from "../api";
-import { errorText, STATUS_LABEL, statusLabel } from "../labels";
+import { errorText, statusLabel } from "../labels";
 
 
 /** 블로그에 올리는 요청: 방식(임시저장·예약발행·자동발행), 예약 시각, 고른 카테고리 */
 export type PostOpts = { mode?: PublishMode; scheduledAt?: string; category?: BlogCategory };
 
 /**
- * 초안 검토 이후의 글 상태를 직접 바꾼다 (앱이 블로그에 올리거나 발행하지는 않는다).
- * 초안 검토로 되돌릴 때는 블로그에 올라간 글은 그대로이니 확인을 받는다.
+ * 블로그마다 글 상태를 직접 바꾼다 (앱이 블로그에 올리거나 발행하지는 않고 표시만 바꾼다). 다른 블로그의 상태는 그대로다.
+ * 올리지 않음으로 되돌릴 때는 블로그에 올라간 글은 그대로이니 확인을 받는다.
  */
-export function StatusPicker({ status, onSetStatus }: { status: Job["status"]; onSetStatus: (status: ManualStatus) => void }) {
-  const pick = (s: ManualStatus) => {
-    if (s === status) return;
-    if (s === "draft_ready" && !confirm("초안 검토 상태로 되돌릴까요?\n블로그에 이미 저장·발행된 글은 그대로 남습니다.")) return;
-    onSetStatus(s);
+export function StatusPicker({ job, onSetStatus }: { job: Job; onSetStatus: (platform: Platform, status: ManualStatus) => void }) {
+  const pick = (p: Platform, s: ManualStatus) => {
+    const current = job.blogs?.[p]?.status ?? "none";
+    if (s === current) return;
+    if (s === "none" && !confirm(`${PLATFORM_LABEL[p]}에 올리지 않은 글로 되돌릴까요?\n블로그에 이미 저장·발행된 글은 그대로 남습니다.`)) return;
+    onSetStatus(p, s);
   };
   return (
-    <div className="option-row status-picker">
-      <span className="field-label">글 상태</span>
-      <div className="segmented" role="radiogroup" aria-label="글 상태">
-        {MANUAL_STATUSES.map((s) => (
-          <button key={s} type="button" className={status === s ? "on" : ""} onClick={() => pick(s)}>
-            {STATUS_LABEL[s]}
-          </button>
-        ))}
-      </div>
-      {status === "scheduled" && <span className="hint small">지금은 {STATUS_LABEL.scheduled} 상태입니다.</span>}
+    <div className="status-picker">
+      <span className="field-label">블로그별 글 상태</span>
+      {PLATFORMS.map((p) => {
+        const current = job.blogs?.[p]?.status ?? "none";
+        return (
+          <div key={p} className="option-row">
+            <span>{PLATFORM_LABEL[p]}</span>
+            <div className="segmented" role="radiogroup" aria-label={`${PLATFORM_LABEL[p]} 글 상태`}>
+              {MANUAL_STATUSES.map((s) => (
+                <button key={s} type="button" className={current === s ? "on" : ""} onClick={() => pick(p, s)}>
+                  {MANUAL_STATUS_LABEL[s]}
+                </button>
+              ))}
+            </div>
+            {current === "scheduled" && <span className="hint small">지금은 {BLOG_STATUS_LABEL.scheduled} 상태입니다.</span>}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -77,15 +86,15 @@ export function NextStep({
     );
   }
   const target = platform ? PLATFORM_LABEL[platform] : "블로그";
-  if (!platform && job.status !== "published") {
+  if (!platform) {
     // 올릴 블로그를 아직 고르지 않았다: 고르기 전에는 등록 버튼을 보여 주지 않는다.
-    const registered = job.status === "posted" || job.status === "scheduled";
+    const done = PLATFORMS.flatMap((p) => (job.blogs?.[p] ? [blogStatusText(p, job.blogs[p].status)] : []));
     return (
       <>
         {destPicker}
-        <div className={`next-step ${registered ? "ok" : ""}`}>
+        <div className={`next-step ${done.length ? "ok" : ""}`}>
           <div>
-            {registered ? <b>이미 {STATUS_LABEL[job.status]} 상태인 글입니다.</b> : <b>초안이 준비됐습니다.</b>} <b>올릴 블로그를 위에서 선택하세요.</b>
+            {done.length ? <b>이미 올린 블로그가 있는 글입니다 ({done.join(" · ")}).</b> : <b>초안이 준비됐습니다.</b>} <b>올릴 블로그를 위에서 선택하세요.</b>
             {!blogReady && (
               <p className="hint small">
                 연결된 블로그가 없습니다.{" "}
@@ -99,7 +108,8 @@ export function NextStep({
       </>
     );
   }
-  if (platform === "wordpress" && job.status !== "published") {
+  const published = job.blogs?.[platform]?.status === "published";
+  if (platform === "wordpress" && !published) {
     return (
       <>
         {destPicker}
@@ -107,22 +117,25 @@ export function NextStep({
       </>
     );
   }
-  if (job.status === "published") {
+  if (published) {
+    // 이 블로그에서는 발행완료다. 다시 올리려면 위 블로그별 글 상태에서 이 블로그의 상태를 먼저 바꾼다.
     return (
-      <div className="next-step ok">
-        <div>
-          <b>블로그 발행완료된 글입니다.</b>{" "}
-          {job.wordpress ? "워드프레스에 발행했거나 블로그 발행완료로 표시한 글입니다." : "블로그에 발행했거나 블로그 발행완료로 표시한 글입니다."}
-          {job.wordpress?.link && (
-            <>
-              {" "}
-              <a href={job.wordpress.link} target="_blank" rel="noreferrer noopener">
-                글 열기
-              </a>
-            </>
-          )}
+      <>
+        {destPicker}
+        <div className="next-step ok">
+          <div>
+            <b>{target}에 발행완료된 글입니다.</b> {target}에 발행했거나 발행완료로 표시한 글입니다. 다른 블로그에도 올릴 수 있습니다.
+            {platform === "wordpress" && job.wordpress?.link && (
+              <>
+                {" "}
+                <a href={job.wordpress.link} target="_blank" rel="noreferrer noopener">
+                  글 열기
+                </a>
+              </>
+            )}
+          </div>
         </div>
-      </div>
+      </>
     );
   }
   return (
@@ -154,9 +167,9 @@ function ChromeBlogNext({
 }) {
   const pm = usePublishMode(platform === "naver" ? NAVER_MINUTE_STEP : 1);
   const cats = useCategories(platform);
-  const registered = job.status === "posted" || job.status === "scheduled";
-  // 마지막으로 올린 블로그가 이 블로그일 때만 "올렸다"고 본다 (예전 글은 올린 블로그 기록이 없으면 이 블로그로 본다).
-  const again = registered && (!job.postingTo || job.postingTo === platform);
+  // 이 블로그의 상태만 본다 (다른 블로그에 올린 결과와 관계없다).
+  const status = platform && job.blogs?.[platform]?.status;
+  const again = status === "posted" || status === "scheduled";
   const go = () => {
     const dup = again ? "\n이전에 올린 글은 그대로 두고 블로그에 새 글이 하나 더 생깁니다." : "";
     if (pm.mode === "publish" && !confirm(`${target}에 임시저장한 뒤 바로 공개합니다. 계속할까요?${dup}`)) return;
@@ -166,15 +179,11 @@ function ChromeBlogNext({
   return (
     <div className={`next-step ${again ? "ok" : ""}`}>
       <div>
-        {registered && !again ? (
-          <>
-            <b>다른 블로그에 올린 글입니다.</b> {target}에도 올릴 수 있습니다. 올리면 글의 상태가 {target} 기준으로 바뀝니다.
-          </>
-        ) : job.status === "posted" ? (
+        {status === "posted" ? (
           <>
             <b>{target}에 임시저장했습니다.</b> 크롬 창에서 내용을 확인하고 직접 발행하거나, 아래에서 다시 올릴 수 있습니다. 다시 올리면 이전 글을 고치지 않고 블로그에 새 글이 하나 더 생깁니다. 이전 글은 블로그에서 직접 지워 주세요.
           </>
-        ) : job.status === "scheduled" ? (
+        ) : status === "scheduled" ? (
           <>
             <b>{target}에 발행 예약했습니다.</b> 예약 시각은 진행 로그에서 볼 수 있습니다. 다시 올리면 블로그에 새 글이 하나 더 생깁니다.
           </>
@@ -381,23 +390,20 @@ function WordPressNext({
       글 열기
     </a>
   );
-  // 이 글을 워드프레스에 올린 기록이 있을 때만 "등록됨"이다 (다른 블로그에 올려 임시저장 상태인 글은 아직 아니다).
-  const registered = !!wp && (job.status === "posted" || job.status === "scheduled");
+  // 워드프레스의 상태만 본다 (다른 블로그에 올린 결과와 관계없다).
+  const status = job.blogs?.wordpress?.status;
+  const registered = status === "posted" || status === "scheduled";
 
   return (
     <div className={`next-step ${registered ? "ok" : ""}`}>
       <div>
-        {registered && job.status === "posted" ? (
+        {status === "posted" ? (
           <>
             <b>워드프레스에 임시저장했습니다.</b> {link} 다시 등록하면 같은 글을 갱신합니다.
           </>
-        ) : registered && job.status === "scheduled" ? (
+        ) : status === "scheduled" ? (
           <>
             <b>워드프레스에 예약했습니다.</b> {wp?.scheduledAt ? `${new Date(wp.scheduledAt).toLocaleString("ko-KR")}에 공개됩니다.` : ""} {link} 다시 등록하면 같은 글을 갱신합니다.
-          </>
-        ) : job.status === "posted" || job.status === "scheduled" ? (
-          <>
-            <b>다른 블로그에 올린 글입니다.</b> 워드프레스에도 올릴 수 있습니다. 올리면 글의 상태가 워드프레스 기준으로 바뀝니다.
           </>
         ) : (
           <>

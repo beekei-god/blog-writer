@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { BUSY_STATUSES, aiFor, canSetStatus, methodFor, type ImageMethod, type ImageProvider, type ImageStyle, type Job, type Platform, type Post } from "../../shared/types";
-import { countBodyChars, MAX_BODY_CHARS } from "../../shared/length";
+import { BUSY_STATUSES, aiFor, methodFor, type ImageMethod, type ImageProvider, type ImageStyle, type Job, type Platform, type Post } from "../../shared/types";
+import { countBodyChars, maxBodyChars, targetCharsOf } from "../../shared/length";
 import { PLATFORM_LABEL } from "../../shared/labels";
 import { api } from "../api";
 import { ExtensionStatus } from "../ExtensionStatus";
@@ -13,6 +13,7 @@ import { Preview } from "./Preview";
 import { EditByPrompt } from "./EditByPrompt";
 import { Progress } from "./Progress";
 import { Report } from "./Report";
+import { TitlePicker } from "./TitlePicker";
 import { AiPicker, type ImageToolsProps, MethodPicker, shownMethod, useImageApi } from "./images";
 
 interface Props {
@@ -29,6 +30,9 @@ type SaveState = "saved" | "pending" | "saving" | "error";
 
 export function JobDetail({ job, ready, onChange, onDeleted, onOpenSettings }: Props) {
   const [draft, setDraft] = useState<Post | null>(job.post ?? null);
+  // 오래 걸리는 요청(제목 다시 만들기)이 끝났을 때 그사이 고친 내용 위에 결과를 넣는다
+  const draftRef = useRef(draft);
+  draftRef.current = draft;
   const [mode, setMode] = useState<"preview" | "edit">("preview");
   const [error, setError] = useState("");
   const [saveState, setSaveState] = useState<SaveState>("saved");
@@ -179,6 +183,21 @@ export function JobDetail({ job, ready, onChange, onDeleted, onOpenSettings }: P
   const blockCount = draft?.blocks.length;
   useEffect(() => setSelected([]), [blockCount, job.id]);
   const chars = draft ? countBodyChars(draft) : 0;
+  // 본문 맨 위 제목 아래의 제목 후보 (미리보기·편집 모두)
+  const titleSlot = draft && (
+    <TitlePicker
+      post={draft}
+      disabled={busy}
+      onPick={(title) => edit({ ...draft, title })}
+      onRegenerate={async () => {
+        await flush();
+        const { titleCandidates } = await api.regenerateTitles(job.id);
+        if (draftRef.current) edit({ ...draftRef.current, titleCandidates });
+      }}
+    />
+  );
+  const targetChars = targetCharsOf(job);
+  const maxChars = maxBodyChars(targetChars);
 
   return (
     <div className="detail">
@@ -205,9 +224,7 @@ export function JobDetail({ job, ready, onChange, onDeleted, onOpenSettings }: P
       </header>
 
       <Progress job={job} />
-      {draft && !busy && canSetStatus(job.status) && (
-        <StatusPicker status={job.status} onSetStatus={(status) => run(() => api.setStatus(job.id, status))} />
-      )}
+      {draft && !busy && <StatusPicker job={job} onSetStatus={(platform, status) => run(() => api.setBlogStatus(job.id, platform, status))} />}
 
       {busy && lastLog && (
         <p className="current-activity">
@@ -234,7 +251,7 @@ export function JobDetail({ job, ready, onChange, onDeleted, onOpenSettings }: P
         blogReady={dest ? ready[dest] : ready.naver || ready.tistory || ready.wordpress}
         platform={dest}
         destPicker={
-          draft && !busy && job.status !== "published" ? (
+          draft && !busy ? (
             <div className="dest-picker">
               <span className="field-label">올릴 곳</span>
               <div className="segmented" role="radiogroup" aria-label="올릴 곳">
@@ -282,9 +299,9 @@ export function JobDetail({ job, ready, onChange, onDeleted, onOpenSettings }: P
                 편집
               </button>
             </div>
-            <span className={`char-count ${chars > MAX_BODY_CHARS ? "over" : ""}`} title="공백 포함, 참고 자료 목록 제외">
-              본문 {chars.toLocaleString()} / {MAX_BODY_CHARS.toLocaleString()}자
-              {chars > MAX_BODY_CHARS && " · 분량 초과"}
+            <span className={`char-count ${chars > maxChars ? "over" : ""}`} title={`공백 포함, 참고 자료 목록 제외. ${maxChars.toLocaleString()}자를 넘으면 분량 초과`}>
+              본문 {chars.toLocaleString()} / 목표 약 {targetChars.toLocaleString()}자
+              {chars > maxChars && " · 분량 초과"}
             </span>
           </div>
 
@@ -294,10 +311,10 @@ export function JobDetail({ job, ready, onChange, onDeleted, onOpenSettings }: P
             selected={selected}
             disabled={busy}
             lastLog={lastLog}
-            onStart={(prompt, range) =>
+            onStart={(prompt, range, writing) =>
               run(async () => {
                 await flush();
-                await api.editPost(job.id, prompt, range);
+                await api.editPost(job.id, prompt, range, writing);
               })
             }
             onApply={() => void run(() => api.applyEdit(job.id))}
@@ -350,6 +367,7 @@ export function JobDetail({ job, ready, onChange, onDeleted, onOpenSettings }: P
               generating={job.status === "generating_images" ? (job.generatingImages ?? []) : []}
               regenerating={job.status === "generating_images" ? (job.regeneratingImages ?? []) : []}
               tools={imageTools}
+              titleSlot={titleSlot}
             />
           ) : (
             <PostEditor
@@ -359,6 +377,7 @@ export function JobDetail({ job, ready, onChange, onDeleted, onOpenSettings }: P
               disabled={busy}
               tools={imageTools}
               selection={{ selected, toggle: (i) => setSelected((s) => (s.includes(i) ? s.filter((x) => x !== i) : [...s, i].sort((a, b) => a - b))) }}
+              titleSlot={titleSlot}
             />
           )}
 

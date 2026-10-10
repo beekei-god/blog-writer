@@ -1,4 +1,4 @@
-import type { BlogCategory, ImageMethod, KeywordSection, ImageOptions, ImageProvider, ImageStyle, Job, ManualStatus, Platform, Post, PublishMode, Recommendation, Settings, TokenTotals, UsageSummary } from "../shared/types";
+import type { BlogCategory, ImageMethod, KeywordSection, ImageOptions, ImageProvider, ImageStyle, Job, ManualStatus, Platform, Post, PublishMode, Recommendation, Settings, TokenTotals, UsageSummary, WritingOptions } from "../shared/types";
 
 export interface DatalabStatus {
   configured: boolean;
@@ -81,8 +81,8 @@ export const api = {
   saveSettings: (s: Settings) => req<Settings>("/api/settings", { method: "PUT", body: JSON.stringify(s) }),
   listJobs: () => req<Job[]>("/api/jobs"),
   getJob: (id: string) => req<Job>(`/api/jobs/${id}`),
-  createJob: (topic: string, images: ImageOptions, links: string[]) =>
-    req<Job>("/api/jobs", { method: "POST", body: JSON.stringify({ topic, images, links }) }),
+  createJob: (topic: string, images: ImageOptions, links: string[], writing: WritingOptions) =>
+    req<Job>("/api/jobs", { method: "POST", body: JSON.stringify({ topic, images, links, writing }) }),
   getSearchAd: () => req<SearchAdStatus>("/api/searchad"),
   saveSearchAd: (customerId: string, apiKey: string, secretKey: string) =>
     req<SearchAdStatus>("/api/searchad", { method: "PUT", body: JSON.stringify({ customerId, apiKey, secretKey }) }),
@@ -118,9 +118,9 @@ export const api = {
   /** 이미지 한 장만 고른 AI·스타일로 다시 만든다. target: "thumbnail" 또는 "body-<블록 번호>" */
   regenerateImage: (id: string, target: string, ai: { provider: ImageProvider; style: ImageStyle; method?: ImageMethod }) =>
     req<void>(`/api/jobs/${id}/images/${target}/regenerate`, { method: "POST", body: JSON.stringify(ai) }),
-  /** 프롬프트로 글 고치기: range는 고칠 블록 범위(처음·끝 포함), 없으면 글 전체. 결과는 job.editProposal로 오고, 적용해야 글에 들어간다 */
-  editPost: (id: string, prompt: string, range?: { start: number; end: number }) =>
-    req<void>(`/api/jobs/${id}/edit`, { method: "POST", body: JSON.stringify({ prompt, range }) }),
+  /** 프롬프트로 글 고치기: range는 고칠 블록 범위(처음·끝 포함), 없으면 글 전체. writing이 있으면 그 분량·말투로 글 전체를 다시 쓴다. 결과는 job.editProposal로 오고, 적용해야 글에 들어간다 */
+  editPost: (id: string, prompt: string, range?: { start: number; end: number }, writing?: WritingOptions) =>
+    req<void>(`/api/jobs/${id}/edit`, { method: "POST", body: JSON.stringify({ prompt, range, writing }) }),
   applyEdit: (id: string) => req<Job>(`/api/jobs/${id}/edit/apply`, { method: "POST" }),
   discardEdit: (id: string) => req<Job>(`/api/jobs/${id}/edit`, { method: "DELETE" }),
   /** 본문 이미지 자리 추가: afterBlock 번 블록 바로 뒤에 이미지 없는 이미지 블록을 넣는다 (이미지는 "이미지 생성"으로 만든다) */
@@ -144,9 +144,11 @@ export const api = {
   getCategories: (platform: Platform) => req<CategoryList>(`/api/categories/${platform}`),
   /** 네이버·티스토리: 블로그 에디터에서 카테고리 목록을 읽어 온다 (글은 저장하지 않는다) */
   refreshCategories: (platform: Platform) => req<CategoryList>(`/api/categories/${platform}/refresh`, { method: "POST" }),
-  /** 임시저장 이후 상태를 직접 바꾼다: 블로그 발행완료 표시/취소, 초안 검토로 되돌리기 */
-  setStatus: (id: string, status: ManualStatus) =>
-    req<Job>(`/api/jobs/${id}/status`, { method: "PUT", body: JSON.stringify({ status }) }),
+  /** 블로그 하나의 상태를 직접 바꾼다 (올리지 않음·임시저장 완료·발행완료). 다른 블로그의 상태는 그대로 */
+  setBlogStatus: (id: string, platform: Platform, status: ManualStatus) =>
+    req<Job>(`/api/jobs/${id}/blogs/${platform}/status`, { method: "PUT", body: JSON.stringify({ status }) }),
+  /** 제목 후보만 새로 만든다 (글에는 넣지 않고 돌려준다) */
+  regenerateTitles: (id: string) => req<{ titleCandidates: string[] }>(`/api/jobs/${id}/titles`, { method: "POST" }),
   retry: (id: string) => req<void>(`/api/jobs/${id}/retry`, { method: "POST" }),
   remove: (id: string) => req<void>(`/api/jobs/${id}`, { method: "DELETE" }),
   getLoginWindow: () => req<LoginWindowStatus>("/api/browser/login"),

@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
-import { BUSY_STATUSES, blogIdOf, type Job, type Platform, type Settings, type UsageSummary } from "../shared/types";
+import { BUSY_STATUSES, blogIdOf, PLATFORMS, type Job, type Platform, type Settings, type UsageSummary } from "../shared/types";
+import { matchesFilter, type BlogFilter, type StatusFilter } from "../shared/blogStatus";
+import { blogStatusText, PLATFORM_SHORT_LABEL } from "../shared/labels";
 import { api } from "./api";
 import { JobDetail } from "./job/JobDetail";
 import { errorText, statusLabel } from "./labels";
@@ -22,22 +24,15 @@ const TABS: { view: View; label: string }[] = [
   { view: "settings", label: "설정" },
 ];
 
-/** "내 글" 목록의 상태 필터. 글 작성 단계별로 묶는다 (실패한 글은 "전체"에서만 보인다) */
-type StatusFilter = "all" | "researching" | "draft" | "saved" | "published";
-
-const FILTERS: { key: StatusFilter; label: string; statuses?: Job["status"][] }[] = [
+/** "내 글" 목록의 상태 필터 (묶는 기준은 `matchesFilter`). 블로그를 고르면 그 블로그에서의 상태로 거른다 */
+const FILTERS: { key: StatusFilter; label: string }[] = [
   { key: "all", label: "전체" },
-  // 초안이 나오기 전 (자료 조사·글 작성·이미지 생성 중)
-  { key: "researching", label: "자료 조사 중", statuses: ["researching", "writing", "generating_images"] },
-  { key: "draft", label: "초안 검토", statuses: ["draft_ready"] },
-  { key: "saved", label: "임시 저장", statuses: ["posting", "posted"] },
-  { key: "published", label: "발행 완료", statuses: ["scheduled", "published"] },
+  { key: "researching", label: "자료 조사 중" },
+  { key: "draft", label: "초안 검토" },
+  { key: "saved", label: "임시 저장" },
+  { key: "published", label: "발행 완료" },
 ];
-
-const matchesFilter = (j: Job, f: StatusFilter) => {
-  const statuses = FILTERS.find((x) => x.key === f)?.statuses;
-  return !statuses || statuses.includes(j.status);
-};
+const BLOG_FILTERS: { key: BlogFilter; label: string }[] = [{ key: "all", label: "전체 블로그" }, ...PLATFORMS.map((p) => ({ key: p, label: PLATFORM_SHORT_LABEL[p] }))];
 
 function shortDate(iso: string) {
   const d = new Date(iso);
@@ -59,6 +54,7 @@ export function App() {
   const [error, setError] = useState("");
   const [usage, setUsage] = useState<UsageSummary | null>(null);
   const [filter, setFilter] = useState<StatusFilter>("all");
+  const [blogFilter, setBlogFilter] = useState<BlogFilter>("all");
 
   const refresh = useCallback(async () => {
     try {
@@ -109,7 +105,7 @@ export function App() {
     wordpress: !!settings && !!blogIdOf(settings, "wordpress"),
   };
   const blogReady = ready.naver || ready.tistory || ready.wordpress; // 하나라도 연결되어 있으면 올릴 수 있다
-  const visibleJobs = jobs.filter((j) => matchesFilter(j, filter));
+  const visibleJobs = jobs.filter((j) => matchesFilter(j, blogFilter, filter));
 
   return (
     <div className="app">
@@ -135,11 +131,18 @@ export function App() {
         <aside className="sidebar">
           <div className="sidebar-head">
             <h2>내 글</h2>
-            <span className="hint small">{jobs.length ? (filter === "all" ? `${jobs.length}개` : `${visibleJobs.length} / ${jobs.length}개`) : ""}</span>
+            <span className="hint small">{jobs.length ? (visibleJobs.length === jobs.length ? `${jobs.length}개` : `${visibleJobs.length} / ${jobs.length}개`) : ""}</span>
+          </div>
+          <div className="filter-chips" role="group" aria-label="블로그별로 보기">
+            {BLOG_FILTERS.map((b) => (
+              <button key={b.key} className={blogFilter === b.key ? "on" : ""} aria-pressed={blogFilter === b.key} onClick={() => setBlogFilter(b.key)}>
+                {b.label}
+              </button>
+            ))}
           </div>
           <div className="filter-chips" role="group" aria-label="상태별로 보기">
             {FILTERS.map((f) => {
-              const count = jobs.filter((j) => matchesFilter(j, f.key)).length;
+              const count = jobs.filter((j) => matchesFilter(j, blogFilter, f.key)).length;
               return (
                 <button key={f.key} className={filter === f.key ? "on" : ""} aria-pressed={filter === f.key} onClick={() => setFilter(f.key)}>
                   {f.label} <span className="count">{count}</span>
@@ -153,9 +156,18 @@ export function App() {
                 <button className={selected?.id === j.id ? "active" : ""} onClick={() => go("job", j.id)}>
                   <span className="topic">{j.post?.title ?? j.topic}</span>
                   <span className="meta">
-                    <span className={`badge ${j.status}`}>
-                      {BUSY_STATUSES.includes(j.status) && <span className="spinner" />}
-                      {statusLabel(j)}
+                    {/* 올린 블로그가 있는 초안은 블로그별 상태만 보인다 (올리는 중·진행 중이면 그 상태도 함께) */}
+                    <span className="badges">
+                      {(j.status !== "draft_ready" || !PLATFORMS.some((p) => j.blogs?.[p])) && (
+                        <span className={`badge ${j.status}`}>
+                          {BUSY_STATUSES.includes(j.status) && <span className="spinner" />}
+                          {statusLabel(j)}
+                        </span>
+                      )}
+                      {PLATFORMS.map((p) => {
+                        const b = j.blogs?.[p];
+                        return b && <span key={p} className={`badge ${b.status}`}>{blogStatusText(p, b.status)}</span>;
+                      })}
                     </span>
                     <span className="hint small">{shortDate(j.createdAt)}</span>
                   </span>

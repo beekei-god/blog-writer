@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { countBodyChars, MAX_BODY_CHARS } from "../shared/length";
-import type { EditProposal, Post, PostBlock } from "../shared/types";
+import { countBodyChars, DEFAULT_TARGET_CHARS, maxBodyChars, targetRange } from "../shared/length";
+import type { EditProposal, Post, PostBlock, Source, WritingOptions } from "../shared/types";
 import { runClaude } from "./claude";
-import { isCompleteTable } from "./writer";
+import { isCompleteTable, toneSection } from "./writer";
 
 /**
  * 프롬프트로 글 고치기: 사용자가 쓴 수정 요청대로 글 전체 또는 선택한 블록 범위를 고치거나 내용을 더한다.
@@ -71,7 +71,7 @@ function shown(blocks: PostBlock[], offset: number, refOf: Map<PostBlock, string
     .join("\n");
 }
 
-const SYSTEM = (rules: string, today: string, whole: boolean, chars: number) => `당신은 한국어 블로그 작가이자 편집자입니다. 이미 쓴 블로그 글을 사용자의 "수정 요청"대로 고치거나 내용을 덧붙입니다.
+const SYSTEM = (rules: string, today: string, whole: boolean, chars: number, writing?: WritingOptions) => `당신은 한국어 블로그 작가이자 편집자입니다. 이미 쓴 블로그 글을 사용자의 "수정 요청"대로 고치거나 내용을 덧붙입니다.
 오늘 날짜는 ${today}(한국 시간)입니다.
 
 <글쓰기_규칙>
@@ -82,7 +82,7 @@ ${rules}
 - 요청한 부분만 고치세요. 요청과 상관없는 문장은 표현까지 그대로 두세요. 글쓰기 규칙(문체, 구조, 확인된 사실만 쓰기 등)은 고치거나 더한 부분에도 똑같이 지키세요.
 - 새 사실은 수정 요청에 적힌 내용, 글에 이미 있는 자료·출처, 웹 검색(WebSearch·WebFetch)으로 확인한 것만 쓰세요. 확인하지 못한 사실은 쓰지 말고 note에 "확인하지 못해 뺐다"고 적으세요. 웹 검색은 새 사실이 필요할 때만 하고, 페이지 열람(WebFetch)은 최대 4개까지만 하세요.
 - 링크는 확인한 URL만, "기관/페이지 이름: https://..." 형태의 일반 텍스트로 쓰세요. 새로 참고한 자료는 글 끝 "참고 자료" 목록에 더하세요(그 목록이 고치는 범위 안에 있을 때).
-- 분량: 본문은 공백 포함 ${MAX_BODY_CHARS.toLocaleString()}자를 넘기지 마세요(제목·이미지·"참고 자료" 목록은 제외). 지금 본문은 ${chars.toLocaleString()}자입니다. 내용을 더하면 덜 중요한 문장을 줄여 맞추세요.
+- 분량: 본문은 공백 포함 ${maxBodyChars(writing?.targetChars ?? DEFAULT_TARGET_CHARS).toLocaleString()}자를 넘기지 마세요(제목·이미지·"참고 자료" 목록은 제외, 글쓰기 규칙에 적힌 분량보다 우선). 지금 본문은 ${chars.toLocaleString()}자입니다. 내용을 더하면 덜 중요한 문장을 줄여 맞추세요.
 - 이미지 블록({"type":"image","ref":"img-1"}…)은 새로 만들거나 지우지 마세요. 보이는 이미지 블록을 빠짐없이 한 번씩, ref를 그대로 blocks에 넣으세요. 위치는 요청에 맞게 옮겨도 됩니다.
 - blocks 종류: heading(소제목), paragraph(문단), list(목록), quote(인용), table(표), image(이미지).
 - paragraph 안에서는 문장이 끝날 때마다 줄바꿈 문자(\\n)로 줄을 나누세요. 한 문단은 2~4줄이고, 문단 사이에 빈 문단을 만들지 마세요.
@@ -94,6 +94,19 @@ ${
     : "- 지정한 범위의 블록만 고칩니다. blocks에는 그 범위를 대신할 블록들만 돌려주세요(범위 앞뒤의 블록은 보이는 문맥일 뿐이니 돌려주지 마세요). 고치지 않을 블록도 범위 안에 있으면 그대로 포함해서 돌려주세요."
 }`;
 
+/** 분량·말투를 바꿔 글 전체를 다시 쓸 때의 지시 ("요청한 부분만 고치세요"보다 우선) */
+function rewriteSection(target: number, chars: number) {
+  const [lo, hi] = targetRange(target);
+  return `
+## 다시 쓰기 (분량·말투 바꾸기, 위 "요청한 부분만 고치세요"보다 우선)
+- 글 전체를 본문 공백 포함 약 ${target.toLocaleString()}자(${lo.toLocaleString()}~${hi.toLocaleString()}자)에 맞춰 다시 쓰세요. 지금 본문은 ${chars.toLocaleString()}자입니다.
+- 모든 문장을 아래 "말투"에 맞게 새로 쓰세요. 소제목과 섹션 구성도 말투에 맞게 바꿔도 됩니다.
+- 사실·숫자·날짜·출처는 바꾸거나 새로 만들지 마세요. 분량을 늘릴 때는 지금 글과 수정 요청 아래의 "조사 자료"에 있는 내용으로 보태고, 그래도 모자라면 웹 검색으로 확인한 사실만 더하세요. 채울 사실이 없으면 짧게 끝내고 note에 적으세요.
+- 분량을 줄일 때는 중복 설명, 긴 예시, 중요도가 낮은 내용부터 줄이세요. 도입부(결론 먼저), 핵심 요약, 참고 자료 목록은 남기세요.
+- 수정 요청에 적힌 내용이 있으면 함께 반영하세요.
+`;
+}
+
 export interface EditInput {
   post: Post;
   prompt: string;
@@ -102,6 +115,10 @@ export interface EditInput {
   rules: string;
   today: string;
   jobId: string;
+  /** 작업을 만들 때 고른 분량·말투 (고친 부분도 같은 말투로). 다시 쓰기(rewrite)에서는 새로 고른 값 */
+  writing?: WritingOptions;
+  /** 있으면 writing의 분량·말투로 글 전체를 다시 쓴다. 이 작업의 조사 자료를 함께 보여 준다 */
+  rewrite?: { notes: string; sources: Source[] };
   onProgress: (m: string) => void;
 }
 
@@ -127,9 +144,12 @@ export async function proposeEdit(input: EditInput): Promise<EditResult> {
   }
 
   const context = (blocks: PostBlock[], offset: number) => (blocks.length ? shown(blocks, offset, new Map()) : "(없음)");
+  const research = input.rewrite
+    ? `\n## 조사 자료 (이 글을 처음 쓸 때 조사한 노트)\n${input.rewrite.notes || "(없음)"}\n\n## 리서치 출처\n${input.rewrite.sources.map((s) => `- ${s.title}: ${s.url}`).join("\n") || "(없음)"}\n`
+    : "";
   const prompt = `## 수정 요청
-${input.prompt.trim()}
-
+${input.prompt.trim() || "(따로 없음. 분량·말투만 바꿔 다시 써 주세요)"}
+${research}
 ## 글
 제목: ${post.title}
 요약: ${post.summary}
@@ -139,9 +159,14 @@ ${
     : `\n## 범위 앞의 블록 (문맥, 고치지 않음)\n${context(post.blocks.slice(Math.max(0, start - 2), start), Math.max(0, start - 2))}\n\n## 고칠 블록 (#${start}~#${end})\n${shown(before, start, refOf)}\n\n## 범위 뒤의 블록 (문맥, 고치지 않음)\n${context(post.blocks.slice(end + 1, end + 3), end + 1)}`
 }`;
 
-  input.onProgress(whole ? "프롬프트로 글 전체를 고치는 중" : `프롬프트로 블록 #${start}~#${end}를 고치는 중`);
+  input.onProgress(
+    input.rewrite ? "\n분량·말투를 바꿔 글 전체를 다시 쓰는 중" : whole ? "\n프롬프트로 글 전체를 고치는 중" : `\n프롬프트로 블록 #${start}~#${end}를 고치는 중`,
+  );
   const raw = await runClaude<unknown>({
-    system: SYSTEM(input.rules, input.today, whole, charsBefore),
+    system:
+      SYSTEM(input.rules, input.today, whole, charsBefore, input.writing) +
+      (input.rewrite ? rewriteSection(input.writing?.targetChars ?? DEFAULT_TARGET_CHARS, charsBefore) : "") +
+      toneSection(input.writing?.tone),
     prompt,
     schema: jsonSchema(whole),
     tools: ["WebSearch", "WebFetch"],

@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { MAX_BODY_IMAGES, MAX_TAGS, STYLES_BY_PROVIDER, TAG_SOURCES } from "../shared/types";
+import { MAX_BODY_IMAGES, MAX_TAGS, STYLES_BY_PROVIDER, TAG_SOURCES, WRITING_TONES } from "../shared/types";
+import { MAX_TARGET_CHARS, MIN_TARGET_CHARS } from "../shared/length";
 import { IMAGE_ERROR_KINDS } from "../shared/imageErrors";
 
 export const ProviderEnum = z.enum(["claude", "gemini", "chatgpt"]);
@@ -66,6 +67,11 @@ export const ImageOptionsSchema = z
     path: ["thumbnailStyle"],
     message: "썸네일을 만드는 AI가 지원하지 않는 스타일입니다. Claude(SVG)는 플랫 일러스트만 지원합니다.",
   });
+
+export const WritingOptionsSchema = z.object({
+  targetChars: z.number().int().min(MIN_TARGET_CHARS).max(MAX_TARGET_CHARS),
+  tone: z.enum(WRITING_TONES),
+});
 
 const textBlock = (type: string) => ({
   type: "object",

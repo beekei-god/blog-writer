@@ -1,6 +1,6 @@
 import { countBodyChars } from "../shared/length";
-import { aiFor, bodyImageKey, bodyIndexOf, imageKey, imageSpecAt, imageSpecsOf, methodFor, type ImageMethod, type ImageOptions, type ImageProvider, type ImageScope, type ImageStyle, type Job, type Post } from "../shared/types";
-import { type BlogCategory, type Platform, type PublishMode, settingsFor } from "../shared/types";
+import { aiFor, bodyImageKey, bodyIndexOf, imageKey, imageSpecAt, imageSpecsOf, methodFor, type ImageMethod, type ImageOptions, type ImageProvider, type ImageScope, type ImageStyle, type Job, type Post, type WritingOptions } from "../shared/types";
+import { type BlogCategory, type BlogStatus, type Platform, type PublishMode, settingsFor } from "../shared/types";
 import { postWithClaudeInChrome } from "./browser/blogPost";
 import { isBlocked, markBlocked } from "./browser/blockedSites";
 import { SiteBlockedError } from "./browser/claudeChrome";
@@ -20,11 +20,17 @@ import { serialQueue } from "./fsutil";
 import { getJob, getSettings, log, updateJob } from "./store";
 import { writePost } from "./writer";
 import { publishToWordPress } from "./wordpress";
-import { errorText, PLATFORM_LABEL, PUBLISH_MODE_LABEL } from "../shared/labels";
+import { errorText, PLATFORM_LABEL, PUBLISH_MODE_LABEL, TONE_LABEL } from "../shared/labels";
 
 const running = new Set<string>();
 // Claude in Chrome 작업(블로그 작성, Gemini·ChatGPT 이미지)은 같은 크롬을 쓰므로 하나씩 실행한다.
 export const enqueueBrowser = serialQueue();
+
+/** 그 블로그의 상태만 바꾼다 (다른 블로그의 상태는 그대로). 글 자체는 초안 검토로 돌아온다 */
+function setBlogStatus(j: Job, p: Platform, status: BlogStatus) {
+  j.blogs = { ...j.blogs, [p]: { status, at: new Date().toISOString() } };
+  j.status = "draft_ready";
+}
 
 const NO_IMAGES: ImageOptions = { thumbnail: false, bodyImages: 0, provider: "claude", style: "flat" };
 const optionsOf = (job: { imageOptions?: Partial<ImageOptions> }): ImageOptions => ({ ...NO_IMAGES, ...job.imageOptions });
@@ -111,7 +117,8 @@ async function doDraft(id: string) {
         (relCount ? "" : " (이 키워드들은 함께 많이 찾는 영역이 없거나 꺼져 있음)"),
     );
 
-    await log(id, "규칙에 맞춰 글 작성 중");
+    const w = job.writingOptions;
+    await log(id, `규칙에 맞춰 글 작성 중${w ? ` (분량 약 ${w.targetChars.toLocaleString()}자, 말투 ${TONE_LABEL[w.tone]})` : ""}`);
     const post = await writePost({
       jobId: id,
       topic: job.topic,
@@ -125,6 +132,7 @@ async function doDraft(id: string) {
       autocomplete,
       related,
       options,
+      writing: job.writingOptions,
     }, (m) => void log(id, m));
     await updateJob(id, (j) => {
       j.post = post;
@@ -149,17 +157,19 @@ async function doDraft(id: string) {
   }
 }
 
+type EditOpts = { prompt: string; range?: { start: number; end: number }; writing?: WritingOptions };
+
 /**
  * 프롬프트로 글 고치기를 시작한다 (글 전체 또는 range 블록 범위). 제안을 "만드는 중"으로 먼저 기록해 두고 백그라운드에서 Claude가 고친다.
  * 고친 결과는 글에 바로 넣지 않고 제안으로 남긴다 (적용은 사용자가 비교해 보고 정한다).
  * 다른 작업이 진행 중이면 false. 만드는 동안 글 수정·블로그 올리기·이미지 작업은 막힌다 (isRunning).
  */
-export async function startEdit(id: string, opts: { prompt: string; range?: { start: number; end: number } }): Promise<boolean> {
+export async function startEdit(id: string, opts: EditOpts): Promise<boolean> {
   if (isRunning(id)) return false;
   running.add(id);
   try {
     await updateJob(id, (j) => {
-      j.editProposal = { prompt: opts.prompt, range: opts.range, status: "running", createdAt: new Date().toISOString() };
+      j.editProposal = { prompt: opts.prompt, range: opts.range, writing: opts.writing, status: "running", createdAt: new Date().toISOString() };
     });
   } catch (e) {
     running.delete(id);
@@ -169,15 +179,26 @@ export async function startEdit(id: string, opts: { prompt: string; range?: { st
   return true;
 }
 
-async function doEdit(id: string, opts: { prompt: string; range?: { start: number; end: number } }) {
+async function doEdit(id: string, opts: EditOpts) {
   const say = (m: string) => void log(id, m);
   try {
     throwIfCancelled();
     const job = await requireDraft(id);
-    const result = await proposeEdit({ post: job.post, ...opts, rules: (await getRules()).content, today: todayKST(), jobId: id, onProgress: say });
+    // 분량·말투를 바꿔 다시 쓰면 새 값으로, 저장된 조사 자료를 바탕으로 쓴다. 그 밖에는 작업의 분량·말투를 따른다.
+    const result = await proposeEdit({
+      post: job.post,
+      prompt: opts.prompt,
+      range: opts.range,
+      writing: opts.writing ?? job.writingOptions,
+      rewrite: opts.writing && { notes: job.researchNotes ?? "", sources: job.sources },
+      rules: (await getRules()).content,
+      today: todayKST(),
+      jobId: id,
+      onProgress: say,
+    });
     throwIfCancelled(); // 결과가 나온 순간에 중지했으면 제안으로 남기지 않는다
     await updateJob(id, (j) => {
-      j.editProposal = { prompt: opts.prompt, range: opts.range, status: "ready", createdAt: j.editProposal?.createdAt ?? new Date().toISOString(), ...result };
+      j.editProposal = { prompt: opts.prompt, range: opts.range, writing: opts.writing, status: "ready", createdAt: j.editProposal?.createdAt ?? new Date().toISOString(), ...result };
     });
     say(`고친 결과가 준비됐습니다. 바뀐 부분을 보고 적용하세요. (${result.note})`);
   } catch (e) {
@@ -187,7 +208,7 @@ async function doEdit(id: string, opts: { prompt: string; range?: { start: numbe
     } else {
       const error = errorText(e);
       await updateJob(id, (j) => {
-        j.editProposal = { prompt: opts.prompt, range: opts.range, status: "failed", createdAt: j.editProposal?.createdAt ?? new Date().toISOString(), error };
+        j.editProposal = { prompt: opts.prompt, range: opts.range, writing: opts.writing, status: "failed", createdAt: j.editProposal?.createdAt ?? new Date().toISOString(), error };
       });
       say(`글 고치기 실패: ${error}`);
     }
@@ -405,10 +426,10 @@ async function doWordPressPost(id: string, mode: PublishMode, scheduledAt?: stri
     await log(id, `워드프레스 API로 ${PUBLISH_MODE_LABEL[mode]} 시작${category ? ` (카테고리: ${category.name})` : ""}`);
     const say = (m: string) => void log(id, m);
     const r = await publishToWordPress(job.post, id, settings, mode, scheduledAt, job.wordpress, say, category);
-    const status = r.wpStatus === "publish" ? "published" : r.wpStatus === "future" ? "scheduled" : "posted";
+    const status: BlogStatus = r.wpStatus === "publish" ? "published" : r.wpStatus === "future" ? "scheduled" : "posted";
     await updateJob(id, (j) => {
       j.wordpress = { postId: r.postId, link: r.link, mode: r.mode, scheduledAt: r.scheduledAt, mediaIds: r.mediaIds };
-      j.status = status;
+      setBlogStatus(j, "wordpress", status);
     });
     const done = { published: "발행했습니다", scheduled: "예약했습니다", posted: "임시저장했습니다" }[status];
     await log(id, `워드프레스에 ${done}: ${r.link}`);
@@ -471,11 +492,9 @@ async function doPost(id: string, platform: Platform, publish: PublishRequest) {
         await fallback();
       }
     }
-    const status = publish.mode === "publish" ? "published" : publish.mode === "schedule" ? "scheduled" : "posted";
+    const status: BlogStatus = publish.mode === "publish" ? "published" : publish.mode === "schedule" ? "scheduled" : "posted";
     if (publish.mode !== "draft") await log(id, `${PLATFORM_LABEL[platform]}에 ${publishedText(publish)}.`);
-    await updateJob(id, (j) => {
-      j.status = status;
-    });
+    await updateJob(id, (j) => setBlogStatus(j, platform, status));
   } catch (e) {
     if (e instanceof PublishStepError) {
       // 임시저장까지는 됐다.
@@ -483,7 +502,7 @@ async function doPost(id: string, platform: Platform, publish: PublishRequest) {
       // 발행 창 단계를 실제 화면에 맞게 고칠 수 있도록 멈춘 순간의 화면 구조를 남긴다.
       if (e.dialog) await log(id, `발행 창 구조 (문제 확인용, 글 본문은 빠짐):\n${e.dialog}`);
       await updateJob(id, (j) => {
-        j.status = "posted";
+        setBlogStatus(j, platform, "posted");
         j.error = e.message;
       });
       return;

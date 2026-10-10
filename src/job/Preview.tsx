@@ -49,12 +49,15 @@ export function Preview({
   generating,
   regenerating,
   tools,
+  titleSlot,
 }: {
   jobId: string;
   post: Post;
   generating: string[];
   regenerating: string[];
   tools: ImageToolsProps;
+  /** 제목 바로 아래에 둘 것 (제목 후보 고르기) */
+  titleSlot?: React.ReactNode;
 }) {
   return (
     <article className="preview">
@@ -62,6 +65,7 @@ export function Preview({
         <PreviewImage jobId={jobId} spec={post.thumbnail} thumbnail generating={generating.includes("thumbnail")} regenerating={regenerating.includes("thumbnail")} target="thumbnail" tools={tools} />
       )}
       <h1>{post.title}</h1>
+      {titleSlot}
       {post.blocks.map((b, i) => {
         switch (b.type) {
           case "heading":
