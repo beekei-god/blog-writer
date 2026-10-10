@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { blockText, collapseSame, diffBlocks } from "../../shared/blockDiff";
 import { DEFAULT_TARGET_CHARS, maxBodyChars, targetCharsOf } from "../../shared/length";
-import { TONE_LABEL } from "../../shared/labels";
+import { FORMAT_LABEL, TONE_LABEL } from "../../shared/labels";
 import type { EditProposal, Job, Post, WritingOptions } from "../../shared/types";
 import { draftOf, parseWriting, WritingPicker } from "../WritingPicker";
 
@@ -13,7 +13,7 @@ function rangeLabel(range: { start: number; end: number } | undefined) {
 }
 
 /** 분량·말투를 바꿔 다시 쓰는 제안이면 "분량 약 4,000자 · 스토리형" */
-const writingLabel = (w: WritingOptions) => `분량 약 ${w.targetChars.toLocaleString()}자 · ${TONE_LABEL[w.tone]}`;
+const writingLabel = (w: WritingOptions) => `분량 약 ${w.targetChars.toLocaleString()}자 · ${w.format ? `${FORMAT_LABEL[w.format]} · ` : ""}${TONE_LABEL[w.tone]}`;
 
 /** 선택한 블록 번호들을 처음~끝 범위로 (사이의 블록도 포함한다). 선택이 없으면 글 전체 */
 const rangeOf = (selected: number[]) => (selected.length ? { start: Math.min(...selected), end: Math.max(...selected) } : undefined);
@@ -196,10 +196,10 @@ export function EditByPrompt({
 
       {/* 2. 분량·말투 바꾸기: 처음 조사한 자료로 글 전체를 새 분량·말투로 다시 쓴다 */}
       <details className="edit-card" open={!!p?.writing || undefined}>
-        <summary>분량·말투 바꾸기</summary>
+        <summary>분량·형식·말투 바꾸기</summary>
         {!(running && p.writing) && (
           <>
-            <WritingPicker value={rewrite} onChange={setRewrite} disabled={locked} />
+            <WritingPicker value={rewrite} onChange={setRewrite} disabled={locked} topic={job.topic} />
             <label className="mini-label">
               추가로 반영할 요청 (선택)
               <textarea
@@ -213,7 +213,7 @@ export function EditByPrompt({
             </label>
             <div className="edit-actions">
               <button className="primary" disabled={locked || !rewriteWriting} onClick={() => rewriteWriting && onStart(rewritePrompt.trim(), undefined, rewriteWriting)}>
-                이 분량·말투로 다시 쓰기
+                이 설정으로 다시 쓰기
               </button>
               <span className="hint small">
                 처음 조사한 자료로 글 전체를 다시 씁니다. 이미지·태그는 그대로이고, 비교해 보고 적용해야 바뀝니다.

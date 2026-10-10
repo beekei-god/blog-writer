@@ -512,6 +512,15 @@ button.link {
   font-weight: 600;
   font-size: 13px;
 }
+.field-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.experience-field {
+  margin: 4px 0 8px;
+}
 .form-actions {
   display: flex;
   align-items: center;

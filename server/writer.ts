@@ -1,4 +1,4 @@
-import { MAX_TAGS, type ImageOptions, type Post, type PostBlock, type Source, type TagDetail, type WritingOptions, type WritingTone } from "../shared/types";
+import { MAX_TAGS, type ImageOptions, type Post, type PostBlock, type Source, type TagDetail, type WritingFormat, type WritingOptions, type WritingTone } from "../shared/types";
 import { countBodyChars, DEFAULT_TARGET_CHARS, maxBodyChars, targetRange } from "../shared/length";
 import { toneName, toneProblem } from "../shared/tone";
 import { runClaude } from "./claude";
@@ -19,6 +19,29 @@ export const TONE_GUIDE: Record<WritingTone, string> = {
 export const toneSection = (tone?: WritingTone) =>
   tone ? `\n## 말투 (가장 중요한 요구입니다. 글쓰기 규칙의 문체보다 우선하며, 존댓말과 확인된 사실만 쓰는 규칙은 그대로 지킬 것)\n- ${TONE_GUIDE[tone]}\n` : "";
 
+export const FORMAT_GUIDE: Record<WritingFormat, string> = {
+  info: "정보 제공 형식: 독자가 알고 싶은 정보를 빠르게 얻는 글입니다. 도입부에서 핵심 답을 먼저 밝히고, 대상·자격 → 방법·절차 → 일정·금액 같은 수치 → 주의점·자주 하는 실수 순서로 쓰세요. 소제목은 독자가 찾을 질문이나 항목 이름으로 쓰고, 비교할 값이 있으면 표로 정리하세요. 개인의 감상이나 평가는 넣지 마세요. 마지막은 핵심 요약으로 끝냅니다.",
+  review:
+    "리뷰 형식: 대상을 살펴보고 평가하는 글입니다. 도입부에서 무엇을 다루는지와 한 줄 총평을 먼저 밝히고, 기본 정보(표 또는 목록) → 좋았던 점 → 아쉬운 점·주의할 점 → 이런 분께 추천 / 이런 분께는 맞지 않음 → 총평 순서로 쓰세요. 좋은 점과 아쉬운 점을 모두 같은 비중으로 구체적인 근거와 함께 쓰고, 근거 없는 칭찬이나 과장된 광고 문구는 쓰지 마세요.",
+};
+
+/**
+ * 글 형식 지시 (고르지 않은 예전 작업은 글쓰기 규칙대로라 빈 문자열).
+ * 리뷰에서 글쓴이가 직접 겪은 일은 경험 메모에 있는 것만 쓰고, 메모가 없으면 경험담 없이 공개된 자료로만 평가한다.
+ */
+export const formatSection = (writing?: Pick<WritingOptions, "format" | "experience">) => {
+  const f = writing?.format;
+  if (!f) return "";
+  let s = `\n## 글 형식 (글의 구성을 정합니다. 말투·분량·확인된 사실만 쓰는 규칙은 그대로 지킬 것)\n- ${FORMAT_GUIDE[f]}\n`;
+  if (f === "review") {
+    const exp = writing?.experience?.trim();
+    s += exp
+      ? `- 아래 "글쓴이의 경험 메모"는 글쓴이가 직접 겪고 확인한 내용입니다. 이 메모에 있는 내용만 1인칭 후기('써 보니', '직접 해 보니')로 쓰고, 메모에 없는 사용 기간·구매 경위·수치·에피소드는 만들지 마세요. 메모의 사실과 리서치 노트의 자료가 다르면 자료를 우선하고 메모는 '제 경우에는'으로 한정하세요.\n<글쓴이의_경험_메모>\n${exp}\n</글쓴이의_경험_메모>\n`
+      : "- 글쓴이의 경험 메모가 없습니다. 직접 써 보거나 겪은 것처럼 1인칭 경험담·후기를 지어내지 마세요. 공개된 자료(공식 정보·수집한 출처)를 근거로 평가하고, '공개된 정보 기준으로', '자료를 보면'처럼 근거를 밝혀 쓰세요.\n";
+  }
+  return s;
+};
+
 /** 글 쓰기 요청의 맨 끝에 한 번 더 붙이는 말투 확인 (긴 지시 앞부분이 잊히지 않게) */
 const toneReminder = (tone?: WritingTone) => (tone ? `\n\n## 말투 최종 확인 (${toneName(tone)})\n- ${TONE_GUIDE[tone]}\n- 다 쓴 뒤 모든 문장의 끝을 이 말투로 다시 확인하고, 어긋난 문장은 고쳐서 내세요.` : "");
 
@@ -38,7 +61,7 @@ ${rules}
 - 제목, 이미지, 글 끝 "참고 자료" 목록, 태그는 이 분량에 들어가지 않습니다.
 - 정보가 많으면 중요도가 낮은 섹션을 빼고, 빼낸 내용은 omittedItems에 "분량 때문에 뺌"으로 적으세요.
 - 확인된 자료가 목표를 채우기에 부족하면 지어내거나 같은 말을 되풀이하지 말고 짧게 끝내세요.
-${toneSection(writing?.tone)}
+${toneSection(writing?.tone)}${formatSection(writing)}
 ## 출력 형식
 - 사실은 리서치 노트에 출처와 함께 있는 것만 씁니다. 노트의 "찾지 못한 항목"은 본문에 쓰지 말고 omittedItems에 넣으세요.
 - blocks 종류: heading(소제목), paragraph(문단), list(목록), quote(인용), table(표), image(이미지).

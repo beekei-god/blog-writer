@@ -20,7 +20,7 @@ import { serialQueue } from "./fsutil";
 import { getJob, getSettings, log, updateJob } from "./store";
 import { writePost } from "./writer";
 import { publishToWordPress } from "./wordpress";
-import { errorText, PLATFORM_LABEL, PUBLISH_MODE_LABEL, TONE_LABEL } from "../shared/labels";
+import { errorText, PLATFORM_LABEL, FORMAT_LABEL, PUBLISH_MODE_LABEL, TONE_LABEL } from "../shared/labels";
 
 const running = new Set<string>();
 // Claude in Chrome 작업(블로그 작성, Gemini·ChatGPT 이미지)은 같은 크롬을 쓰므로 하나씩 실행한다.
@@ -118,7 +118,7 @@ async function doDraft(id: string) {
     );
 
     const w = job.writingOptions;
-    await log(id, `규칙에 맞춰 글 작성 중${w ? ` (분량 약 ${w.targetChars.toLocaleString()}자, 말투 ${TONE_LABEL[w.tone]})` : ""}`);
+    await log(id, `규칙에 맞춰 글 작성 중${w ? ` (분량 약 ${w.targetChars.toLocaleString()}자, 말투 ${TONE_LABEL[w.tone]}${w.format ? `, 형식 ${FORMAT_LABEL[w.format]}` : ""})` : ""}`);
     const post = await writePost({
       jobId: id,
       topic: job.topic,

@@ -125,6 +125,8 @@ export const api = {
   /** 프롬프트로 글 고치기: range는 고칠 블록 범위(처음·끝 포함), 없으면 글 전체. writing이 있으면 그 분량·말투로 글 전체를 다시 쓴다. 결과는 job.editProposal로 오고, 적용해야 글에 들어간다 */
   editPost: (id: string, prompt: string, range?: { start: number; end: number }, writing?: WritingOptions) =>
     req<void>(`/api/jobs/${id}/edit`, { method: "POST", body: JSON.stringify({ prompt, range, writing }) }),
+  /** 리뷰 글의 경험 메모 초안 (공개 정보 기준, 직접 겪은 내용은 비워 둠) */
+  draftExperience: (topic: string) => req<{ memo: string }>("/api/experience-draft", { method: "POST", body: JSON.stringify({ topic }) }),
   applyEdit: (id: string) => req<Job>(`/api/jobs/${id}/edit/apply`, { method: "POST" }),
   discardEdit: (id: string) => req<Job>(`/api/jobs/${id}/edit`, { method: "DELETE" }),
   /** 본문 이미지 자리 추가: afterBlock 번 블록 바로 뒤에 이미지 없는 이미지 블록을 넣는다 (이미지는 "이미지 생성"으로 만든다) */

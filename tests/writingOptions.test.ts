@@ -53,6 +53,34 @@ describe("분량·말투 옵션 (글 작성)", () => {
     expect(system).not.toContain("## 말투");
   });
 
+  it("글 형식: 고르지 않으면 형식 지시 없음, 정보 제공·리뷰는 각 구성을 지시한다", async () => {
+    claude.results.push(postOf(2500), postOf(2500), postOf(2500));
+    await writePost(input({ targetChars: 2500, tone: "info" }));
+    expect(claude.calls[0].system).not.toContain("## 글 형식");
+    await writePost(input({ targetChars: 2500, tone: "info", format: "info" }));
+    expect(claude.calls[1].system).toContain("정보 제공 형식");
+    await writePost(input({ targetChars: 2500, tone: "friendly", format: "review" }));
+    expect(claude.calls[2].system).toContain("리뷰 형식");
+  });
+
+  it("리뷰: 경험 메모가 있으면 그 내용만 후기로, 없으면 경험담을 지어내지 않게 한다", async () => {
+    claude.results.push(postOf(2500), postOf(2500), postOf(2500));
+    await writePost(input({ targetChars: 2500, tone: "friendly", format: "review", experience: "한 달 사용, 배터리가 이틀 간다" }));
+    const withMemo = claude.calls[0].system;
+    expect(withMemo).toContain("<글쓴이의_경험_메모>");
+    expect(withMemo).toContain("배터리가 이틀 간다");
+    expect(withMemo).toContain("메모에 없는");
+
+    await writePost(input({ targetChars: 2500, tone: "friendly", format: "review" }));
+    const noMemo = claude.calls[1].system;
+    expect(noMemo).not.toContain("<글쓴이의_경험_메모>");
+    expect(noMemo).toContain("경험담·후기를 지어내지 마세요");
+
+    // 정보 제공 형식에서는 경험 메모가 있어도 쓰지 않는다
+    await writePost(input({ targetChars: 2500, tone: "info", format: "info", experience: "메모" }));
+    expect(claude.calls[2].system).not.toContain("<글쓴이의_경험_메모>");
+  });
+
   it("고른 목표의 1.2배를 넘을 때만 줄여 쓰게 한다", async () => {
     claude.results.push(postOf(4500)); // 4,000자 목표의 상한 4,800 이하 → 줄이지 않음
     await writePost(input({ targetChars: 4000, tone: "info" }));

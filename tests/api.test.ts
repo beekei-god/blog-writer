@@ -84,10 +84,12 @@ describe("새 글", () => {
     expect((await call("POST", "/api/jobs", { topic: "정상 주제", images: IMAGES, links: ["ftp://x"] })).body.error).toBe("참고 링크는 http(s)로 시작하는 주소여야 합니다.");
   });
   it("분량·말투를 검사한다", async () => {
-    const msg = "본문 분량은 1,000~8,000자 사이로, 말투는 목록에서 고르세요.";
+    const msg = "본문 분량은 1,000~8,000자 사이로, 말투와 글 형식은 목록에서 고르세요, 경험 메모는 1,500자 이하로 쓰세요.";
     expect((await call("POST", "/api/jobs", { topic: "정상 주제", images: IMAGES, writing: { targetChars: 900, tone: "info" } })).body.error).toBe(msg);
     expect((await call("POST", "/api/jobs", { topic: "정상 주제", images: IMAGES, writing: { targetChars: 8001, tone: "info" } })).body.error).toBe(msg);
     expect((await call("POST", "/api/jobs", { topic: "정상 주제", images: IMAGES, writing: { targetChars: 2500, tone: "poem" } })).body.error).toBe(msg);
+    expect((await call("POST", "/api/jobs", { topic: "정상 주제", images: IMAGES, writing: { targetChars: 2500, tone: "info", format: "essay" } })).body.error).toBe(msg);
+    expect((await call("POST", "/api/jobs", { topic: "정상 주제", images: IMAGES, writing: { targetChars: 2500, tone: "info", format: "review", experience: "가".repeat(1501) } })).body.error).toBe(msg);
   });
   it("설정 화면에서 저장해도 기억한 분량·말투는 그대로", async () => {
     const current = await getSettings();

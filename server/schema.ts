@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { MAX_BODY_IMAGES, MAX_TAGS, STYLES_BY_PROVIDER, TAG_SOURCES, WRITING_TONES } from "../shared/types";
+import { MAX_BODY_IMAGES, MAX_EXPERIENCE_CHARS, MAX_TAGS, STYLES_BY_PROVIDER, TAG_SOURCES, WRITING_FORMATS, WRITING_TONES } from "../shared/types";
 import { MAX_TARGET_CHARS, MIN_TARGET_CHARS } from "../shared/length";
 import { IMAGE_ERROR_KINDS } from "../shared/imageErrors";
 
@@ -71,6 +71,13 @@ export const ImageOptionsSchema = z
 export const WritingOptionsSchema = z.object({
   targetChars: z.number().int().min(MIN_TARGET_CHARS).max(MAX_TARGET_CHARS),
   tone: z.enum(WRITING_TONES),
+  format: z.enum(WRITING_FORMATS).optional(),
+  experience: z
+    .string()
+    .trim()
+    .max(MAX_EXPERIENCE_CHARS)
+    .transform((s) => s || undefined)
+    .optional(),
 });
 
 const textBlock = (type: string) => ({

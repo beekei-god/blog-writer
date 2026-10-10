@@ -164,8 +164,8 @@ export function NewJob({ topic, links, onTopicChange, onLinksChange, onCreated, 
       </section>
 
       <section className="card">
-        <h3 className="card-title">분량과 말투</h3>
-        <WritingPicker value={writing} onChange={changeWriting} />
+        <h3 className="card-title">분량·글 형식·말투</h3>
+        <WritingPicker value={writing} onChange={changeWriting} topic={topic} />
       </section>
 
       <section className="card">

@@ -2,7 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { errorText, MANUAL_STATUS_LABEL, PLATFORM_LABEL, PLATFORM_SHORT_LABEL } from "../../shared/labels";
 import { MAX_TARGET_CHARS, MIN_TARGET_CHARS } from "../../shared/length";
-import { imageSpecsOf, MANUAL_STATUSES, PLATFORMS, MAX_LINKS, NAVER_MINUTE_STEP, settingsFor, type ImageSpec, type Post } from "../../shared/types";
+import { imageSpecsOf, MANUAL_STATUSES, MAX_EXPERIENCE_CHARS, PLATFORMS, MAX_LINKS, NAVER_MINUTE_STEP, settingsFor, type ImageSpec, type Post } from "../../shared/types";
 import { extensionStatus, INSTALL_URL } from "../browser/claudeChrome";
 import { cancelJob } from "../cancel";
 import { isRunning, runDraft, runPost } from "../pipeline";
@@ -12,6 +12,7 @@ import { createJob, deleteJob, getJob, getSettings, listJobs, log, saveSettings,
 import { checkSchedule, normalizeSite, wordpressSiteOf } from "../wordpress";
 import { isCompleteTable } from "../writer";
 import { regenerateTitles } from "../titles";
+import { draftExperienceMemo } from "../experience";
 import { getRules, todayKST } from "../rules";
 import { markBusy, wordpressStatus, wrap } from "./util";
 
@@ -66,7 +67,7 @@ router.post(
               ? "주제는 300자 이하로 입력하세요."
               : "주제를 2자 이상 입력하세요."
             : issue.path[0] === "writing"
-              ? `본문 분량은 ${MIN_TARGET_CHARS.toLocaleString()}~${MAX_TARGET_CHARS.toLocaleString()}자 사이로, 말투는 목록에서 고르세요.`
+              ? `본문 분량은 ${MIN_TARGET_CHARS.toLocaleString()}~${MAX_TARGET_CHARS.toLocaleString()}자 사이로, 말투와 글 형식은 목록에서 고르세요, 경험 메모는 ${MAX_EXPERIENCE_CHARS.toLocaleString()}자 이하로 쓰세요.`
               : issue.message;
       return void res.status(400).json({ error: msg });
     }
@@ -74,7 +75,8 @@ router.post(
     const settings = await getSettings();
     const writing = parsed.data.writing ?? settings.writing;
     // 마지막으로 쓴 이미지·분량·말투 옵션을 다음 작업의 기본값으로 기억한다.
-    await saveSettings({ ...settings, images, writing });
+    // 경험 메모는 이 글에만 쓴다 (기본값으로 기억하지 않는다)
+    await saveSettings({ ...settings, images, writing: { ...writing, experience: undefined } });
     const job = await createJob(topic, images, links, writing);
     void runDraft(job.id);
     res.status(201).json(job);
@@ -108,6 +110,16 @@ router.put(
 );
 
 // 제목 후보만 새로 만든다. 글에는 넣지 않고 돌려준다 (화면이 후보로 보여 주고, 저장은 화면의 자동 저장으로 한다)
+// 리뷰 글의 경험 메모 초안 (글쓴이가 고쳐 쓴다)
+router.post(
+  "/api/experience-draft",
+  wrap(async (req, res) => {
+    const parsed = z.object({ topic: z.string().trim().min(2).max(300) }).safeParse(req.body);
+    if (!parsed.success) return void res.status(400).json({ error: "주제를 2자 이상 입력하세요." });
+    res.json({ memo: await draftExperienceMemo(parsed.data.topic) });
+  }),
+);
+
 router.post(
   "/api/jobs/:id/titles",
   wrap(async (req, res) => {

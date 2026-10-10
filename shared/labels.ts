@@ -1,4 +1,4 @@
-import type { BlogStatus, Job, ManualStatus, Platform, PublishMode, WritingTone } from "./types";
+import type { BlogStatus, Job, ManualStatus, Platform, PublishMode, WritingFormat, WritingTone } from "./types";
 
 /** 화면과 서버 오류 메시지에서 함께 쓰는 이름 */
 export const STATUS_LABEL: Record<Job["status"], string> = {
@@ -35,6 +35,13 @@ export const TONE_HINT: Record<WritingTone, string> = {
   friendly: "해요체 + 수다형",
   story: "스토리텔링 + 일기체",
   summary: "Q&A + 요약 리스트",
+};
+
+/** 글 형식 이름과 짧은 설명 (새 글 폼과 작업 로그) */
+export const FORMAT_LABEL: Record<WritingFormat, string> = { info: "정보 제공", review: "리뷰" };
+export const FORMAT_HINT: Record<WritingFormat, string> = {
+  info: "결론과 핵심을 먼저, 대상·방법·주의점 순서로 전달",
+  review: "총평·좋았던 점·아쉬운 점·추천 대상 순서로 평가",
 };
 
 export const errorText = (e: unknown) => (e instanceof Error ? e.message : String(e));

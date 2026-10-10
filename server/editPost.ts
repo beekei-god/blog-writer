@@ -2,7 +2,7 @@ import { z } from "zod";
 import { countBodyChars, DEFAULT_TARGET_CHARS, maxBodyChars, targetRange } from "../shared/length";
 import type { EditProposal, Post, PostBlock, Source, WritingOptions } from "../shared/types";
 import { runClaude } from "./claude";
-import { isCompleteTable, toneSection } from "./writer";
+import { formatSection, isCompleteTable, toneSection } from "./writer";
 
 /**
  * 프롬프트로 글 고치기: 사용자가 쓴 수정 요청대로 글 전체 또는 선택한 블록 범위를 고치거나 내용을 더한다.
@@ -166,7 +166,8 @@ ${
     system:
       SYSTEM(input.rules, input.today, whole, charsBefore, input.writing) +
       (input.rewrite ? rewriteSection(input.writing?.targetChars ?? DEFAULT_TARGET_CHARS, charsBefore) : "") +
-      toneSection(input.writing?.tone),
+      toneSection(input.writing?.tone) +
+      (input.rewrite ? formatSection(input.writing) : ""), // 부분 고치기는 글 구성을 바꾸지 않는다
     prompt,
     schema: jsonSchema(whole),
     tools: ["WebSearch", "WebFetch"],

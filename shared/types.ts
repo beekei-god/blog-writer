@@ -59,11 +59,21 @@ export interface ImageOptions {
 export type WritingTone = "info" | "friendly" | "story" | "summary";
 export const WRITING_TONES: WritingTone[] = ["info", "friendly", "story", "summary"];
 
+/** 글 형식: 정보 제공(정보를 순서대로 전달), 리뷰(써 본 느낌·장단점·추천 대상). 말투와 따로 고른다 */
+export type WritingFormat = "info" | "review";
+export const WRITING_FORMATS: WritingFormat[] = ["info", "review"];
+/** 리뷰 형식의 경험 메모 최대 글자수 */
+export const MAX_EXPERIENCE_CHARS = 1500;
+
 /** 글 작성 옵션 (작업마다 고른다) */
 export interface WritingOptions {
   /** 본문 목표 글자수 (공백 포함 근사값) */
   targetChars: number;
   tone: WritingTone;
+  /** 글 형식 (없으면 글쓰기 규칙대로. 예전 작업) */
+  format?: WritingFormat;
+  /** 리뷰 형식에서 글쓴이가 직접 겪은 내용 메모. 이 글에만 쓰고 기본값으로 기억하지 않는다 */
+  experience?: string;
 }
 
 /** 고른 AI에서 쓸 수 있는 스타일로 맞춘다 (Claude는 플랫만 가능). */
