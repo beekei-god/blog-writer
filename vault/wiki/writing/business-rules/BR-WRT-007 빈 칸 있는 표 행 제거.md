@@ -7,13 +7,13 @@ status: active
 confidence: high
 consistency: consistent
 source:
-  - blog-writer:server/writer.ts:25
-  - blog-writer:server/writer.ts:166
-  - blog-writer:server/writer.ts:264-268
+  - blog-writer:server/writer.ts:44
+  - blog-writer:server/writer.ts:191
+  - blog-writer:server/writer.ts:292-296
   - blog-writer:rules/default-writing-rules.md:45
-  - blog-writer:shared/types.ts:192-193
+  - blog-writer:shared/types.ts:205-206
   - blog-writer:src/job/PostEditor.tsx:50-56
-  - blog-writer:server/routes/jobs.ts:85-99
+  - blog-writer:server/routes/jobs.ts:94-123
   - blog-writer:tests/writer.test.ts:18-27
 entities: [Post]
 updated: 2026-10-07
@@ -34,9 +34,9 @@ updated: 2026-10-07
 | 레이어 | 구현 | 값/내용 | 근거 |
 |---|---|---|---|
 | 규칙 문서 | 빈 칸·"-"·"미정" 금지, 행 삭제 | | `blog-writer:rules/default-writing-rules.md:45` |
-| 프롬프트(작성) | 칸 수 같게, 모두 채움, 못 채우면 행 빼기 | | `blog-writer:server/writer.ts:25` |
-| 서버(작성 직후) | `isCompleteTable` 필터 | 위 표 | `blog-writer:server/writer.ts:166`, `:264-268` |
-| 서버(저장 PUT) | 같은 필터 적용 (2026-10-05 추가) | 편집 결과에서도 불완전한 행·표 제거 | `blog-writer:server/routes/jobs.ts:91-94` |
+| 프롬프트(작성) | 칸 수 같게, 모두 채움, 못 채우면 행 빼기 | | `blog-writer:server/writer.ts:44` |
+| 서버(작성 직후) | `isCompleteTable` 필터 | 위 표 | `blog-writer:server/writer.ts:191`, `:292-296` |
+| 서버(저장 PUT) | 같은 필터 적용 (2026-10-05 추가) | 편집 결과에서도 불완전한 행·표 제거 | `blog-writer:server/routes/jobs.ts:100-103` |
 | 화면(편집) | 검사 없음 (저장 때 서버가 정리) | `|`로 나눈 텍스트를 그대로 표로 저장 요청 | `blog-writer:src/job/PostEditor.tsx:50-56` |
 | 테스트 | 빈 칸·"-"·"미정"·칸 수 다른 행 제거, 남은 행 없으면 표 제거 | | `blog-writer:tests/writer.test.ts:18-27` |
 
@@ -55,4 +55,4 @@ updated: 2026-10-07
 | 날짜 | 변경 | 근거 |
 |---|---|---|
 | 2026-10-05 | 최초 기록 | |
-| 2026-10-05 | 저장(PUT) 때도 `isCompleteTable` 적용 (consistency conflict → consistent) | `blog-writer:server/routes/jobs.ts:91-94` |
+| 2026-10-05 | 저장(PUT) 때도 `isCompleteTable` 적용 (consistency conflict → consistent) | `blog-writer:server/routes/jobs.ts:100-103` |

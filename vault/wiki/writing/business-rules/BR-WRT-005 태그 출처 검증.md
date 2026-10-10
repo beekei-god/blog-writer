@@ -7,10 +7,10 @@ status: active
 confidence: high
 consistency: consistent
 source:
-  - blog-writer:server/writer.ts:28-33
-  - blog-writer:server/writer.ts:156-165
-  - blog-writer:server/writer.ts:219-261
-  - blog-writer:shared/types.ts:196-205
+  - blog-writer:server/writer.ts:47-52
+  - blog-writer:server/writer.ts:181-190
+  - blog-writer:server/writer.ts:247-289
+  - blog-writer:shared/types.ts:209-218
   - blog-writer:tests/writer.test.ts:50-68
 entities: [Post]
 updated: 2026-10-07
@@ -33,9 +33,9 @@ updated: 2026-10-07
 ## 구현 현황
 | 레이어 | 구현 | 값/내용 | 근거 |
 |---|---|---|---|
-| 프롬프트(작성) | 목록에 실제로 있는 표현만, query는 그 목록의 검색어, 글 내용과 맞는 것만 | | `blog-writer:server/writer.ts:28-33` |
-| 서버 | `dedupeTags` → `verifyTagSources` → 30개 자르기 | 부분 일치(`norm(item).includes(norm(tag))`) | `blog-writer:server/writer.ts:156-165`, `:225-254` |
-| 화면 | "태그를 고른 근거" 표 (태그·출처·확인 검색어, 확인 날짜) | | `blog-writer:src/job/Report.tsx:56-80` |
+| 프롬프트(작성) | 목록에 실제로 있는 표현만, query는 그 목록의 검색어, 글 내용과 맞는 것만 | | `blog-writer:server/writer.ts:47-52` |
+| 서버 | `dedupeTags` → `verifyTagSources` → 30개 자르기 | 부분 일치(`norm(item).includes(norm(tag))`) | `blog-writer:server/writer.ts:181-190`, `:253-282` |
+| 화면 | "태그를 고른 근거" 표 (태그·출처·확인 검색어, 확인 날짜) | | `blog-writer:src/job/Report.tsx:41-65` |
 | 테스트 | 목록에 있는 표현만 유지, 검색어 바로잡기, 스마트블록 제외, 그 밖의 출처 유지 | | `blog-writer:tests/writer.test.ts:50-68` |
 
 ## 예외 / 경계값
@@ -50,4 +50,4 @@ updated: 2026-10-07
 | 날짜 | 변경 | 근거 |
 |---|---|---|
 | 2026-10-05 | 최초 기록 | |
-| 2026-10-05 | 근거 표를 작성 당시 기록으로 확정, 화면 문구에 표시 | `blog-writer:src/job/Report.tsx:59` |
+| 2026-10-05 | 근거 표를 작성 당시 기록으로 확정, 화면 문구에 표시 | `blog-writer:src/job/Report.tsx:44` |

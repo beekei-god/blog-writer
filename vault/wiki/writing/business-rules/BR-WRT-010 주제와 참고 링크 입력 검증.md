@@ -7,13 +7,13 @@ status: active
 confidence: high
 consistency: consistent
 source:
-  - blog-writer:server/routes/jobs.ts:44-73
-  - blog-writer:src/NewJob.tsx:26-42
+  - blog-writer:server/routes/jobs.ts:47-82
+  - blog-writer:src/NewJob.tsx:28-44
   - blog-writer:shared/types.ts:25
-  - blog-writer:src/NewJob.tsx:89-107
-  - blog-writer:src/NewJob.tsx:139-151
-  - blog-writer:src/NewJob.tsx:219-224
-  - blog-writer:tests/api.test.ts:80-86
+  - blog-writer:src/NewJob.tsx:98-118
+  - blog-writer:src/NewJob.tsx:150-162
+  - blog-writer:src/NewJob.tsx:235-240
+  - blog-writer:tests/api.test.ts:80-98
 entities: [Job]
 updated: 2026-10-09
 ---
@@ -36,9 +36,9 @@ updated: 2026-10-09
 ## 구현 현황
 | 레이어 | 구현 | 값/내용 | 근거 |
 |---|---|---|---|
-| 서버 | zod + 길이 초과 전용 문구. 링크 개수는 공용 상수 `MAX_LINKS` | topic 2~300, links ≤20 http(s) URL | `blog-writer:server/routes/jobs.ts:47-65` |
-| 화면 | 주제: 2자 이상 + `maxLength=300`. 링크: `isHttpUrl`(`^https?://` + `new URL`), `MAX_LINKS = 20`(서버와 같은 상수, `blog-writer:shared/types.ts:25`), 오류 표시와 버튼 비활성 (2026-10-05 추가) | 서버와 같은 기준 | `blog-writer:src/NewJob.tsx:26-42`, `:89-90`, `:127`, `:148-150`, `:220-223` |
-| 테스트 | 2자 미만·300자 초과·http(s) 아닌 링크의 서버 오류 문구 | | `blog-writer:tests/api.test.ts:80-86` |
+| 서버 | zod + 길이 초과 전용 문구. 링크 개수는 공용 상수 `MAX_LINKS` | topic 2~300, links ≤20 http(s) URL | `blog-writer:server/routes/jobs.ts:50-72` |
+| 화면 | 주제: 2자 이상 + `maxLength=300`. 링크: `isHttpUrl`(`^https?://` + `new URL`), `MAX_LINKS = 20`(서버와 같은 상수, `blog-writer:shared/types.ts:25`), 오류 표시와 버튼 비활성 (2026-10-05 추가) | 서버와 같은 기준 | `blog-writer:src/NewJob.tsx:28-44`, `:98-99`, `:138`, `:159-161`, `:236-239` |
+| 테스트 | 2자 미만·300자 초과·http(s) 아닌 링크의 서버 오류 문구 | | `blog-writer:tests/api.test.ts:80-98` |
 
 모든 레이어가 같은 값이다.
 
@@ -53,5 +53,5 @@ updated: 2026-10-09
 | 날짜 | 변경 | 근거 |
 |---|---|---|
 | 2026-10-05 | 최초 기록 | |
-| 2026-10-05 | 주제 300자 상한을 화면에도 적용, 서버 초과 오류 문구 분리 (링크 검증은 여전히 서버만) | `blog-writer:src/NewJob.tsx:127`, `blog-writer:server/routes/jobs.ts:54-65` |
-| 2026-10-05 | 링크 형식·개수(20개)를 화면에서도 검사 (consistency conflict → consistent) | `blog-writer:src/NewJob.tsx:26-42`, `:220` |
+| 2026-10-05 | 주제 300자 상한을 화면에도 적용, 서버 초과 오류 문구 분리 (링크 검증은 여전히 서버만) | `blog-writer:src/NewJob.tsx:138`, `blog-writer:server/routes/jobs.ts:59-72` |
+| 2026-10-05 | 링크 형식·개수(20개)를 화면에서도 검사 (consistency conflict → consistent) | `blog-writer:src/NewJob.tsx:28-44`, `:236` |

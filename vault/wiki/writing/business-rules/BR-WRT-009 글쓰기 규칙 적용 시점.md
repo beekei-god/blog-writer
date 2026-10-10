@@ -8,8 +8,8 @@ confidence: high
 consistency: consistent
 source:
   - blog-writer:server/rules.ts:6-37
-  - blog-writer:server/pipeline.ts:80-86
-  - blog-writer:server/routes/settings.ts:49-59
+  - blog-writer:server/pipeline.ts:86-92
+  - blog-writer:server/routes/settings.ts:52-62
   - blog-writer:src/RulesEditor.tsx:22-32
   - blog-writer:src/RulesEditor.tsx:64
 entities: [글쓰기 규칙, Job]
@@ -33,8 +33,8 @@ updated: 2026-10-07
 ## 구현 현황
 | 레이어 | 구현 | 값/내용 | 근거 |
 |---|---|---|---|
-| 서버 | 작업마다 `getRules()` | | `blog-writer:server/pipeline.ts:80-86` |
-| 서버 | 저장 검증 | 1~50,000자 | `blog-writer:server/routes/settings.ts:51-58` |
+| 서버 | 작업마다 `getRules()` | | `blog-writer:server/pipeline.ts:86-92` |
+| 서버 | 저장 검증 | 1~50,000자 | `blog-writer:server/routes/settings.ts:54-61` |
 | 화면 | 안내 문구·이탈 확인 | "다음 작업부터 적용 (진행 중인 작업에는 적용되지 않음)" | `blog-writer:src/RulesEditor.tsx:64`, `:22-32` |
 
 ## 예외 / 경계값

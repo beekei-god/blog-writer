@@ -9,7 +9,7 @@ consistency: consistent
 source:
   - blog-writer:server/research.ts:14-22
   - blog-writer:server/research.ts:66-82
-  - blog-writer:server/writer.ts:102-112
+  - blog-writer:server/writer.ts:124-134
   - blog-writer:rules/default-writing-rules.md:42-43
 entities: [Job]
 updated: 2026-10-07
@@ -33,9 +33,9 @@ updated: 2026-10-07
 |---|---|---|---|
 | 프롬프트(리서치) | 순서·6개 제한·사용자 링크 | | `blog-writer:server/research.ts:14-22` |
 | 서버 | 도구를 WebSearch·WebFetch로만 제한, effort high, 20분 | 열람 개수는 세지 않음 | `blog-writer:server/research.ts:70-82` |
-| 서버(작성 입력) | 출처 등급 라벨 | | `blog-writer:server/writer.ts:102-112` |
+| 서버(작성 입력) | 출처 등급 라벨 | | `blog-writer:server/writer.ts:124-134` |
 | 규칙 문서 | 공식→언론→블로그 | | `blog-writer:rules/default-writing-rules.md:42-43` |
-| 화면 | 출처 목록에 등급 배지 (공식/언론/블로그·참고용/기타) | | `blog-writer:src/job/JobDetail.tsx:412`, `:314-328` |
+| 화면 | 출처 목록에 등급 배지 (공식/언론/블로그·참고용/기타) | | `blog-writer:src/job/JobDetail.tsx:431`, `:331-345` |
 
 6개 제한과 순서는 프롬프트 지시라 `confidence: medium`.
 

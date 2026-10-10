@@ -158,3 +158,13 @@ updated: 2026-10-05
 - 불일치: 없음. 새 open question: topic #5(검색광고 API 실제 응답 미검증)·#6(구글 트렌드 RSS 미검증)·#7(입력 키워드 5개 초과 시 알림 없이 버림, 의도 확인 필요)
 - 비고: 서브에이전트 3개가 영역별로 갱신하고 메인이 용어집·index·registry·log·점검을 마무리했다
 - 분석 시점: git 1edb65a (스냅샷 `_snapshot.json`)
+
+## [2026-10-10] update | writing (분량·말투 선택, 분량·말투 다시 쓰기, 블로그별 글 상태, 제목 후보)
+- 읽은 범위: 커밋 1edb65a..afc7c10에서 바뀐 35개 파일 (추가 6개: `server/titles.ts`, `shared/blogStatus.ts`, `src/WritingPicker.tsx`, `src/job/TitlePicker.tsx`, `tests/titles.test.ts`, `tests/writingOptions.test.ts` / 수정 29개)
+- 변경 내용: 새 글에서 본문 목표 분량(1,000~8,000, 프리셋 4개)과 말투(정보형·친근형·스토리형·정리형) 선택, 상한은 고정 3,000자 대신 목표 × 1.2, 마지막 값 기억. 기존 글을 새 분량·말투로 글 전체 다시 쓰기(글 고치기 제안, 조사 자료 사용, 적용하면 작업의 분량·말투 변경). 글 상태를 진행 상태와 **블로그별 상태**(`Job.blogs`)로 분리, 블로그별 수기 변경, 목록에 블로그 칩·블로그별 배지, 예전 글은 읽을 때 옮김. 제목 후보를 제목 아래에서 고르고 "제목 다시 만들기"
+- 생성: [[writing/business-rules/BR-WRT-019 본문 말투 선택]]
+- 갱신(내용): writing — BR-WRT-001(이름 "본문 분량 목표와 상한", 다시 씀), 002, 011, 012, 013(다시 씀), 016, 017, Job(다시 씀), Post, 글쓰기 규칙, 초안 작성·초안 편집·프롬프트로 글 고치기·내 글 목록 상태 필터(다시 씀) 플로우, 구현 지도(줄 번호 전체 재작성), overview, index, open-questions(#8·9·11 수정, #14~17 신규) / glossary(용어 5개 추가, 상태 용어 4개 고침), index, _registry(매핑·모듈 경로·분석 시점 메모) / _system/modules 4쪽(새 파일 행만 추가)
+- 줄 번호 보정: writing 페이지의 `blog-writer:` 참조 264곳을 1edb65a → 현재 파일 diff로 옮기고, 많이 바뀐 파일(`JobDetail.tsx`·`NextStep.tsx`·`writer.ts`·`editPost.ts` 등)과 고쳐 쓴 페이지의 근거는 직접 확인해 다시 적음. 파일 길이를 넘는 참조 0개
+- 불일치: 없음. 새 open question: writing #14(분량·말투·다시 쓰기·제목 결과를 실제 Claude로 미검증), #17(제목 다시 만들기 결과가 화면 자동 저장에 의존). #15·#16은 사용자 결정 기록(resolved)
+- 범위 밖으로 남김: publishing(BR-PUB-013 글 상태 직접 바꾸기, BR-PUB-019 다른 블로그에 올린 글 표시 — 블로그별 상태로 사실상 해소, 블로그 임시저장·워드프레스 등록 플로우, 구현 지도, open-questions #7·#15)와 _system(api의 `/status`→`/blogs/:platform/status`·`/titles`·`/edit`의 `writing`, data-storage의 `Job.blogs`·`writingOptions`·설정 `writing`, configuration, 바뀐 파일의 모듈 설명·줄 수)은 1edb65a 기준 그대로
+- 분석 시점: writing만 git afc7c10. 스냅샷(`_snapshot.json`)은 publishing·_system 갱신 전이라 1edb65a 그대로 둠

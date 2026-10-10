@@ -1,6 +1,6 @@
 ---
 type: index
-updated: 2026-10-08
+updated: 2026-10-10
 ---
 # blog-writer Wiki
 
@@ -41,7 +41,7 @@ updated: 2026-10-08
 - [[_system/integrations/blog-editors]] — 네이버·티스토리·워드프레스 에디터
 
 ## 도메인
-- [[writing/overview|writing (글 작성)]] — 작업·리서치·초안·규칙·태그. 프롬프트로 글 고치기 포함. 엔티티 3, 규칙 18, 플로우 5 → [[writing/index]]
+- [[writing/overview|writing (글 작성)]] — 작업·리서치·초안·규칙·태그. 프롬프트로 글 고치기(분량·말투 다시 쓰기), 글마다 고르는 분량·말투, 블로그별 글 상태, 제목 후보 다시 만들기 포함. 엔티티 3, 규칙 19, 플로우 5 → [[writing/index]]
 - [[image/overview|image (이미지 생성)]] — 썸네일·본문 이미지. 본문 이미지 추가·삭제 포함. 엔티티 2, 규칙 15(폐기 1), 플로우 2 → [[image/index]]
 - [[publishing/overview|publishing (블로그 등록)]] — 입력 경로·에디터 서식, 임시저장·예약발행·자동발행(네이버·티스토리·워드프레스), 글 상태 직접 변경, 카테고리·네이버 주제 선택. 엔티티 2, 규칙 21, 플로우 4 → [[publishing/index]]
 - [[topic/overview|topic (주제 추천·키워드 탐색)]] — 뉴스·통계·데이터랩·검색광고·구글 트렌드. 엔티티 3, 규칙 9, 플로우 2 → [[topic/index]]

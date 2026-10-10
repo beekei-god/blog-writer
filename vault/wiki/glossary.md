@@ -1,6 +1,6 @@
 ---
 type: glossary
-updated: 2026-10-09
+updated: 2026-10-10
 ---
 # 용어집
 
@@ -13,9 +13,14 @@ updated: 2026-10-09
 | 리서치 노트 | "리서치 노트" | `researchNotes` | | 사실마다 출처가 붙은 노트 | [[writing/entities/Job]] |
 | 출처 | "수집한 출처", 공식/언론/블로그·참고용/기타 | `Source`, `kind: official/press/blog/other` | | 리서치에서 실제로 연 페이지 | [[writing/business-rules/BR-WRT-014 리서치 출처 등급과 열람 제한]] |
 | 글쓰기 규칙 | "글쓰기 규칙", "기본 규칙으로 되돌리기" | `getRules`, `rulesSnapshot` | `data/writing-rules.md` | 리서치·작성 프롬프트에 들어가는 편집 방침 | [[writing/entities/글쓰기 규칙]] |
-| 본문 글자수 / 분량 | "본문 N / 3,000자", "분량 초과" | `countBodyChars`, `MAX_BODY_CHARS` | | 공백 포함, 참고 자료 앞까지 | [[writing/business-rules/BR-WRT-002 본문 글자수 계산]] |
+| 본문 글자수 / 분량 | "본문 N / 목표 약 M자", "분량 초과" | `countBodyChars`, `maxBodyChars`, `targetCharsOf` | | 공백 포함, 참고 자료 앞까지. 상한은 그 글의 목표 × 1.2 (예전 고정 3,000자, `MAX_BODY_CHARS`는 2026-10-10 삭제) | [[writing/business-rules/BR-WRT-002 본문 글자수 계산]], [[writing/business-rules/BR-WRT-001 본문 분량 상한]] |
 | 작성 리포트 | "작성 리포트" | `searchQuestion`, `titleCandidates`, `omittedItems`, `tagDetails` | | 본문에 안 들어가는 정보 | [[writing/entities/Post]] |
 | 본문에서 뺀 항목 | "본문에서 뺀 항목" | `omittedItems` | | 못 찾았거나 분량 때문에 뺀 내용 | [[writing/business-rules/BR-WRT-003 확인된 사실만 사용]] |
+| 블로그별 상태 | 목록 배지 "네이버 발행완료 · 워드프레스 임시저장 완료", 목록 블로그 칩 "전체 블로그·네이버·티스토리·워드프레스" | `BlogStatus`, `BlogStates`, `Job.blogs`, `blogPositionOf`, `matchesFilter`, `migrateJob` | `blogs: {naver?, tistory?, wordpress?}` 각 `{status, at}` | 블로그마다 따로 두는 글 상태. 한 블로그에 올려도 다른 블로그는 그대로 (2026-10-10) | [[writing/entities/Job]], [[writing/flows/내 글 목록 상태 필터 플로우]] |
+| 목표 분량 | 새 글 "본문 분량 (공백 포함, 근사값)", 프리셋 "짧게 ≈1,500 / 보통 ≈2,500 / 길게 ≈4,000 / 아주 길게 ≈6,000", 직접 입력 | `WritingOptions.targetChars`, `LENGTH_PRESETS`, `DEFAULT_TARGET_CHARS` | `writingOptions.targetChars`, 설정 `writing.targetChars` | 글마다 고르는 본문 목표 글자수(1,000~8,000) | [[writing/business-rules/BR-WRT-001 본문 분량 상한]] |
+| 말투 | "말투" 정보형 / 친근형 / 스토리형 / 정리형 | `WritingTone`, `TONE_LABEL`, `TONE_GUIDE`, `toneSection` | `writingOptions.tone`: `info`/`friendly`/`story`/`summary` | 본문 문체. 규칙의 문체보다 우선, 모두 존댓말 | [[writing/business-rules/BR-WRT-019 본문 말투 선택]] |
+| 분량·말투 바꿔 다시 쓰기 | "분량·말투 바꿔 글 전체 다시 쓰기", "이 분량·말투로 다시 쓰기" | `WritingPicker`, `rewriteSection`, `EditProposal.writing` | `editProposal.writing` | 기존 글을 새 분량·말투로 글 전체 다시 쓴 제안. 적용하면 작업의 분량·말투도 바뀜 | [[writing/business-rules/BR-WRT-016 프롬프트로 글 고치기]] |
+| 제목 다시 만들기 | 제목 아래 "제목 다시 만들기", "(지금 제목, N자)" | `TitlePicker`, `regenerateTitles`, `POST /api/jobs/:id/titles` | `post.titleCandidates` | 글은 그대로 두고 제목 후보 3개만 새로 받기. 지금 제목은 고를 때까지 유지 | [[writing/business-rules/BR-WRT-013 제목 후보와 키워드]] |
 | 검색 질문 | "검색 질문" | `searchQuestion` | | 글이 답할 검색 질문 한 문장 | [[writing/business-rules/BR-WRT-013 제목 후보와 키워드]] |
 | 메인·서브 키워드 | "키워드 메인 / 서브" | `mainKeyword`, `subKeywords` | | 메인 1, 서브 2~3 (롱테일) | [[writing/business-rules/BR-WRT-013 제목 후보와 키워드]] |
 | 태그 | "태그", `#태그` | `tags`, `MAX_TAGS` | | 최대 30개, '#' 없이 저장 | [[writing/business-rules/BR-WRT-004 태그 최대 30개]] |
@@ -41,10 +46,10 @@ updated: 2026-10-09
 | 이미지 API 키 | "이미지 API 설정", "연결 확인 후 저장" | `getImageApiKey`, `saveImageApiKey`, `GEMINI_API_KEY`, `OPENAI_API_KEY` | `secrets.json`의 `geminiApiKey`·`openaiApiKey` | 있으면 API로 이미지 생성 | [[_system/integrations/image-api]] |
 | 한 장씩 동시 실행 | "이미지를 만드는 중입니다" (그 이미지 자리) | `imageRuns`, `isImageBusy`, `Job.imageRunsOnly` | | 이미지 여러 장을 각각 다시 만들 때 함께 진행 | [[image/business-rules/BR-IMG-014 한 장씩 다시 만들기 동시 실행]] |
 | 올리는 중 | "블로그 임시저장 중" (예전 "크롬 작성 중"/"워드프레스 등록 중") | `STATUS_LABEL.posting`, `statusLabel`, `Job.postingTo` | `status: "posting"` + `postingTo` | 블로그에 글을 올리는 중. 2026-10-09부터 블로그와 관계없이 같은 이름 (`postingTo`는 상세 안내 문구에만 씀). 진행 단계에서는 "블로그 임시저장" 단계가 진행 중 | [[writing/entities/Job]] |
-| 임시저장 | 등록 방식 "임시저장", 상태 "블로그 임시저장 완료"(예전 "임시저장 완료"), 필터 칩 "임시 저장", "다시 올리기 (<방식>)" | `runPost`, `doPost`, 워드프레스는 `doWordPressPost` mode `draft` | `status: "posting"/"posted"` | 블로그에 글을 넣고 저장만 함 (발행 안 함). 네이버·티스토리는 예약발행·자동발행도 늘 임시저장을 먼저 한다 | [[publishing/business-rules/BR-PUB-001 발행하지 않고 임시저장까지만]] |
-| 발행 완료 | 상태·진행 단계 "블로그 발행완료"(예전 "발행 완료"), 필터 칩 "발행 완료"(발행 예약 포함) | `STATUS_LABEL` (`shared/labels.ts`) | `status: "published"` | 블로그에 공개된 상태: 사용자가 블로그에서 직접 발행한 뒤 글 상태로 고른 것, 또는 워드프레스·네이버·티스토리 자동발행 결과 | [[publishing/business-rules/BR-PUB-013 발행 완료 표시]] |
+| 임시저장 | 등록 방식 "임시저장", 블로그별 상태 "임시저장 완료"(배지 "네이버 임시저장 완료" 등), 필터 칩 "임시 저장", "다시 올리기 (<방식>)" | `runPost`, `doPost`, 워드프레스는 `doWordPressPost` mode `draft` | `status: "posting"`(올리는 중), `blogs.<블로그>.status: "posted"` | 블로그에 글을 넣고 저장만 함 (발행 안 함). 네이버·티스토리는 예약발행·자동발행도 늘 임시저장을 먼저 한다 | [[publishing/business-rules/BR-PUB-001 발행하지 않고 임시저장까지만]] |
+| 발행 완료 | 블로그별 상태 "발행완료"(배지 "네이버 발행완료" 등), 진행 단계 "블로그 발행완료", 필터 칩 "발행 완료"(발행 예약 포함) | `BLOG_STATUS_LABEL`, `blogStatusText` (`shared/labels.ts`) | `blogs.<블로그>.status: "published"` (2026-10-10 전에는 `status: "published"`) | 그 블로그에 공개된 상태: 사용자가 블로그에서 직접 발행한 뒤 표시한 것, 또는 워드프레스·네이버·티스토리 자동발행 결과 | [[publishing/business-rules/BR-PUB-013 발행 완료 표시]], [[writing/entities/Job]] |
 | 상태 필터 | "전체 / 자료 조사 중 / 초안 검토 / 임시 저장 / 발행 완료" (2026-10-09, 실패는 "전체"에서만) | `StatusFilter`, `FILTERS`, `matchesFilter` | | "내 글" 목록을 글 작성 단계별로 묶어 보는 칩 | [[writing/flows/내 글 목록 상태 필터 플로우]] |
-| 글 상태 (직접 변경) | 진행 단계 아래 "글 상태 [초안 검토 \| 블로그 임시저장 완료 \| 블로그 발행완료]", "지금은 블로그 발행 예약 상태입니다." | `StatusPicker`, `MANUAL_STATUSES`, `canSetStatus`, `PUT /api/jobs/:id/status`, `setStatus` | `status`: `draft_ready`/`posted`/`published` | 초안 검토 이후의 글 상태를 사용자가 직접 고름 (앱은 블로그에 올리거나 발행하지 않음). 초안 검토로 되돌릴 때만 확인 창. 예전 "발행 완료로 표시 / 발행 완료 취소 / 초안 완료로 되돌리기" 버튼을 대신함 (2026-10-09) | [[writing/entities/Job]], [[publishing/business-rules/BR-PUB-013 발행 완료 표시]] |
+| 블로그별 글 상태 (직접 변경) | 진행 단계 아래 "블로그별 글 상태", 블로그마다 "[올리지 않음 \| 임시저장 완료 \| 발행완료]", "지금은 발행 예약 상태입니다." | `StatusPicker`, `MANUAL_STATUSES`, `PUT /api/jobs/:id/blogs/:platform/status`, `setBlogStatus` | `blogs.<블로그>` (없음/`posted`/`published`) | 초안이 있는 글의 블로그 하나의 상태를 사용자가 직접 표시 (다른 블로그와 글 진행 상태는 그대로). 2026-10-10 전의 "글 상태"(`PUT /api/jobs/:id/status`, `canSetStatus`)를 대신함 | [[writing/entities/Job]], [[publishing/business-rules/BR-PUB-013 발행 완료 표시]] |
 | 예약발행 / 자동발행 (네이버·티스토리) | "다시 올리기 (<방식>)", 예약 시각 입력, 확인 창 "임시저장한 뒤 바로 공개합니다" / "…에 공개되도록 예약합니다", 로그 "<블로그>에 …예약했습니다/발행했습니다" | `PublishRequest`, `naverPublishSteps`, `tistoryPublishSteps`, `runPublishSteps`, `PublishStepError`, `publishPrompt` (`server/browser/publish.ts`), `ChromeBlogNext`, `NAVER_MINUTE_STEP` | `status: "scheduled"/"published"` | 크롬으로 임시저장한 뒤 블로그의 발행 창에서 공개 범위·예약 시각을 넣고 발행. 네이버 예약은 10분 단위. 발행 창에서 멈추면 블로그 임시저장 완료로 두고 이유를 남김 (2026-10-09) | [[publishing/business-rules/BR-PUB-001 발행하지 않고 임시저장까지만]], [[writing/business-rules/BR-WRT-012 중단 시 작업 상태 복구]] |
 | 진행 단계 | "자료 조사 → 글 작성 → 이미지 생성 → 초안 검토 → 블로그 임시저장 → 블로그 발행완료" | `Progress` (`src/job/Progress.tsx`) | | 글 상세 위의 단계 표시. 올리는 중과 임시저장 완료는 한 단계 (2026-10-09) | [[writing/flows/초안 작성 플로우]] |
 | ~~본문 복사~~ (삭제됨) | 예전 "본문 복사", "텍스트만 복사", "제목 복사", "태그 복사" | 예전 `CopyBar`, `postToHtml`, `postToText` | | 2026-10-09에 기능 삭제. 글은 앱이 블로그에 직접 올리는 경로로만 내보냄 | [[writing/flows/초안 편집과 자동 저장 플로우]] |
@@ -63,7 +68,7 @@ updated: 2026-10-09
 | 정가 환산 | "정가 환산" | `costUSD` | | API 정가로 계산한 금액 (청구 아님) | [[usage/entities/UsageRecord]] |
 | 올릴 블로그 | "올릴 블로그를 선택하세요" | `platform` (요청마다), `PLATFORM_LABEL`, `PLATFORM_SHORT_LABEL` | `naver`/`tistory`/`wordpress` | 글을 올릴 때마다 고르는 블로그 | [[publishing/business-rules/BR-PUB-015 올릴 블로그는 글마다 선택]] |
 | 등록 방식 | "임시저장 / 예약발행 / 자동발행" | `PublishMode`, `PUBLISH_MODE_LABEL`, `PublishModeFields`, `usePublishMode` | `draft` / `schedule` / `publish` | 블로그에 올리는 방식. 워드프레스(API)와 2026-10-09부터 네이버·티스토리(크롬)도 고른다. 예약·자동은 확인 창 뒤 실행 | [[publishing/business-rules/BR-PUB-014 워드프레스 등록 방식과 예약 시각]], [[publishing/business-rules/BR-PUB-001 발행하지 않고 임시저장까지만]] |
-| 발행 예약 | 상태 "블로그 발행 예약"(예전 "예약됨"), 필터는 "발행 완료" 칩에 포함 | `JobStatus` `"scheduled"` | `status: "scheduled"` | 블로그에 예약발행을 걸어 둔 상태 (워드프레스, 2026-10-09부터 네이버·티스토리도). 예약 시각이 지나도 자동으로 바뀌지 않음. 글 상태로 직접 고를 수는 없음 | [[writing/entities/Job]] |
+| 발행 예약 | 블로그별 상태 "발행 예약"(배지 "워드프레스 발행 예약" 등), 필터는 "발행 완료" 칩에 포함 | `BlogStatus` `"scheduled"` | `blogs.<블로그>.status: "scheduled"` | 그 블로그에 예약발행을 걸어 둔 상태. 예약 시각이 지나도 자동으로 바뀌지 않음. 직접 고를 수는 없음 | [[writing/entities/Job]] |
 | 워드프레스 연결 | "워드프레스 설정", "연결 확인 후 저장" | `testWordPress`, `getWordPressAuth`, `saveWordPressAuth` | `data/secrets.json`의 `wpUsername`·`wpAppPassword` | Application Password로 사이트 REST API에 인증 | [[_system/integrations/wordpress-rest]] |
 | 워드프레스 등록 기록 | "글 열기" 링크 | `WordPressRecord`, `Job.wordpress` | `wordpress.{postId, link, mode, scheduledAt, mediaIds}` | 다시 등록하면 같은 글을 갱신하고 올린 이미지를 재사용하기 위한 기록 | [[publishing/business-rules/BR-PUB-016 워드프레스 재등록은 같은 글 갱신]] |
 | 로그인 창 | "로그인 창 열기", "로그인 완료 (창 닫기)" | `openLoginWindow`, `loginWindowFor` | (메모리) | 앱 전용 크롬 프로필에 블로그 하나씩 로그인하는 창 | [[publishing/business-rules/BR-PUB-017 로그인 창은 한 블로그씩]] |

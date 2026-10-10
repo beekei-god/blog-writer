@@ -8,10 +8,10 @@ confidence: high
 consistency: consistent
 source:
   - blog-writer:server/editPost.ts:67-72
-  - blog-writer:server/editPost.ts:119-127
-  - blog-writer:server/editPost.ts:159-180
+  - blog-writer:server/editPost.ts:136-144
+  - blog-writer:server/editPost.ts:184-205
   - blog-writer:server/editPost.ts:86
-  - blog-writer:tests/editPost.test.ts:51-101
+  - blog-writer:tests/editPost.test.ts:51-128
 entities: [Post]
 updated: 2026-10-09
 ---
@@ -34,11 +34,11 @@ updated: 2026-10-09
 ## 구현 현황
 | 레이어 | 구현 | 값/내용 | 근거 |
 |---|---|---|---|
-| 서버 | ref 부여·되돌려 붙임·검증 | 이미지 개수·중복·모르는 ref 검사 | `blog-writer:server/editPost.ts:119-127`, `:159-174` |
-| 서버 | 빈 칸 표 제거, 바뀐 것 없음 거절 | | `blog-writer:server/editPost.ts:170`, `:176-180` |
+| 서버 | ref 부여·되돌려 붙임·검증 | 이미지 개수·중복·모르는 ref 검사 | `blog-writer:server/editPost.ts:136-144`, `:184-199` |
+| 서버 | 빈 칸 표 제거, 바뀐 것 없음 거절 | | `blog-writer:server/editPost.ts:195`, `:201-205` |
 | 프롬프트 | "이미지 블록은 새로 만들거나 지우지 마세요. 보이는 이미지 블록을 빠짐없이 한 번씩, ref를 그대로" | | `blog-writer:server/editPost.ts:86` |
-| 화면 | 안내 문구 "이미지는 새로 만들거나 지우지 않고 그대로 둡니다." | | `blog-writer:src/job/EditByPrompt.tsx:84` |
-| 테스트 | 범위 고침에서 이미지 원본 복원, 이미지 빼기·늘리기·모르는 ref, 바뀐 것 없음, 빈 표 | | `blog-writer:tests/editPost.test.ts:51-101` |
+| 화면 | 안내 문구 "이미지는 새로 만들거나 지우지 않고 그대로 둡니다." | | `blog-writer:src/job/EditByPrompt.tsx:101` |
+| 테스트 | 범위 고침에서 이미지 원본 복원, 이미지 빼기·늘리기·모르는 ref, 바뀐 것 없음, 빈 표 | | `blog-writer:tests/editPost.test.ts:51-128` |
 
 ## 예외 / 경계값
 - 이미지를 더하거나 빼려면 고치기가 아니라 편집 화면의 "＋ 여기에 이미지 추가"·이미지 삭제를 쓴다 → [[image/overview]].

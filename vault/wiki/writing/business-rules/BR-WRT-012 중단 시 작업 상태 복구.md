@@ -7,25 +7,27 @@ status: active
 confidence: high
 consistency: consistent
 source:
-  - blog-writer:server/pipeline.ts:39-47
-  - blog-writer:server/pipeline.ts:140-149
-  - blog-writer:server/pipeline.ts:199-265
-  - blog-writer:server/pipeline.ts:418-419
-  - blog-writer:server/pipeline.ts:479-491
+  - blog-writer:server/pipeline.ts:45-53
+  - blog-writer:server/pipeline.ts:147-157
+  - blog-writer:server/pipeline.ts:220-286
+  - blog-writer:server/pipeline.ts:439-440
+  - blog-writer:server/pipeline.ts:499-514
   - blog-writer:server/browser/publish.ts:314-374
-  - blog-writer:server/store.ts:131-149
-  - blog-writer:server/pipeline.ts:157-197
+  - blog-writer:server/store.ts:155-173
+  - blog-writer:server/pipeline.ts:167-218
   - blog-writer:server/cancel.ts:1-39
-  - blog-writer:src/job/JobDetail.tsx:152-156
+  - blog-writer:src/job/JobDetail.tsx:156-159
 entities: [Job]
-updated: 2026-10-09
+updated: 2026-10-10
 ---
 # BR-WRT-012 중단 시 작업 상태 복구
 
 ## 규칙
 작업이 실패하거나, 사용자가 중지하거나, 서버가 재시작되어 끊기면 **초안이 있으면 초안 검토(draft_ready)로, 없으면 실패(failed)로** 돌린다. 지금까지 만든 초안과 이미지는 그대로 남긴다. 사용자 중지는 오류로 표시하지 않는다.
 
-예외 (2026-10-09): 네이버·티스토리에 예약발행·자동발행으로 올릴 때, 임시저장은 끝났는데 그 뒤 발행 창에서 멈추면 **블로그 임시저장 완료(posted)** 로 두고 멈춘 이유를 `error`에 남긴다 → [[publishing/business-rules/BR-PUB-001 발행하지 않고 임시저장까지만]].
+예외 (2026-10-09): 네이버·티스토리에 예약발행·자동발행으로 올릴 때, 임시저장은 끝났는데 그 뒤 발행 창에서 멈추면 **그 블로그를 임시저장 완료(`blogs[블로그] = posted`)** 로 두고 멈춘 이유를 `error`에 남긴다 (글 자체는 draft_ready) → [[publishing/business-rules/BR-PUB-001 발행하지 않고 임시저장까지만]].
+
+블로그 등록이 실패·중지되면 그 블로그의 상태(`blogs`)는 바뀌지 않고, 다른 블로그의 상태도 그대로다 (2026-10-10, 블로그별 상태 → [[writing/entities/Job]]).
 
 ## 조건과 결과
 | 조건 | 상태 | `error` | 로그 |
@@ -33,10 +35,10 @@ updated: 2026-10-09
 | 초안 단계 실패 | 초안 있으면 draft_ready, 없으면 failed | 오류 메시지 | "실패: …" |
 | 초안 단계 중지 | 같음 | 초안 있으면 없음, 없으면 "사용자가 작업을 중지했습니다." | "작업을 중지했습니다." |
 | 이미지 단계 실패/중지 | draft_ready (한 장씩 동시에 만드는 중이면 마지막 이미지가 끝날 때) | 실패면 메시지, 중지면 없음 | "이미지 생성 실패/중지" |
-| 블로그 입력(크롬) 실패/중지 | 초안 있으면 draft_ready | 실패면 메시지 | 중지: "크롬에 열린 탭에 일부만 들어갔을 수 있으니 확인하세요." |
-| 네이버·티스토리 예약발행·자동발행에서 임시저장 뒤 발행 창 단계가 멈춤(`PublishStepError`: 단계마다 10초 안에 끝나지 않거나 화면에서 오류) | **posted**(블로그 임시저장 완료). 임시저장은 됐기 때문 | 멈춘 이유 ("임시저장은 했지만 발행 창의 "<단계>"에서 멈췄습니다: … 크롬에 열린 탭에서 직접 발행하세요.", 마지막 발행 버튼을 누른 뒤면 "발행됐는지 확인하지 못했습니다…") | 같은 문구 |
-| 발행 창 단계 중 중지 | 발행 버튼을 누르기 전이면 중지가 반영되어 위 크롬 중지와 같이 draft_ready (임시저장은 된 상태). 누른 뒤에는 중지를 보지 않고 끝까지 확인 | 없음 | 크롬 중지와 같음 |
-| 워드프레스 API 등록 실패/중지 | 초안 있으면 draft_ready | 실패면 메시지 | "워드프레스 등록 실패: …" / "워드프레스 등록을 중지했습니다." 중지 신호는 진행 중인 요청도 끊는다 |
+| 블로그 입력(크롬) 실패/중지 | 초안 있으면 draft_ready. 블로그별 상태는 그대로 | 실패면 메시지 | 중지: "크롬에 열린 탭에 일부만 들어갔을 수 있으니 확인하세요." |
+| 네이버·티스토리 예약발행·자동발행에서 임시저장 뒤 발행 창 단계가 멈춤(`PublishStepError`: 단계마다 10초 안에 끝나지 않거나 화면에서 오류) | 글은 draft_ready, **그 블로그만 posted**(임시저장 완료). 임시저장은 됐기 때문 | 멈춘 이유 ("임시저장은 했지만 발행 창의 "<단계>"에서 멈췄습니다: … 크롬에 열린 탭에서 직접 발행하세요.", 마지막 발행 버튼을 누른 뒤면 "발행됐는지 확인하지 못했습니다…") | 같은 문구 |
+| 발행 창 단계 중 중지 | 발행 버튼을 누르기 전이면 중지가 반영되어 위 크롬 중지와 같이 draft_ready이고 그 블로그 상태는 바뀌지 않음 (임시저장은 된 상태 → [[writing/open-questions]] #9). 누른 뒤에는 중지를 보지 않고 끝까지 확인 | 없음 | 크롬 중지와 같음 |
+| 워드프레스 API 등록 실패/중지 | 초안 있으면 draft_ready. 블로그별 상태는 그대로 | 실패면 메시지 | "워드프레스 등록 실패: …" / "워드프레스 등록을 중지했습니다." 중지 신호는 진행 중인 요청도 끊는다 |
 | 서버 재시작 시 진행 중 상태로 남은 작업 | 초안 있으면 draft_ready, 없으면 failed. 진행 표시(`generatingImages`·`regeneratingImages`)와 `imageRunsOnly`도 지움 | "서버가 재시작되어 작업이 중단되었습니다." | |
 | 서버 재시작 시 글 고치기(`editProposal.status = "running"`)가 남아 있음 | 작업 상태는 그대로(글 고치기는 작업 상태를 바꾸지 않음). 제안만 `failed` | "서버가 재시작되어 글 고치기가 중단되었습니다." (제안의 `error`) | |
 | 글 고치기 중 사용자 중지 | 작업 상태 그대로. 제안 삭제 (글은 그대로) | 없음 | "글 고치기를 중지했습니다." |
@@ -48,11 +50,11 @@ updated: 2026-10-09
 ## 구현 현황
 | 레이어 | 구현 | 근거 |
 |---|---|---|
-| 서버 | 파이프라인 catch 블록 4곳(초안·이미지 `imagesStep`·워드프레스·크롬 입력). 워드프레스와 크롬 입력은 공용 `failStep`(초안 있으면 draft_ready, 중지면 오류 없음)을 쓰고, 크롬 입력은 그 전에 `PublishStepError`를 따로 받아 posted로 둔다. 이미지 실행 마무리(`runImages`·`runImage`의 finally), 재시작 복구 | 위 source |
-| 화면 | 중지 확인 창 "지금까지 만든 초안과 이미지는 그대로 남습니다." | `blog-writer:src/job/JobDetail.tsx:152-156` |
+| 서버 | 파이프라인 catch 블록 4곳(초안·이미지 `imagesStep`·워드프레스·크롬 입력). 워드프레스와 크롬 입력은 공용 `failStep`(초안 있으면 draft_ready, 중지면 오류 없음)을 쓰고, 크롬 입력은 그 전에 `PublishStepError`를 따로 받아 그 블로그를 posted로 둔다(`setBlogStatus`). 이미지 실행 마무리(`runImages`·`runImage`의 finally), 재시작 복구 | 위 source |
+| 화면 | 중지 확인 창 "지금까지 만든 초안과 이미지는 그대로 남습니다." | `blog-writer:src/job/JobDetail.tsx:156-160` |
 
 ## 예외 / 경계값
-- Playwright·AppleScript 경로는 Claude 호출이 아니어서, 중지 신호는 다음 `throwIfCancelled` 지점까지 반영되지 않는다 (대체 경로 시작 전 한 번만 확인, `blog-writer:server/pipeline.ts:447`).
+- Playwright·AppleScript 경로는 Claude 호출이 아니어서, 중지 신호는 다음 `throwIfCancelled` 지점까지 반영되지 않는다 (대체 경로 시작 전 한 번만 확인, `blog-writer:server/pipeline.ts:468`).
 - 추천도 재시작 시 failed로 바꾼다 → [[topic/business-rules/BR-TOP-005 추천 동시 실행과 입력 제한]].
 
 ## 영향받는 플로우
@@ -63,5 +65,6 @@ updated: 2026-10-09
 |---|---|---|
 | 2026-10-05 | 최초 기록 | |
 | 2026-10-08 | 이미지 한 장씩 동시 실행: 중지는 작업의 모든 신호를 보냄(`cancel.ts`가 작업마다 여러 AbortController), 이미지 상태 복귀는 마지막 진행이 끝날 때, 재시작 복구가 `imageRunsOnly`도 지움 | 커밋 38ae96c |
-| 2026-10-09 | 글 고치기(`editProposal`) 복구 추가: 재시작 시 running 제안 → failed, 중지 시 제안 삭제, 실패 시 제안 failed. 작업 상태는 바꾸지 않음 | `blog-writer:server/store.ts:131-140`, `blog-writer:server/pipeline.ts:172-197`, 커밋 b7ced30 |
-| 2026-10-09 | 네이버·티스토리 발행 창 단계가 멈추면(`PublishStepError`) draft_ready가 아니라 posted + 오류 이유로 둠. 실패·중지 처리를 `failStep`으로 공용화(동작 같음) | `blog-writer:server/pipeline.ts:39-47`, `:416-428`, `blog-writer:server/browser/publish.ts:314-374` |
+| 2026-10-09 | 글 고치기(`editProposal`) 복구 추가: 재시작 시 running 제안 → failed, 중지 시 제안 삭제, 실패 시 제안 failed. 작업 상태는 바꾸지 않음 | `blog-writer:server/store.ts:155-164`, `blog-writer:server/pipeline.ts:182-218`, 커밋 b7ced30 |
+| 2026-10-09 | 네이버·티스토리 발행 창 단계가 멈추면(`PublishStepError`) draft_ready가 아니라 posted + 오류 이유로 둠. 실패·중지 처리를 `failStep`으로 공용화(동작 같음) | `blog-writer:server/pipeline.ts:45-53`, `:437-449`, `blog-writer:server/browser/publish.ts:314-374` |
+| 2026-10-10 | 블로그별 상태 도입: 발행 창에서 멈추면 글이 아니라 **그 블로그**를 posted로(글은 draft_ready), 블로그 등록 실패·중지는 블로그별 상태를 바꾸지 않음 | 커밋 afc7c10, `blog-writer:server/pipeline.ts:28-33`, `:499-509` |
