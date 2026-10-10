@@ -55,7 +55,7 @@ export interface ImageOptions {
   thumbnailMethod?: ImageMethod;
 }
 
-/** 본문 말투: 정보형(존댓말 칼럼체), 친근형(해요체 수다형), 스토리형(스토리텔링·일기체·유머), 정리형(Q&A·요약 리스트) */
+/** 본문 말투: 정보형(존댓말 칼럼체), 친근형(해요체 수다형), 스토리형(스토리텔링·일기체), 정리형(Q&A·요약 리스트) */
 export type WritingTone = "info" | "friendly" | "story" | "summary";
 export const WRITING_TONES: WritingTone[] = ["info", "friendly", "story", "summary"];
 

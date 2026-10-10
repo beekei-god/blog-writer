@@ -33,7 +33,7 @@ export const TONE_LABEL: Record<WritingTone, string> = { info: "정보형", frie
 export const TONE_HINT: Record<WritingTone, string> = {
   info: "존댓말 + 칼럼체",
   friendly: "해요체 + 수다형",
-  story: "스토리텔링 + 일기체 + 유머",
+  story: "스토리텔링 + 일기체",
   summary: "Q&A + 요약 리스트",
 };
 
