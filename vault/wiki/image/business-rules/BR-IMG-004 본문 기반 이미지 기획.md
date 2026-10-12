@@ -8,9 +8,9 @@ confidence: medium
 consistency: consistent
 source:
   - blog-writer:server/pipeline.ts:311-349
-  - blog-writer:server/images/plan.ts:1-113
-  - blog-writer:server/writer.ts:53-63
-updated: 2026-10-09
+  - blog-writer:server/images/plan.ts:1-117
+  - blog-writer:server/writer.ts:96-150
+updated: 2026-10-12
 entities: [ImageSpec]
 ---
 # BR-IMG-004 본문 기반 이미지 기획
@@ -24,7 +24,7 @@ entities: [ImageSpec]
 | 만들 대상 중 `userEdited`가 아닌 이미지 | 기획 대상 |
 | 기획 호출 | 본문을 블록 번호와 함께(이미지는 자리 표시, 최대 9,000자) 보여 주고, key마다 prompt·headline·basis 하나씩 |
 | prompt 언어 | Claude는 한국어(도형·아이콘·도식), Gemini/ChatGPT는 영어(장면·구도·소품·색감, 화풍 이름 금지) |
-| 글자 | prompt에 쓰지 말고 headline에만. prompt에는 글자 자리(여백·띠·상자)만 |
+| 글자 | prompt에 쓰지 말고 headline에만. prompt에는 글자 자리(여백·띠·상자)만. 썸네일은 주제+질문(답 없음), basis는 그 질문에 답하는 문장 → [[image/business-rules/BR-IMG-005 이미지 안 문구 길이]] |
 | 결과 반영 | prompt 교체, basis는 값이 있으면 교체, headline은 빈 값이면 삭제 |
 | 기획 호출 실패 | 기존 설명으로 그대로 생성 (로그) — 중지는 예외로 전파 |
 | 응답에 없는 key | 그 이미지는 기존 설명 유지 |
@@ -32,8 +32,9 @@ entities: [ImageSpec]
 ## 구현 현황
 | 레이어 | 구현 | 근거 |
 |---|---|---|
-| 프롬프트(작성) | 처음 쓸 때 basis 먼저, 범용 이미지 금지, 일관성 | `blog-writer:server/writer.ts:53-63` |
-| 프롬프트(기획) | 위 규칙 | `blog-writer:server/images/plan.ts:86-100` |
+| 프롬프트(작성) | 처음 쓸 때 basis 먼저, 범용 이미지 금지, 일관성 | `blog-writer:server/writer.ts:109-150` |
+| 프롬프트(공용) | 썸네일 문구·장면, 본문 이미지 문구는 작성과 기획이 같은 상수를 씀 (2026-10-12) | `blog-writer:server/writer.ts:96-108`, `blog-writer:tests/imagePlan.test.ts:1-21` |
+| 프롬프트(기획) | 위 규칙 | `blog-writer:server/images/plan.ts:89-103` |
 | 서버 | 그룹별 기획 호출과 반영 | `blog-writer:server/pipeline.ts:311-349` |
 | 스키마 | basis를 prompt보다 먼저 쓰게 순서 배치 | `blog-writer:server/schema.ts:146-150` |
 
@@ -50,3 +51,4 @@ entities: [ImageSpec]
 | 날짜 | 변경 | 근거 |
 |---|---|---|
 | 2026-10-05 | 최초 기록 | |
+| 2026-10-12 | 썸네일 문구·장면·본문 문구 지시를 작성·기획 공용 상수로 통일, 썸네일 basis는 질문에 답하는 문장 | 커밋 74e5eb0 |

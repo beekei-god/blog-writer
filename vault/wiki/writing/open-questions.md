@@ -1,7 +1,7 @@
 ---
 type: open-questions
 domain: writing
-updated: 2026-10-10
+updated: 2026-10-12
 ---
 # 확인이 필요한 질문
 
@@ -27,3 +27,6 @@ updated: 2026-10-10
 | 15 | 동작 확인 | 분량·말투 다시 쓰기는 이미지를 새로 만들거나 지우지 않는다. 분량을 크게 늘려도(예: 1,500 → 6,000자) 본문 이미지 수는 그대로다 | `blog-writer:server/editPost.ts:86`, `:97-109` | [[writing/business-rules/BR-WRT-016 프롬프트로 글 고치기]], [[writing/business-rules/BR-WRT-018 고칠 때 이미지는 그대로]] | resolved (2026-10-10) — 사용자가 "글 고치기 제안" 방식(이미지·태그 그대로)을 골랐다. 이미지가 더 필요하면 본문 이미지 자리 추가로 직접 늘린다 |
 | 16 | 사용자 결정 기록 | 예전 글(상태 하나만 있던 글)의 "블로그 발행완료"는 실제로 어느 블로그에 발행했는지와 관계없이 **네이버와 워드프레스 모두 발행완료**로 옮긴다. 티스토리에만 발행했던 글도 네이버·워드프레스가 발행완료로 보이고 티스토리는 올리지 않음으로 보인다 | `blog-writer:server/store.ts:60-75`, `blog-writer:tests/api.test.ts:200-204` | [[writing/entities/Job]] | resolved (2026-10-10) — 사용자 결정. 다르면 "블로그별 글 상태"에서 직접 고친다 |
 | 17 | 의도 불명 | 제목 다시 만들기의 새 후보는 서버가 저장하지 않고 화면의 자동 저장(1초 뒤)으로 저장된다. 결과를 받은 직후 화면을 닫거나 새로고침하면 새 후보를 잃을 수 있다(화면을 떠날 때 남은 수정 내용을 저장하는 처리가 있어 대부분은 저장된다). 서버가 바로 저장하게 할지? | `blog-writer:server/routes/jobs.ts:110-123`, `blog-writer:src/job/JobDetail.tsx:186-197`, `:69-75` | [[writing/business-rules/BR-WRT-013 제목 후보와 키워드]] | open (2026-10-10) |
+| 18 | 규칙 충돌 | 정보형 말투는 "배경 → 핵심 사실 → 의미·주의점 순서"로 쓰라고 하는데, 글쓰기 규칙의 "도입부(결론 먼저)"와 키워드·검색 의도 지시의 "도입부에서 질문의 답을 먼저, 검색 의도와 관계없는 배경 설명은 넣지 않음"은 답을 먼저 쓰라고 한다. 말투는 "글쓰기 규칙의 문체보다 우선"이라 정보형 글은 도입부가 배경으로 시작할 수 있다. 스토리형은 "도입부 2~3문장 안에 핵심 답도"를 따로 적어 맞췄다. 정보형도 같은 문장을 넣을지, 배경 먼저를 허용할지? | `blog-writer:server/writer.ts:10`, `blog-writer:rules/default-writing-rules.md:17`, `blog-writer:shared/keywords.ts:15` | [[writing/business-rules/BR-WRT-019 본문 말투 선택]], [[writing/business-rules/BR-WRT-013 제목 후보와 키워드]] | open (2026-10-12) |
+| 19 | 레이어 차이 | 키워드 횟수(제목 1·본문 2)·검색 의도 지시(`KEYWORD_RULES`)는 글 작성과 제목 다시 만들기에만 들어간다. 프롬프트로 글 고치기와 분량·말투 다시 쓰기는 그 작업의 글쓰기 규칙 사본만 따르므로, 2026-10-12 이전에 만든 글은 예전 문구("반복은 피함")를 따르고 새 글도 지시가 약하다. 다시 쓴 결과가 횟수를 넘기면 작성 리포트 경고만 뜬다. 고치기·다시 쓰기에도 같은 지시를 넣을지? | `blog-writer:server/editPost.ts:76-110`, `blog-writer:server/writer.ts:76-78`, `blog-writer:server/titles.ts:39-41` | [[writing/business-rules/BR-WRT-013 제목 후보와 키워드]], [[writing/business-rules/BR-WRT-016 프롬프트로 글 고치기]] | open (2026-10-12) |
+| 20 | 규칙 충돌 가능 | 정리형 말투는 소제목을 "독자가 검색할 법한 질문"으로 쓰게 한다. 질문형 소제목에는 메인·서브 키워드가 들어가기 쉬워, 본문(소제목 포함) 키워드 2번 제한을 넘기기 쉽다. 소제목을 횟수에서 뺄지, 지금처럼 셀지? | `blog-writer:server/writer.ts:16`, `blog-writer:shared/keywords.ts:13-14`, `blog-writer:shared/length.ts:29-48` | [[writing/business-rules/BR-WRT-019 본문 말투 선택]], [[writing/business-rules/BR-WRT-013 제목 후보와 키워드]] | open (2026-10-12) |

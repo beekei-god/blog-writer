@@ -2,9 +2,9 @@
 type: implementation
 domain: writing
 project: blog-writer
-paths: [server/pipeline.ts, server/research.ts, server/writer.ts, server/titles.ts, server/schema.ts, server/naver.ts, server/rules.ts, server/store.ts, server/fsutil.ts, server/cancel.ts, server/routes/jobs.ts, server/routes/settings.ts, server/routes/edit.ts, server/routes/images.ts, server/editPost.ts, shared/blockDiff.ts, shared/blogStatus.ts, src/job/EditByPrompt.tsx, server/routes/util.ts, shared/length.ts, shared/types.ts, shared/labels.ts, rules/default-writing-rules.md, src/NewJob.tsx, src/WritingPicker.tsx, src/App.tsx, src/job/JobDetail.tsx, src/job/Progress.tsx, src/job/Preview.tsx, src/job/Report.tsx, src/job/PostEditor.tsx, src/job/TitlePicker.tsx, src/job/NextStep.tsx, src/RulesEditor.tsx, tests/writer.test.ts, tests/shared.test.ts, tests/api.test.ts, tests/store.test.ts, tests/editPost.test.ts, tests/writingOptions.test.ts, tests/titles.test.ts, tests/wordpress.test.ts]
+paths: [server/pipeline.ts, server/research.ts, server/writer.ts, server/titles.ts, server/titleGuide.ts, shared/keywords.ts, server/schema.ts, server/naver.ts, server/rules.ts, server/store.ts, server/fsutil.ts, server/cancel.ts, server/routes/jobs.ts, server/routes/settings.ts, server/routes/edit.ts, server/routes/images.ts, server/editPost.ts, shared/blockDiff.ts, shared/blogStatus.ts, src/job/EditByPrompt.tsx, server/routes/util.ts, shared/length.ts, shared/types.ts, shared/labels.ts, rules/default-writing-rules.md, src/NewJob.tsx, src/WritingPicker.tsx, src/App.tsx, src/job/JobDetail.tsx, src/job/Progress.tsx, src/job/Preview.tsx, src/job/Report.tsx, src/job/PostEditor.tsx, src/job/TitlePicker.tsx, src/job/NextStep.tsx, src/RulesEditor.tsx, tests/writer.test.ts, tests/shared.test.ts, tests/api.test.ts, tests/store.test.ts, tests/editPost.test.ts, tests/writingOptions.test.ts, tests/titles.test.ts, tests/wordpress.test.ts]
 last_ingested_commit: afc7c10
-updated: 2026-10-10
+updated: 2026-10-12
 ---
 # blog-writer의 writing 구현
 
@@ -15,12 +15,14 @@ updated: 2026-10-10
 |---|---|---|
 | `shared/types.ts` | `MAX_LINKS`(25), `WritingTone`·`WRITING_TONES`·`WritingOptions`(58-67), `Settings`(153-163, `writing` 기억값), `PostBlock`(200-207), `TAG_SOURCES`·`TagDetail`(210-218), `MAX_TAGS`(220), `Post`(222-239), `imageSpecAt`·`imageSpecsOf`(242-252), `Source`(254-258), `JobStatus`(260-261, 진행 상태 6종), `BlogStatus`·`BlogState`·`BlogStates`·`PLATFORMS`(263-277), `PublishMode`(280), `WordPressRecord`(283-291), `BUSY_STATUSES`(293), `MANUAL_STATUSES`(295-297, none·posted·published), `EditProposal`(330-353, `writing` 포함), `Job`(355-388, `writingOptions`·`blogs`) | [[writing/entities/Job]], [[writing/entities/Post]], [[writing/business-rules/BR-WRT-004 태그 최대 30개]], [[writing/business-rules/BR-WRT-010 주제와 참고 링크 입력 검증]], [[writing/business-rules/BR-WRT-019 본문 말투 선택]] |
 | `shared/labels.ts` | `STATUS_LABEL`(4-11, 진행 상태 6종), `BLOG_STATUS_LABEL`(14), `MANUAL_STATUS_LABEL`(16), `statusLabel`(19), `blogStatusText`(25, "네이버 발행완료"), `PUBLISH_MODE_LABEL`(28), `TONE_LABEL`·`TONE_HINT`(31-37), `errorText`(39) | [[writing/entities/Job]], [[writing/business-rules/BR-WRT-019 본문 말투 선택]] |
-| `shared/length.ts` | `DEFAULT_TARGET_CHARS`·`MIN/MAX_TARGET_CHARS`·`LENGTH_PRESETS`(3-12), `maxBodyChars`(16, 목표 × 1.2), `targetRange`(18, ±10%), `targetCharsOf`(19), `countBodyChars`(29-48) | [[writing/business-rules/BR-WRT-001 본문 분량 상한]], [[writing/business-rules/BR-WRT-002 본문 글자수 계산]] |
+| `shared/length.ts` | `DEFAULT_TARGET_CHARS`·`MIN/MAX_TARGET_CHARS`·`LENGTH_PRESETS`(3-12), `maxBodyChars`(16, 목표 × 1.2), `targetRange`(18, ±10%), `targetCharsOf`(19), `bodyTexts`(29-48, 본문 범위), `countBodyChars`(51-53) | [[writing/business-rules/BR-WRT-001 본문 분량 상한]], [[writing/business-rules/BR-WRT-002 본문 글자수 계산]] |
 | `shared/blogStatus.ts` | `blogPositionOf`(6-9), `furthestBlogStatus`(13-17), `StatusFilter`·`BlogFilter`(20-22), `matchesFilter`(36-43) — 블로그별 상태로 목록 거르기·진행 단계 | [[writing/flows/내 글 목록 상태 필터 플로우]], [[writing/entities/Job]] |
 | `server/routes/jobs.ts` | `keepImageResults`(28-43), `GET/POST /api/jobs`(45-82, 분량·말투 검사와 기억), `GET /:id`(84-91), `PUT /post`(94-108), `POST /titles`(110-123, 제목 후보 다시 만들기), `POST /post-to-blog`(125-185), `PUT /blogs/:platform/status`(186-215, 블로그별 수기 상태), `/cancel`(217-224), `/retry`(226-236), `DELETE`(238-245) | [[writing/entities/Job]], [[writing/business-rules/BR-WRT-010 주제와 참고 링크 입력 검증]], [[writing/business-rules/BR-WRT-011 작업 중복 실행과 진행 중 변경 금지]], [[writing/business-rules/BR-WRT-013 제목 후보와 키워드]] |
 | `server/editPost.ts` | `EDIT_PROMPT_MAX`(13), `SYSTEM`(74-95, 작업의 상한), `rewriteSection`(97-109, 분량·말투 다시 쓰기), `EditInput`(110-123, `writing`·`rewrite`), `proposeEdit`(128-215), `applyProposal`(220-232) | [[writing/business-rules/BR-WRT-016 프롬프트로 글 고치기]], [[writing/business-rules/BR-WRT-017 고친 결과 적용 조건과 잠금]], [[writing/business-rules/BR-WRT-018 고칠 때 이미지는 그대로]] |
 | `server/routes/edit.ts` | `POST /edit`(12-38, `writing`이 있으면 요청 생략 가능·범위 금지), `POST /edit/apply`(41-63, 다시 쓰기면 `writingOptions` 바꿈), `DELETE /edit`(66-76) | BR-WRT-016, 017 |
-| `server/titles.ts` | `TITLE_COUNT`·`BODY_LIMIT`(6-8), `regenerateTitles`(16-57) | [[writing/business-rules/BR-WRT-013 제목 후보와 키워드]] |
+| `server/titles.ts` | `TITLE_COUNT`·`BODY_LIMIT`(8-10), `regenerateTitles`(18-60, 프롬프트에 `TITLE_TECHNIQUES`·`KEYWORD_RULES`) |
+| `server/titleGuide.ts` | `TITLE_TECHNIQUES`(1-15): 제목 기법 4가지 (작성·다시 만들기 공용) | [[writing/business-rules/BR-WRT-013 제목 후보와 키워드]] |
+| `shared/keywords.ts` | `KEYWORD_LIMIT`(5, 제목 1·본문 2), `KEYWORD_RULES`(11-15), `countKeywords`(23-32), `keywordOveruse`(41-51) | [[writing/business-rules/BR-WRT-013 제목 후보와 키워드]] | [[writing/business-rules/BR-WRT-013 제목 후보와 키워드]] |
 | `shared/blockDiff.ts` | `blockText`, `diffBlocks`, `collapseSame` — 고치기 전·후 비교, 제목 다시 만들기의 본문 텍스트 | [[writing/flows/프롬프트로 글 고치기 플로우]] |
 | `src/job/EditByPrompt.tsx` | `rangeLabel`(9-13), `writingLabel`(16), `rangeOf`(19), `EditByPrompt`(25-195): 요청 입력, 분량·말투 다시 쓰기 상자(104-115), 만드는 중 표시·중지, 비교, 상한 경고(175-177), 적용/다시 만들기(`restore`)/버리기 | BR-WRT-016, 017, 018, 001 |
 | `server/routes/settings.ts` | 설정 저장 때 `writing` 유지(18-50), 글쓰기 규칙 `GET/PUT /api/rules`, `POST /api/rules/reset`(53-63) | [[writing/business-rules/BR-WRT-009 글쓰기 규칙 적용 시점]], [[writing/business-rules/BR-WRT-001 본문 분량 상한]] |
@@ -43,7 +45,7 @@ updated: 2026-10-10
 | `src/job/NextStep.tsx` | `StatusPicker`(11-43) 블로그별 상태 직접 변경, `NextStep`(45-147) 다음 할 일(고른 블로그가 발행완료면 안내, 111-139), `ChromeBlogNext`(153-213), `WordPressNext`(366-431) | [[writing/entities/Job]], [[publishing/business-rules/BR-PUB-013 발행 완료 표시]] |
 | `src/job/Preview.tsx` | `Linked`(8-27), `Rich`(30-44), `Preview`(46-133, 제목 아래 `titleSlot` 68) | [[writing/flows/초안 편집과 자동 저장 플로우]] |
 | `src/job/TitlePicker.tsx` | `TitlePicker`(9-67): 제목 후보, 지금 제목 표시, 제목 다시 만들기 | [[writing/business-rules/BR-WRT-013 제목 후보와 키워드]] |
-| `src/job/Report.tsx` | `Report`(6-68): 검색 질문·키워드, 뺀 항목, 태그 근거 (제목 후보는 2026-10-10에 `TitlePicker`로 옮김) | [[writing/business-rules/BR-WRT-005 태그 출처 검증]] |
+| `src/job/Report.tsx` | `Report`(12-124): 검색 질문·키워드와 키워드 반복 경고(26-50), 출처, 뺀 항목, 태그 근거 (제목 후보는 2026-10-10에 `TitlePicker`로 옮김) | [[writing/business-rules/BR-WRT-005 태그 출처 검증]] |
 | `src/job/PostEditor.tsx` | `TagInput`(9-48), `tableToText`·`textToTable`(51-56), `ImageEditor`(58-117), `PostEditor`(119-252, 제목 칸 아래 `titleSlot` 152) | [[writing/business-rules/BR-WRT-004 태그 최대 30개]], [[writing/business-rules/BR-WRT-007 빈 칸 있는 표 행 제거]] |
 | `src/RulesEditor.tsx` | `RulesEditor`(6-84) | [[writing/entities/글쓰기 규칙]] |
 
@@ -53,7 +55,8 @@ updated: 2026-10-10
 | `tests/shared.test.ts` | 글자수 계산(27-51), 분량 목표·범위·상한(53-65), 상태·블로그 라벨(109-121), 목록 필터 블로그 × 상태·가장 앞선 블로그 상태(170-197) → BR-WRT-001, 002, 내 글 목록 필터 |
 | `tests/writer.test.ts` | 날짜 표시줄 제거(6-16), 표 정리(18-27), 이미지 개수 옵션(29-48), 태그 출처 검증(50-68) → BR-WRT-005, 006, 007, 008 |
 | `tests/writingOptions.test.ts` | 목표 분량·말투가 프롬프트에 들어감, 예전 작업 기본값, 상한 초과 때만 줄이기, 짧을 때 로그(35-76) → BR-WRT-001, 019 |
-| `tests/titles.test.ts` | 제목 다시 만들기 프롬프트·정리·오류, 요청 검사, 글은 그대로(33-81) → BR-WRT-013 |
+| `tests/titles.test.ts` | 제목 다시 만들기 프롬프트(기법·키워드 지시)·정리·오류, 요청 검사, 글은 그대로(33-85) → BR-WRT-013 |
+| `tests/keywords.test.ts` | 키워드 횟수 세기(띄어쓰기 무시, 긴 키워드 우선), 제목 1·본문 2 경고, 참고 자료·이미지 제외(1-31) → BR-WRT-013 |
 | `tests/api.test.ts` | 새 글 입력 검증·분량·말투 검사·기억값 유지(80-98), 블로그별 수기 상태 변경(164-190), 예전 글 상태 옮기기(192-215), 중지·삭제(285-300) → BR-WRT-010, 001, Job 전이 |
 | `tests/editPost.test.ts` | 범위·글 전체 고치기, 작업의 상한·말투, 분량·말투 다시 쓰기, 이미지 ref 복원·검증, 바뀐 것 없음, 빈 표, 적용 조건, 요청 검사, 시작→제안→적용, 실패·중지(50-270) → BR-WRT-016, 017, 018 |
 | `tests/wordpress.test.ts` | 워드프레스에 올리면 그 블로그 상태만 바뀜(127-141) → [[writing/entities/Job]] |

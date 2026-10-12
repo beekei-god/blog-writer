@@ -1,7 +1,7 @@
 ---
 type: index
 domain: image
-updated: 2026-10-09
+updated: 2026-10-12
 ---
 # image Index
 
@@ -14,7 +14,7 @@ updated: 2026-10-09
 - [[image/business-rules/BR-IMG-002 AI별 허용 스타일]] — Claude는 플랫만 (공용 `fitStyle`)
 - [[image/business-rules/BR-IMG-003 썸네일 AI와 스타일 결정]] — 새 글 쓰기에서 썸네일·본문 설정 독립, 실행 시 없으면 본문 값, 불가하면 첫 스타일
 - [[image/business-rules/BR-IMG-004 본문 기반 이미지 기획]] — 만들기 직전 섹션 기반으로 설명·문구 결정
-- [[image/business-rules/BR-IMG-005 이미지 안 문구 길이]] — 썸네일 8~16자, 본문 4~20자, 최대 60자
+- [[image/business-rules/BR-IMG-005 이미지 안 문구 길이]] — 썸네일은 주제+궁금해할 질문(답 없음), 본문 4~20자, 최대 120자
 - [[image/business-rules/BR-IMG-006 직접 고친 이미지 보호]] — userEdited면 자동 기획 제외
 - [[image/business-rules/BR-IMG-007 이미지 실패 격리와 원인 분류]] — 한 장 실패가 글을 막지 않음, 15종 원인(`site_error` 포함), 이미지 자리에 실제 실패 이유
 - [[image/business-rules/BR-IMG-008 이미지 결과는 서버 기록 우선]] — 초안 저장 시 file/error 유지

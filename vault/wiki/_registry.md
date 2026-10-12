@@ -2,18 +2,20 @@
 type: registry
 vault_path: /Users/kei/Projects/blog-writer/vault
 wiki_root: wiki
-updated: 2026-10-10
+updated: 2026-10-12
 ---
 # Registry
 
 ## 프로젝트
 | 이름 | 경로 | 역할/스택 | 마지막 분석 커밋 | 분석일 |
 |---|---|---|---|---|
-| blog-writer | /Users/kei/Projects/blog-writer | 블로그 초안 자동 작성 로컬 앱: API 서버(Express 5, tsx) + 화면(React 19, Vite). Claude는 로컬 `claude -p` CLI로 호출 | git 1edb65a (스냅샷 2026-10-09, `_snapshot.json` 참고). **writing 도메인만** git afc7c10까지 반영 (2026-10-10) | 2026-10-10 (writing) |
+| blog-writer | /Users/kei/Projects/blog-writer | 블로그 초안 자동 작성 로컬 앱: API 서버(Express 5, tsx) + 화면(React 19, Vite). Claude는 로컬 `claude -p` CLI로 호출 | git 1edb65a (스냅샷 2026-10-09, `_snapshot.json` 참고). **writing 도메인만** git afc7c10까지 반영 (2026-10-10). 커밋 74e5eb0의 제목·키워드·썸네일 규칙은 writing·image 해당 페이지에 반영 (2026-10-12) | 2026-10-12 (writing·image 일부) |
 
 git 저장소가 아니므로 변경 감지는 `_snapshot.json`의 파일 해시로 한다 (`wiki_tool.py changes`).
 
 > 2026-10-10: 커밋 afc7c10(분량·말투, 다시 쓰기, 블로그별 글 상태, 제목 후보)은 writing 도메인만 반영했다. publishing(BR-PUB-013·019, 플로우, 구현 지도)·_system(api, data-storage, configuration, 모듈 페이지의 바뀐 파일 설명)은 아직 1edb65a 기준이라, 스냅샷을 일부러 갱신하지 않았다. 그쪽을 갱신한 뒤 스냅샷을 찍는다.
+
+> 2026-10-12: 커밋 74e5eb0(썸네일 문구는 주제+질문, 제목 기법, 키워드 횟수·검색 의도, 프롬프트 공용 상수)만 반영했다. 그 사이 커밋(fdaeaf8 Claude 계정 설정, dfd2475 키워드 탐색 오류 처리, 22a03cf 이미지 프롬프트, 06ae697·5d0ad05 말투·글 형식, 2af99a4 장소 블록)은 BR-IMG-005에 22a03cf의 60→120자만 반영했고 나머지는 아직이다. 스냅샷은 그대로 둔다.
 
 ## 모듈
 | 모듈 | 경로 | 페이지 |
@@ -21,7 +23,7 @@ git 저장소가 아니므로 변경 감지는 `_snapshot.json`의 파일 해시
 | server-routes | `server/index.ts`, `server/app.ts`, `server/routes/**` | [[_system/modules/server-routes]] |
 | server-core | `server/store.ts`, `server/fsutil.ts`, `server/cancel.ts`, `server/rules.ts`, `server/secrets.ts` | [[_system/modules/server-core]] |
 | server-wordpress | `server/wordpress.ts` | [[_system/modules/server-wordpress]] |
-| server-pipeline | `server/pipeline.ts`, `server/research.ts`, `server/writer.ts`, `server/titles.ts`, `server/schema.ts`, `server/naver.ts` | [[_system/modules/server-pipeline]] |
+| server-pipeline | `server/pipeline.ts`, `server/research.ts`, `server/writer.ts`, `server/titles.ts`, `server/titleGuide.ts`, `server/schema.ts`, `server/naver.ts` | [[_system/modules/server-pipeline]] |
 | server-claude | `server/claude.ts`, `server/usage.ts` | [[_system/modules/server-claude]] |
 | server-recommend | `server/recommend.ts`, `server/datalab.ts`, `server/searchad.ts`, `server/explore.ts`, `server/trends.ts` | [[_system/modules/server-recommend]] |
 | server-images | `server/images/**` | [[_system/modules/server-images]] |
@@ -36,8 +38,8 @@ git 저장소가 아니므로 변경 감지는 `_snapshot.json`의 파일 해시
 ## 도메인
 | 슬러그 | 한글명 | 약어 | 상태 |
 |---|---|---|---|
-| writing | 글 작성 (작업·리서치·초안·글쓰기 규칙·태그·분량·말투·블로그별 글 상태) | WRT | 갱신 (2026-10-10, afc7c10) |
-| image | 이미지 생성 (썸네일·본문 이미지) | IMG | 갱신 (2026-10-09) |
+| writing | 글 작성 (작업·리서치·초안·글쓰기 규칙·태그·분량·말투·블로그별 글 상태) | WRT | 갱신 (2026-10-10, afc7c10), 제목·키워드 규칙 (2026-10-12, 74e5eb0) |
+| image | 이미지 생성 (썸네일·본문 이미지) | IMG | 갱신 (2026-10-09), 썸네일 문구 규칙 (2026-10-12, 74e5eb0) |
 | publishing | 블로그 등록 (크롬 임시저장·예약발행·자동발행, 워드프레스 API 등록, 글 상태 직접 변경, 블로그별 설정) | PUB | 갱신 (2026-10-09) |
 | topic | 주제 추천·키워드 탐색 (뉴스·통계·데이터랩·검색광고·구글 트렌드) | TOP | 갱신 (2026-10-09) |
 | usage | Claude 모델·사용량 | USG | 1차 ingest 완료 (2026-10-05) |
@@ -45,7 +47,7 @@ git 저장소가 아니므로 변경 감지는 `_snapshot.json`의 파일 해시
 ## 코드 ↔ 도메인 매핑
 | 도메인 | 프로젝트 | 경로 패턴 | 확인 여부 |
 |---|---|---|---|
-| writing | blog-writer | `server/pipeline.ts`(doDraft·runDraft·setBlogStatus·startEdit·doEdit), `server/research.ts`, `server/writer.ts`, `server/titles.ts`, `shared/blogStatus.ts`, `src/WritingPicker.tsx`, `src/job/TitlePicker.tsx`, `src/job/EditByPrompt.tsx`, `server/routes/edit.ts`, `server/editPost.ts`, `server/schema.ts`(PostSchema·POST_JSON_SCHEMA), `server/naver.ts`, `server/rules.ts`, `server/store.ts`, `server/fsutil.ts`, `server/cancel.ts`, `server/routes/jobs.ts`(jobs·titles·blogs/:platform/status), `server/routes/settings.ts`(rules·writing 기억값), `shared/length.ts`, `shared/labels.ts`, `shared/types.ts`(Job·Post·Tag·WritingOptions·BlogStatus), `rules/**`, `src/NewJob.tsx`, `src/job/JobDetail.tsx`·`PostEditor.tsx`·`Report.tsx`·`Progress.tsx`·`Preview.tsx`, `src/RulesEditor.tsx`, `src/App.tsx`(내 글 상태 필터) | 추정 |
+| writing | blog-writer | `server/pipeline.ts`(doDraft·runDraft·setBlogStatus·startEdit·doEdit), `server/research.ts`, `server/writer.ts`, `server/titles.ts`, `server/titleGuide.ts`, `shared/keywords.ts`, `src/job/Report.tsx`(키워드 반복 경고), `shared/blogStatus.ts`, `src/WritingPicker.tsx`, `src/job/TitlePicker.tsx`, `src/job/EditByPrompt.tsx`, `server/routes/edit.ts`, `server/editPost.ts`, `server/schema.ts`(PostSchema·POST_JSON_SCHEMA), `server/naver.ts`, `server/rules.ts`, `server/store.ts`, `server/fsutil.ts`, `server/cancel.ts`, `server/routes/jobs.ts`(jobs·titles·blogs/:platform/status), `server/routes/settings.ts`(rules·writing 기억값), `shared/length.ts`, `shared/labels.ts`, `shared/types.ts`(Job·Post·Tag·WritingOptions·BlogStatus), `rules/**`, `src/NewJob.tsx`, `src/job/JobDetail.tsx`·`PostEditor.tsx`·`Report.tsx`·`Progress.tsx`·`Preview.tsx`, `src/RulesEditor.tsx`, `src/App.tsx`(내 글 상태 필터) | 추정 |
 | image | blog-writer | `server/images/**`, `server/secrets.ts`(이미지 API 키), `server/routes/settings.ts`(image-api), `server/cancel.ts`(이미지 동시 실행 중지), `shared/imageErrors.ts`, `shared/types.ts`(ImageOptions·ImageSpec·aiFor·methodFor·ImageMethod·imageSpecAt·imageSpecsOf·Job.imageRunsOnly), `server/schema.ts`(ImageOptionsSchema), `server/pipeline.ts`(runImages·runImage·imagesStep·makeImages·imageRuns), `server/routes/images.ts`, `server/routes/jobs.ts`(keepImageResults), `src/job/images.tsx`, `src/ImageApiSettings.tsx`, `src/NewJob.tsx`(AiRows) | 추정 |
 | publishing | blog-writer | `server/browser/**`, `server/wordpress.ts`, `shared/postHtml.ts`, `shared/types.ts`(Settings·blogIdOf·settingsFor·PublishMode·WordPressRecord·MANUAL_STATUSES·canSetStatus·NAVER_MINUTE_STEP), `server/pipeline.ts`(runPost·doPost·doWordPressPost), `server/routes/jobs.ts`(post-to-blog·status), `server/routes/browser.ts`, `server/routes/settings.ts`(settings·wordpress), `server/secrets.ts`(워드프레스 인증), `src/job/NextStep.tsx`, `src/BlockedSites.tsx`, `src/LoginWindow.tsx`, `src/ExtensionStatus.tsx`, `src/SettingsPanel.tsx`(블로그별 카드) | 추정 |
 | topic | blog-writer | `server/recommend.ts`, `server/datalab.ts`, `server/searchad.ts`, `server/explore.ts`, `server/trends.ts`, `server/secrets.ts`, `server/routes/recommendations.ts`, `server/routes/keywords.ts`, `server/routes/settings.ts`(datalab·searchad), `src/Recommend.tsx`, `src/Keywords.tsx`, `src/SearchAdSettings.tsx`, `src/SettingsPanel.tsx`(데이터랩), `src/App.tsx`(탭 순서·키워드→주제 추천 연결) | 추정 |

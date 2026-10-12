@@ -7,7 +7,7 @@ status: active
 confidence: high
 consistency: consistent
 source:
-  - blog-writer:shared/length.ts:21-48
+  - blog-writer:shared/length.ts:21-53
   - blog-writer:tests/shared.test.ts:27-51
 entities: [Post]
 updated: 2026-10-07
@@ -26,7 +26,7 @@ updated: 2026-10-07
 ## 구현 현황
 | 레이어 | 구현 | 값/내용 | 근거 |
 |---|---|---|---|
-| 공용 | `countBodyChars` | 위 규칙 | `blog-writer:shared/length.ts:29-48` |
+| 공용 | `bodyTexts`(본문 범위) + `countBodyChars`(글자 세기) | 위 규칙 | `blog-writer:shared/length.ts:29-53` |
 | 서버 | 작성·줄이기 판단, 로그 | 같은 함수 | `blog-writer:server/writer.ts:174`, `:222` |
 | 화면 | 글자수 칩 | 같은 함수 | `blog-writer:src/job/JobDetail.tsx:185`, `:302-305` |
 | 테스트 | 공백 포함·줄바꿈/굵게/이미지 제외, 참고 자료 이후 제외, 이모지 1자 | | `blog-writer:tests/shared.test.ts:27-51` |
@@ -47,3 +47,4 @@ updated: 2026-10-07
 |---|---|---|
 | 2026-10-05 | 최초 기록 | |
 | 2026-10-05 | 문단 안 줄바꿈을 글자수에서 제외 | `blog-writer:shared/length.ts:23` |
+| 2026-10-12 | 규칙은 그대로. 본문 범위(제목·이미지 제외, "참고 자료"부터 제외)를 `bodyTexts`로 떼어 내 키워드 횟수 세기([[writing/business-rules/BR-WRT-013 제목 후보와 키워드]])와 같이 씀 | 커밋 74e5eb0, `blog-writer:shared/length.ts:29-53` |

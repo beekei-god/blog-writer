@@ -168,3 +168,12 @@ updated: 2026-10-05
 - 불일치: 없음. 새 open question: writing #14(분량·말투·다시 쓰기·제목 결과를 실제 Claude로 미검증), #17(제목 다시 만들기 결과가 화면 자동 저장에 의존). #15·#16은 사용자 결정 기록(resolved)
 - 범위 밖으로 남김: publishing(BR-PUB-013 글 상태 직접 바꾸기, BR-PUB-019 다른 블로그에 올린 글 표시 — 블로그별 상태로 사실상 해소, 블로그 임시저장·워드프레스 등록 플로우, 구현 지도, open-questions #7·#15)와 _system(api의 `/status`→`/blogs/:platform/status`·`/titles`·`/edit`의 `writing`, data-storage의 `Job.blogs`·`writingOptions`·설정 `writing`, configuration, 바뀐 파일의 모듈 설명·줄 수)은 1edb65a 기준 그대로
 - 분석 시점: writing만 git afc7c10. 스냅샷(`_snapshot.json`)은 publishing·_system 갱신 전이라 1edb65a 그대로 둠
+
+## [2026-10-12] update | writing · image (썸네일 문구, 제목 기법, 키워드 횟수·검색 의도)
+- 읽은 범위: 커밋 74e5eb0에서 바뀐 18개 파일 (추가: `server/titleGuide.ts`, `shared/keywords.ts`, `tests/keywords.test.ts`, `tests/imagePlan.test.ts`)
+- 변경 내용: 썸네일 문구는 주제 + 독자가 궁금해할 질문, 답(결론·금액·날짜·수치)은 넣지 않음. 제목 후보는 기법 4가지. 키워드는 제목 1번·본문 2번까지, 넘으면 작성 리포트 경고. 제목·본문은 검색 질문에 답함. 리팩터링: 본문 범위 `bodyTexts` 공용, 이미지 문구 지시 상수를 작성·기획이 같이 씀
+- 갱신(내용): writing — BR-WRT-013(다시 씀), BR-WRT-002(범위 함수 분리, 규칙 그대로), 구현 지도, index, open-questions(#18~20 신규) / image — BR-IMG-005(다시 씀, confidence high → medium, 22a03cf의 60→120자도 반영), BR-IMG-004, 구현 지도, index / _system/modules — shared(keywords.ts 추가), server-pipeline(titleGuide.ts 추가), web-job(Report) / glossary, _registry
+- 불일치: 없음(레이어 값은 같음). 새 open question: writing #18(정보형 말투 "배경 먼저" ↔ "도입부에서 답 먼저"), #19(고치기·다시 쓰기에 키워드 지시 없음), #20(정리형 질문형 소제목 ↔ 본문 키워드 2번)
+- 범위 밖으로 남김: 74e5eb0 이전의 미반영 커밋(fdaeaf8, dfd2475, 22a03cf 나머지, 06ae697, 5d0ad05, 2af99a4)
+- 분석 시점: 74e5eb0의 변경만. 스냅샷(`_snapshot.json`)은 그대로 둠
+

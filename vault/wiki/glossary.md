@@ -33,7 +33,7 @@ updated: 2026-10-10
 | 본문 이미지 | "본문 이미지 N장" | `type: "image"` 블록, `body-<블록 번호>` | `body-<n>-<ts>.png` | 섹션 안 이미지 0~6장 | [[image/business-rules/BR-IMG-001 본문 이미지 개수]] |
 | 만드는 곳 (AI) | Claude / Gemini / ChatGPT | `ImageProvider`: `claude`/`gemini`/`chatgpt` | | 이미지 생성 방식 | [[image/entities/ImageOptions]] |
 | 스타일 / 화풍 | 플랫 일러스트 / 지브리풍 / 실사 / 애니메이션 | `ImageStyle`: `flat`/`ghibli`/`realistic`/`anime` | | Claude는 flat만 | [[image/business-rules/BR-IMG-002 AI별 허용 스타일]] |
-| 이미지 안 문구 | "이미지 안 문구", 썸네일 "문구 “…”" | `headline` | | 이미지에 넣는 한국어 글자 | [[image/business-rules/BR-IMG-005 이미지 안 문구 길이]] |
+| 이미지 안 문구 | "이미지 안 문구", 썸네일 "문구 “…”" | `headline` | | 이미지에 넣는 한국어 글자 (썸네일은 주제+질문, 본문 이미지는 라벨) | [[image/business-rules/BR-IMG-005 이미지 안 문구 길이]] |
 | 이미지 설명 | "이미지 설명 (다시 만들 때 사용)" | `prompt` | | 그릴 장면 | [[image/entities/ImageSpec]] |
 | 근거 본문 | "이 이미지가 그리는 본문" | `basis` | | 이미지가 그리는 본문 문장 | [[image/business-rules/BR-IMG-004 본문 기반 이미지 기획]] |
 | 직접 고친 이미지 | "직접 고친 설명과 문구라서…", "본문을 보고 자동으로 다시 정하게 하기" | `userEdited` | | 자동 기획 제외 표시 | [[image/business-rules/BR-IMG-006 직접 고친 이미지 보호]] |

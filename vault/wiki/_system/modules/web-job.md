@@ -10,7 +10,7 @@ source:
   - blog-writer:src/job/EditByPrompt.tsx:1-166
   - blog-writer:src/job/PostEditor.tsx:1-248
   - blog-writer:src/job/Preview.tsx:1-129
-  - blog-writer:src/job/Report.tsx:1-83
+  - blog-writer:src/job/Report.tsx:1-124
   - blog-writer:src/job/Progress.tsx:1-44
   - blog-writer:src/job/JobUsage.tsx:1-29
 updated: 2026-10-09
@@ -30,7 +30,7 @@ updated: 2026-10-09
 | `src/job/TitlePicker.tsx` | 67 | (2026-10-10 새 파일) 본문 맨 위 제목 아래(미리보기·편집)의 제목 후보: 누르면 제목 변경, 지금 제목이 후보에 없으면 함께 표시, "제목 다시 만들기"(진행 안내·오류) | `TitlePicker` | [[writing/business-rules/BR-WRT-013 제목 후보와 키워드]] |
 | `src/job/EditByPrompt.tsx` | 166 | (2026-10-09 새 파일) "프롬프트로 글 고치기 · 내용 추가" 카드. 수정 요청 입력(2~2,000자), 편집 화면에서 고른 블록 → 처음~끝 포함 범위(사이의 블록도 포함, 떨어진 블록을 고르면 사이까지 전부 고쳐짐), 만드는 중 표시+중지, 실패 표시, 결과는 바뀐 블록만 비교(`diffBlocks`/`collapseSame`: 추가 초록·삭제 취소선, 제목·요약 변경, 본문 글자 수 변화와 `MAX_BODY_CHARS`(3,000자) 초과 경고 — 경고만 하고 자동으로 줄이지 않음), 적용 / 요청을 고쳐서 다시 만들기 / 버리기 | `EditByPrompt` | [[_system/modules/shared]] (`blockDiff`), [[_system/api]] |
 | `src/job/Preview.tsx` | 129 | 미리보기, 링크·굵게 표시. 복사 버튼(`CopyBar`: 제목·본문 HTML·텍스트·태그 복사)은 2026-10-09에 삭제 | `Preview` | |
-| `src/job/Report.tsx` | 83 | 작성 리포트(검색 의도, 키워드, 제목 후보, 태그 근거, 뺀 항목) | `Report` | [[writing/business-rules/BR-WRT-013 제목 후보와 키워드]] |
+| `src/job/Report.tsx` | 124 | 작성 리포트(검색 질문, 키워드와 키워드 반복 경고(2026-10-12), 출처, 뺀 항목, 리서치 노트, 규칙 사본, 태그 근거). 제목 후보는 2026-10-10에 `TitlePicker`로 옮김 | `Report` | [[writing/business-rules/BR-WRT-013 제목 후보와 키워드]] |
 | `src/job/Progress.tsx` | 44 | 진행 단계 표시: 자료 조사 > 글 작성 > 이미지 생성(이미지를 만들 때만) > 초안 검토 > 블로그 임시저장(올리는 중 `posting`과 `posted`가 한 단계, 발행 예약은 이 단계까지 끝난 것) > 블로그 발행완료 | `Progress` | [[writing/entities/Job]] |
 | `src/job/JobUsage.tsx` | 29 | 이 글에 쓴 모델별 토큰 | `JobUsage` | [[usage/flows/사용량 확인 플로우]] |
 

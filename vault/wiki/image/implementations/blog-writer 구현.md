@@ -4,7 +4,7 @@ domain: image
 project: blog-writer
 paths: [server/images/**, server/cancel.ts, server/store.ts, server/secrets.ts, server/routes/settings.ts, src/ImageApiSettings.tsx, shared/imageErrors.ts, shared/types.ts, server/schema.ts, server/pipeline.ts, server/routes/images.ts, server/routes/jobs.ts, src/job/**, src/NewJob.tsx, tests/**]
 last_ingested_commit: b7ced30
-updated: 2026-10-09
+updated: 2026-10-12
 ---
 # blog-writer의 image 구현
 
@@ -14,14 +14,14 @@ updated: 2026-10-09
 | `shared/types.ts` | `STYLES_BY_PROVIDER`(9-13), `MAX_BODY_IMAGES`(15), `ImageScope`(21-22), `ImageMethod`(24-25), 이미지 키 `bodyImageKey`·`imageKey`·`bodyIndexOf`(27-33), `ImageOptions`(35-50, `method`·`thumbnailMethod` 포함), `fitStyle`(52-54), `aiFor`(56-61), `methodFor`(63-65), `ImageSpec`(163-181), `imageSpecAt`·`imageSpecsOf`(224-233, 키로 이미지 찾기·글의 모든 이미지), Job의 `generatingImages`·`regeneratingImages`·`imageRunsOnly`(288-293) | BR-IMG-001, 002, 003, 009, 013, [[image/entities/ImageSpec]], [[image/entities/ImageOptions]] |
 | `shared/imageErrors.ts` | `IMAGE_ERROR_KINDS`(2-18, 15종), `IMAGE_ERROR_INFO`(27-90), `SITE_ERROR`(94), `classifyImageError`(98-118) | [[image/business-rules/BR-IMG-007 이미지 실패 격리와 원인 분류]] |
 | `server/schema.ts` | `ProviderEnum`·`StyleEnum`·`MethodEnum`(5-7), `ImageSpecShape`(9-21), `ImageOptionsSchema`(47-65), 작성 스키마의 이미지 블록 순서(143-147) | BR-IMG-002, 004, 005, 013 |
-| `server/writer.ts` | `STYLE_GUIDE`(35-43), `imageInstructions`(45-85), `enforceImageOptions`(271-278) | BR-IMG-001, 004, 005 |
+| `server/writer.ts` | `STYLE_GUIDE`(87-95), 썸네일·본문 이미지 문구 공용 지시 `THUMBNAIL_HEADLINE_RULE`·`THUMBNAIL_SCENE_RULE`·`BODY_HEADLINE_RULE`(96-108, 기획도 씀), `imageInstructions`(109-150), `enforceImageOptions`(380-387) | BR-IMG-001, 004, 005 |
 | `server/pipeline.ts` | `NO_IMAGES`·`optionsOf`(27-28), `imageRuns`·`isRunning`·`isImageBusy`(47-58), `runImages`(149-165), `runImage`(167-191), `imagesStep`(193-215, 한 장이면 AI·화풍·방법을 이번 실행만 덮어씀), `makeImages`(217-246, 진행 표시는 더하고 빼기), `makeImagesInner`(248-317; 크롬 큐 판단 301-313) | [[image/flows/이미지 생성 플로우]], BR-IMG-003, 004, 006, 013, 014 |
 | `server/images/index.ts` | `collectTargets`(18-30), `record`(34-54), `recordImageFile`(56-57, 직접 올리기도 같은 기록), `generateImages`(59-124; `methodFor`로 API/크롬 선택 110-123) | BR-IMG-007, 009, 010, 013 |
 | `server/images/api.ts` | `apiError`(25-40), `call`(42-56), `saveImageFile`(63-69, 크롬 URL 회수도 사용), `generateWithApi`(71-120), `testImageApiKey`(122-131) | [[_system/integrations/image-api]], BR-IMG-007, 013 |
-| `server/images/plan.ts` | `planImages`(67-113), `bodyOutline`(46-65) | [[image/business-rules/BR-IMG-004 본문 기반 이미지 기획]] |
+| `server/images/plan.ts` | `planImages`(69-117, 문구 지시는 `writer.ts` 상수), `bodyOutline`(46-67) | [[image/business-rules/BR-IMG-004 본문 기반 이미지 기획]] |
 | `server/images/svg.ts` | `validateSvg`(29-36), `generateSvgImage`(39-80) | [[image/business-rules/BR-IMG-011 SVG 안전 검증과 크기]] |
 | `server/images/webAi.ts` | `downloadScript`(61-97, 내부 전용), `findNewDownload`(127-151), `fetchImage`(162-175), `generateWithWebAi`(178-267; failed여도 폴더 먼저 확인 246-254, 사이트 오류면 `site_error` 255-259), 결과 지시 프롬프트(209-212) | [[_system/integrations/gemini-chatgpt-web]], BR-IMG-007 |
-| `server/images/styles.ts` | `STYLE_PROMPT`(7-15)·`styledPrompt`(17-19) 내부 전용, `imageRequest`(21-40, API·크롬 공용 요청문) | BR-IMG-002, 005 |
+| `server/images/styles.ts` | `STYLE_PROMPT`(7-15)·`styledPrompt`(17-19) 내부 전용, `imageRequest`(21-39, API·크롬 공용 요청문, 썸네일은 글자 없어도 "블로그 썸네일 이미지"로 요청) | BR-IMG-002, 005 |
 | `server/images/errors.ts` | `ImageGenError`(4-12), `errorKindOf`(14-15) | BR-IMG-007 |
 | `server/secrets.ts` | `getImageApiKey`(76-81, 환경변수 우선)·`saveImageApiKey`(83-86) | BR-IMG-013 |
 | `server/store.ts` | `jobImageDir`·`jobImagePath`(77-79, 파일명은 basename), `removeImageFile`(82-83; 다시 만들기 교체와 이미지 삭제가 같이 씀) | BR-IMG-009, 015 |

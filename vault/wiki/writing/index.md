@@ -1,7 +1,7 @@
 ---
 type: index
 domain: writing
-updated: 2026-10-10
+updated: 2026-10-12
 ---
 # writing Index
 
@@ -23,7 +23,7 @@ updated: 2026-10-10
 - [[writing/business-rules/BR-WRT-010 주제와 참고 링크 입력 검증]] — 주제 2~300자, 링크 http(s) ≤20개 (화면·서버 일치)
 - [[writing/business-rules/BR-WRT-011 작업 중복 실행과 진행 중 변경 금지]] — 실행 중 수정·삭제·재실행 409 (예외: 이미지 한 장씩 다시 만들기는 동시 진행)
 - [[writing/business-rules/BR-WRT-012 중단 시 작업 상태 복구]] — 초안 있으면 draft_ready, 없으면 failed (발행 창에서 멈추면 그 블로그만 posted + 이유)
-- [[writing/business-rules/BR-WRT-013 제목 후보와 키워드]] — 검색 질문 1, 메인 1·서브 2~3, 제목 후보 3. 제목 아래에서 고르고 "제목 다시 만들기"로 후보만 새로
+- [[writing/business-rules/BR-WRT-013 제목 후보와 키워드]] — 검색 질문 1, 메인 1·서브 2~3, 제목 후보 3(기법 4가지). 키워드는 제목 1번·본문 2번까지, 넘으면 작성 리포트 경고. 제목·본문은 검색 질문에 답해야 함. 제목 아래에서 고르고 "제목 다시 만들기"로 후보만 새로
 - [[writing/business-rules/BR-WRT-014 리서치 출처 등급과 열람 제한]] — 공식→언론→블로그, WebFetch 최대 6개
 - [[writing/business-rules/BR-WRT-015 네이버 검색어 제안 수집 범위]] — 자동완성 ≤20 검색어, 함께 많이 찾는 ≤6
 - [[writing/business-rules/BR-WRT-016 프롬프트로 글 고치기]] — 글 전체/선택한 블록을 Claude가 고쳐 제안, 적용은 사용자가 (웹 검색 허용, 분량은 경고만). 분량·말투 바꿔 글 전체 다시 쓰기(조사 자료 사용, 적용하면 작업의 분량·말투도)
