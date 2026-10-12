@@ -10,8 +10,8 @@ export const KEYWORD_LIMIT = { title: 1, body: 2 } as const;
  */
 export const KEYWORD_RULES = `## 키워드 횟수와 검색 의도
 - 제목: 메인·서브 키워드마다 그 표현 그대로는 1번만 쓰세요. 같은 키워드를 제목 안에서 되풀이하지 마세요.
-- 본문(도입부·소제목·문단·목록·표, 글 끝 "참고 자료"는 제외): 메인·서브 키워드마다 그 표현 그대로는 본문 전체에서 최대 2번까지만 쓰세요. 메인 키워드는 도입부에서 1번 쓰고 필요하면 본문에서 1번 더 쓸 수 있으며, 그 밖에는 '이 보조금', '지원금'처럼 대명사·동의어·연관어로 바꿔 쓰세요. 더 긴 키워드 안에 들어 있는 짧은 키워드는 따로 세지 않습니다(예: 서브 키워드 '전기차 보조금 신청 방법'을 쓰면 메인 키워드 '전기차 보조금'은 쓴 것으로 세지 않음).
-- 검색 의도: 제목과 본문은 검색 질문에 답하는 내용이어야 합니다. 제목만 보고도 이 글이 그 질문에 답한다는 것을 알 수 있게 쓰세요. 본문은 도입부에서 질문의 답을 먼저 밝히고, 소제목은 그 질문을 검색한 사람이 이어서 알고 싶어 할 내용(대상·조건·방법·일정·주의점 등)으로 구성하세요. 검색 의도와 관계없는 배경 설명·홍보성 내용은 넣지 마세요.`;
+- 본문(도입부·소제목·문단·목록·표, 글 끝 "참고 자료"는 제외): 메인·서브 키워드마다 그 표현 그대로는 본문 전체에서 최대 2번까지만 쓰세요. 소제목도 횟수에 들어가니 질문형 소제목에도 키워드를 되풀이하지 마세요. 메인 키워드는 도입부에서 1번 쓰고 필요하면 본문에서 1번 더 쓸 수 있으며, 그 밖에는 '이 보조금', '지원금'처럼 대명사·동의어·연관어로 바꿔 쓰세요. 더 긴 키워드 안에 들어 있는 짧은 키워드는 따로 세지 않습니다(예: 서브 키워드 '전기차 보조금 신청 방법'을 쓰면 메인 키워드 '전기차 보조금'은 쓴 것으로 세지 않음).
+- 검색 의도: 제목과 본문은 검색 질문에 답하는 내용이어야 합니다. 제목만 보고도 이 글이 그 질문에 답한다는 것을 알 수 있게 쓰세요. 소제목은 그 질문을 검색한 사람이 이어서 알고 싶어 할 내용(대상·조건·방법·일정·주의점 등)으로 구성하세요. 검색 의도와 관계없는 배경 설명·홍보성 내용은 넣지 마세요.`;
 
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 /** 띄어쓰기와 대소문자를 무시하고 키워드를 찾는 정규식 ("전기차 보조금" = "전기차보조금") */
@@ -31,21 +31,27 @@ export function countKeywords(text: string, keywords: string[]): Map<string, num
   return counts;
 }
 
-export interface KeywordOveruse {
+export interface KeywordCount {
   where: "제목" | "본문";
   keyword: string;
   count: number;
+  limit: number;
 }
 
-/** 제목·본문에서 허용 횟수(KEYWORD_LIMIT)를 넘게 쓴 키워드 */
-export function keywordOveruse(post: Pick<Post, "title" | "blocks" | "mainKeyword" | "subKeywords">): KeywordOveruse[] {
+type KeywordPost = Pick<Post, "title" | "blocks" | "mainKeyword" | "subKeywords">;
+
+/** 제목·본문(소제목 포함)에서 키워드마다 쓴 횟수와 허용 횟수 */
+export function keywordCounts(post: KeywordPost): KeywordCount[] {
   const keywords = [post.mainKeyword ?? "", ...(post.subKeywords ?? [])];
-  const out: KeywordOveruse[] = [];
+  const out: KeywordCount[] = [];
   for (const [where, text, limit] of [
     ["제목", post.title, KEYWORD_LIMIT.title],
     ["본문", bodyTexts(post).join("\n").replace(/\*\*/g, ""), KEYWORD_LIMIT.body],
   ] as const) {
-    for (const [keyword, count] of countKeywords(text, keywords)) if (count > limit) out.push({ where, keyword, count });
+    for (const [keyword, count] of countKeywords(text, keywords)) out.push({ where, keyword, count, limit });
   }
   return out;
 }
+
+/** 제목·본문에서 허용 횟수(KEYWORD_LIMIT)를 넘게 쓴 키워드 */
+export const keywordOveruse = (post: KeywordPost) => keywordCounts(post).filter((c) => c.count > c.limit);

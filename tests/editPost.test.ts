@@ -48,6 +48,33 @@ beforeEach(() => {
 });
 
 describe("프롬프트로 글 고치기 (Claude 호출)", () => {
+  it("키워드가 있으면 키워드 횟수 지시와 글 전체 기준 횟수(소제목 포함)를 보여 준다. 없으면 지시하지 않는다", async () => {
+    const withKw: Post = {
+      ...post(),
+      title: "보조금 정리",
+      searchQuestion: "보조금 대상은?",
+      mainKeyword: "보조금",
+      subKeywords: ["신청 방법"],
+      blocks: [{ type: "paragraph", text: "보조금 도입" }, { type: "heading", text: "보조금 대상은?" }, { type: "paragraph", text: "보조금 내용" }],
+    };
+    claude.result = { note: "고침", blocks: [{ type: "paragraph", text: "내용 고침" }] };
+    await proposeEdit({ ...base, post: withKw, prompt: "고쳐 줘", range: { start: 2, end: 2 } });
+    const { system } = claude.calls[0];
+    expect(system).toContain("## 키워드 횟수와 검색 의도");
+    expect(system).toContain("이 글의 검색 질문: 보조금 대상은?");
+    expect(system).toContain("본문 '보조금' 3번(최대 2번)"); // 소제목도 센다
+    expect(system).toContain("고치는 범위 밖의 글도 이 횟수에 들어 있습니다");
+
+    claude.result = { note: "고침", title: "보조금 정리", summary: "요약", blocks: [{ type: "paragraph", text: "다시 씀" }] };
+    await proposeEdit({ ...base, post: withKw, prompt: "", writing: { targetChars: 1500, tone: "info" }, rewrite: { notes: "노트", sources: [] } });
+    expect(claude.calls[1].system).toContain("## 키워드 횟수와 검색 의도");
+    expect(claude.calls[1].system).not.toContain("고치는 범위 밖의 글도");
+
+    claude.result = { note: "고침", blocks: [{ type: "paragraph", text: "내용 고침" }] };
+    await proposeEdit({ ...base, post: post(), prompt: "고쳐 줘", range: { start: 2, end: 2 } });
+    expect(claude.calls[2].system).not.toContain("## 키워드 횟수와 검색 의도");
+  });
+
   it("범위만 고친다: 범위의 블록만 새 블록으로 바뀌고, 이미지는 원래 이미지 그대로 돌아온다", async () => {
     claude.result = {
       note: "문단을 늘렸습니다.",

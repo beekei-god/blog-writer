@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { keywordCounts, KEYWORD_RULES } from "../shared/keywords";
 import { countBodyChars, DEFAULT_TARGET_CHARS, maxBodyChars, targetRange } from "../shared/length";
 import type { EditProposal, Post, PostBlock, Source, WritingOptions } from "../shared/types";
 import { runClaude } from "./claude";
@@ -96,6 +97,23 @@ ${
     : "- 지정한 범위의 블록만 고칩니다. blocks에는 그 범위를 대신할 블록들만 돌려주세요(범위 앞뒤의 블록은 보이는 문맥일 뿐이니 돌려주지 마세요). 고치지 않을 블록도 범위 안에 있으면 그대로 포함해서 돌려주세요."
 }`;
 
+/**
+ * 키워드 횟수·검색 의도 지시와 지금 글의 키워드 상태. 범위만 고칠 때는 글 일부만 보이므로 글 전체 기준 횟수를 알려 준다.
+ * 키워드가 없는 글(예전 글)은 셀 수 없어 지시하지 않는다.
+ */
+function keywordSection(post: Post, whole: boolean): string {
+  if (!post.mainKeyword) return "";
+  const used = keywordCounts(post)
+    .map((c) => `${c.where} '${c.keyword}' ${c.count}번(최대 ${c.limit}번)`)
+    .join(", ");
+  return `
+${KEYWORD_RULES}
+${post.searchQuestion ? `- 이 글의 검색 질문: ${post.searchQuestion}\n` : ""}- 메인 키워드: ${post.mainKeyword}${post.subKeywords?.length ? ` / 서브 키워드: ${post.subKeywords.join(", ")}` : ""}
+- 지금 글 전체에서 쓴 횟수: ${used}${whole ? "" : "\n- 고치는 범위 밖의 글도 이 횟수에 들어 있습니다. 고친 뒤 글 전체가 최대 횟수를 넘지 않게 하세요."}
+- 고치거나 더한 부분이 최대 횟수를 넘기면 대명사·동의어·연관어로 바꿔 쓰세요. 수정 요청과 상관없는 문장의 키워드는 바꾸지 마세요(다시 쓰기는 글 전체를 맞추세요).
+`;
+}
+
 /** 분량·말투를 바꿔 글 전체를 다시 쓸 때의 지시 ("요청한 부분만 고치세요"보다 우선) */
 function rewriteSection(target: number, chars: number) {
   const [lo, hi] = targetRange(target);
@@ -104,7 +122,7 @@ function rewriteSection(target: number, chars: number) {
 - 글 전체를 본문 공백 포함 약 ${target.toLocaleString()}자(${lo.toLocaleString()}~${hi.toLocaleString()}자)에 맞춰 다시 쓰세요. 지금 본문은 ${chars.toLocaleString()}자입니다.
 - 모든 문장을 아래 "말투"에 맞게 새로 쓰세요. 소제목과 섹션 구성도 말투에 맞게 바꿔도 됩니다.
 - 사실·숫자·날짜·출처는 바꾸거나 새로 만들지 마세요. 분량을 늘릴 때는 지금 글과 수정 요청 아래의 "조사 자료"에 있는 내용으로 보태고, 그래도 모자라면 웹 검색으로 확인한 사실만 더하세요. 채울 사실이 없으면 짧게 끝내고 note에 적으세요.
-- 분량을 줄일 때는 중복 설명, 긴 예시, 중요도가 낮은 내용부터 줄이세요. 도입부(결론 먼저), 핵심 요약, 참고 자료 목록은 남기세요.
+- 분량을 줄일 때는 중복 설명, 긴 예시, 중요도가 낮은 내용부터 줄이세요. 도입부, 핵심 요약, 참고 자료 목록은 남기세요.
 - 수정 요청에 적힌 내용이 있으면 함께 반영하세요.
 `;
 }
@@ -167,6 +185,7 @@ ${
   const raw = await runClaude<unknown>({
     system:
       SYSTEM(input.rules, input.today, whole, charsBefore, input.writing) +
+      keywordSection(post, whole) +
       (input.rewrite ? rewriteSection(input.writing?.targetChars ?? DEFAULT_TARGET_CHARS, charsBefore) : "") +
       toneSection(input.writing?.tone) +
       (input.rewrite ? formatSection(input.writing) : ""), // 부분 고치기는 글 구성을 바꾸지 않는다

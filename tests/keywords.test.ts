@@ -23,8 +23,8 @@ describe("키워드 횟수", () => {
       ],
     };
     expect(keywordOveruse(post)).toEqual([
-      { where: "제목", keyword: "전기차 보조금", count: 2 },
-      { where: "본문", keyword: "전기차 보조금", count: 3 },
+      { where: "제목", keyword: "전기차 보조금", count: 2, limit: 1 },
+      { where: "본문", keyword: "전기차 보조금", count: 3, limit: 2 },
     ]);
     expect(keywordOveruse({ ...post, title: "전기차 보조금 정리", blocks: post.blocks.slice(0, 1).concat({ type: "paragraph" as const, text: "전기차 보조금 대상" }) })).toEqual([]);
   });

@@ -151,3 +151,13 @@ describe("분량·말투 옵션 (글 작성)", () => {
     expect(system).toContain("가장 중요한 요구입니다");
   });
 });
+
+describe("도입부에서 답 먼저 지시 없음", () => {
+  it("말투·글 형식·키워드 지시·기본 글쓰기 규칙에 '답·결론·총평 먼저'가 없다", async () => {
+    const { TONE_GUIDE, FORMAT_GUIDE } = await import("../server/writer");
+    const { KEYWORD_RULES } = await import("../shared/keywords");
+    const { readFileSync } = await import("node:fs");
+    const texts = [...Object.values(TONE_GUIDE), ...Object.values(FORMAT_GUIDE), KEYWORD_RULES, readFileSync("rules/default-writing-rules.md", "utf8")];
+    for (const t of texts) expect(t).not.toMatch(/결론 먼저|결론부터|답을 먼저|핵심 답|총평을 먼저|먼저 답하/);
+  });
+});
