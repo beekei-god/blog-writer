@@ -2,6 +2,8 @@ import { z } from "zod";
 import { blockText } from "../shared/blockDiff";
 import type { Post } from "../shared/types";
 import { runClaude } from "./claude";
+import { KEYWORD_RULES } from "../shared/keywords";
+import { TITLE_TECHNIQUES } from "./titleGuide";
 
 const TITLE_COUNT = 3;
 /** 본문은 앞부분만 보여 준다 (제목은 도입부·소제목만으로도 충분하다) */
@@ -29,10 +31,14 @@ ${input.rules}
 </글쓰기_규칙>
 
 ## 제목 후보
-- titleCandidates에 제목 후보를 정확히 ${TITLE_COUNT}개 내세요. 서로 다른 각도(검색 의도·대상·날짜나 숫자)로 쓰세요.
+- titleCandidates에 제목 후보를 정확히 ${TITLE_COUNT}개 내세요. 서로 다른 기법과 각도(검색 의도·대상·날짜나 숫자)로 쓰세요.
 - 지금 제목과 예전 후보를 그대로 되풀이하지 마세요.
-- 본문에 실제로 있는 사실(날짜·금액·대상·숫자)만 쓰세요. 낚시성 표현과 같은 키워드 반복은 피하세요.
-- 굵게(**)·따옴표·이모지·마크다운 없이 제목 글자만 쓰세요.`,
+- 낚시성 표현은 피하세요.
+- 굵게(**)·따옴표·이모지·마크다운 없이 제목 글자만 쓰세요.
+
+${TITLE_TECHNIQUES}
+
+${KEYWORD_RULES}`,
     prompt: `주제: ${input.topic}
 지금 제목: ${post.title}
 예전 후보: ${post.titleCandidates?.join(" / ") || "(없음)"}

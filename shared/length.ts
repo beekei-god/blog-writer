@@ -23,26 +23,31 @@ const strip = (s: string) => s.replace(/\*\*/g, "");
 const len = (s: string) => Array.from(strip(s).replace(/[\r\n]/g, "")).length; // 이모지·한글을 한 글자로 센다. 줄바꿈은 세지 않는다
 
 /**
- * 본문 글자수 (공백 포함). 제목, 이미지, 줄바꿈은 세지 않고,
- * "참고 자료" 소제목부터 끝까지는 제외한다.
+ * 본문 텍스트 조각 (소제목·문단·인용·목록 항목·표 칸). 제목과 이미지는 빼고,
+ * "참고 자료" 소제목부터 끝까지는 제외한다. 글자수와 키워드 횟수가 같은 범위를 쓴다.
  */
-export function countBodyChars(post: Pick<Post, "blocks">): number {
-  let n = 0;
+export function bodyTexts(post: Pick<Post, "blocks">): string[] {
+  const out: string[] = [];
   for (const b of post.blocks) {
     if (b.type === "heading" && REFERENCE_HEADING.test(b.text)) break;
     switch (b.type) {
       case "heading":
       case "paragraph":
       case "quote":
-        n += len(b.text);
+        out.push(b.text);
         break;
       case "list":
-        n += b.items.reduce((a, it) => a + len(it), 0);
+        out.push(...b.items);
         break;
       case "table":
-        n += [b.headers, ...b.rows].flat().reduce((a, c) => a + len(c), 0);
+        out.push(...[b.headers, ...b.rows].flat());
         break;
     }
   }
-  return n;
+  return out;
+}
+
+/** 본문 글자수 (공백 포함). bodyTexts 범위에서 줄바꿈은 세지 않는다 */
+export function countBodyChars(post: Pick<Post, "blocks">): number {
+  return bodyTexts(post).reduce((n, t) => n + len(t), 0);
 }

@@ -18,14 +18,14 @@ function styledPrompt(prompt: string, style: ImageStyle): string {
   return `${prompt}\n\nStyle: ${STYLE_PROMPT[style]}.`;
 }
 
-/** Gemini/ChatGPT에 보내는 요청문 (API와 웹 화면이 같은 문구를 쓴다). headline이 있으면 그 문구를 이미지 안에 넣는다 (썸네일은 가운데에 크게, 본문 이미지는 제목·라벨처럼) */
+/** Gemini/ChatGPT에 보내는 요청문 (API와 웹 화면이 같은 문구를 쓴다). headline이 있으면 그 문구를 이미지 안에 넣는다 (썸네일은 크고 눈에 띄게, 본문 이미지는 제목·라벨처럼) */
 export function imageRequest(prompt: string, style: ImageStyle, headline?: string, kind?: "thumbnail" | "body"): string {
   headline = headline?.trim();
   return headline
     ? kind === "thumbnail"
       ? `블로그 썸네일 이미지를 생성해줘. 가로로 긴 16:9 비율로.
-이미지 가운데에 아래 한국어 문구를 줄바꿈 그대로 여러 줄로 또렷하게 넣어 줘. 첫 줄(제목)은 가장 크고 굵게, 둘째 줄(부제)은 조금 작게, 나머지 줄(핵심 포인트)은 목록처럼 읽기 쉽게. 글자는 맞춤법 그대로, 한 글자도 바꾸지 말고, 배경과 대비가 강하게 (흰 글자+어두운 테두리 또는 색 띠·상자). 문구 말고 다른 글자는 넣지 마.
-목록에서 정사각형으로 잘려도 보이도록 문구와 핵심 대상은 가운데에 모아 줘.
+유튜브·블로그 썸네일 같은 느낌으로, 시선이 가는 구성이면 돼.
+아래 한국어 문구를 줄바꿈 그대로 넣어 줘. 제목은 크고 굵고 또렷하게(어두운 테두리나 색 띠로 배경과 대비를 강하게), 중요한 단어나 숫자는 강조색으로 눈에 띄게 해 줘. 위치와 배치는 그림에 어울리게 자유롭게 정해도 돼. 글자는 맞춤법 그대로 한 글자도 바꾸지 말고, 문구 말고 다른 글자는 넣지 마. (간판·화면 같은 소품의 글자는 알아볼 수 없는 정도로만)
 문구: "${headline}"
 
 배경 장면:
@@ -36,5 +36,5 @@ ${styledPrompt(prompt, style)}`
 
 장면:
 ${styledPrompt(prompt, style)}`
-    : `이미지 생성해줘. 이미지 안에 글자는 넣지 말고, 가로로 긴 16:9 비율로.\n\n${styledPrompt(prompt, style)}`;
+    : `${kind === "thumbnail" ? "블로그 썸네일 이미지를" : "이미지"} 생성해줘. 이미지 안에 글자는 넣지 말고, 가로로 긴 16:9 비율로.\n\n${styledPrompt(prompt, style)}`;
 }

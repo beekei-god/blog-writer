@@ -53,6 +53,24 @@ describe("분량·말투 옵션 (글 작성)", () => {
     expect(system).not.toContain("## 말투");
   });
 
+  it("제목 후보는 제목 기법 4가지를 쓰게 한다", async () => {
+    claude.results.push(postOf(2500));
+    await writePost(input());
+    const { system } = claude.calls[0];
+    for (const t of ["구체적인 숫자", "결론과 이득 먼저", "손실 회피", "질문·호기심"]) expect(system).toContain(t);
+    expect(system).toContain("과장·공포 조장은 쓰지 마세요");
+    expect(system).toContain("## 키워드 횟수와 검색 의도");
+  });
+
+  it("썸네일 문구는 주제와 질문만, 결론·수치 같은 답은 넣지 않게 한다", async () => {
+    claude.results.push(postOf(2500));
+    await writePost({ ...input(), options: { ...NO_IMAGES, thumbnail: true } });
+    const { system } = claude.calls[0];
+    expect(system).toContain("궁금해할 질문");
+    expect(system).toContain("썸네일에 쓰지 마세요");
+    expect(system).not.toContain("질문이나 결론이 좋습니다");
+  });
+
   it("글 형식: 고르지 않으면 형식 지시 없음, 정보 제공·리뷰는 각 구성을 지시한다", async () => {
     claude.results.push(postOf(2500), postOf(2500), postOf(2500));
     await writePost(input({ targetChars: 2500, tone: "info" }));

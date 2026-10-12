@@ -1,3 +1,4 @@
+import { keywordOveruse } from "../../shared/keywords";
 import type { Post, Source } from "../../shared/types";
 
 // ───────────────────────── 작성 리포트 ─────────────────────────
@@ -22,6 +23,8 @@ export function Report({
   // 제목 후보는 본문 맨 위 제목 아래(TitlePicker)에서 고른다.
   const hasReport = post?.searchQuestion || post?.omittedItems?.length || post?.tagDetails?.length || rulesSnapshot || sources.length > 0 || researchNotes;
   if (!hasReport) return null;
+  // 지금 글 기준이라 직접 고치면 바로 다시 센다
+  const overuse = post ? keywordOveruse(post) : [];
 
   return (
     <section className="report">
@@ -37,6 +40,11 @@ export function Report({
             <p>
               <b>키워드</b> 메인 <code>{post.mainKeyword}</code>
               {post.subKeywords?.length ? <> · 서브 {post.subKeywords.map((k) => <code key={k}>{k}</code>)}</> : null}
+            </p>
+          )}
+          {overuse.length > 0 && (
+            <p className="warn-text">
+              키워드 반복: {overuse.map((o) => `${o.where} '${o.keyword}' ${o.count}번`).join(", ")} (제목 1번, 본문 2번까지)
             </p>
           )}
         </div>

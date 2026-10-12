@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { ImageProvider, ImageStyle, Post } from "../../shared/types";
 import { runClaude } from "../claude";
-import { STYLE_GUIDE } from "../writer";
+import { BODY_HEADLINE_RULE, STYLE_GUIDE, THUMBNAIL_HEADLINE_RULE, THUMBNAIL_SCENE_RULE } from "../writer";
 
 /**
  * 이미지를 만들기 직전에 본문을 다시 보고, 이미지마다 "무엇을 그릴지(prompt)"와 "이미지 안에 넣을 문구(headline)"를 정한다.
@@ -95,9 +95,10 @@ export async function planImages(
 - 한 글 안의 이미지는 서로 다른 내용을 그리되, 같은 화풍·색감·등장인물 설정을 유지하세요.
 - ${promptRule}
 - 이미지 안에 글자를 넣어도 됩니다. 단, 글자는 prompt에 쓰지 말고 headline에만 쓰세요(정확한 문구로 따로 넣습니다). prompt에는 글자가 들어갈 자리(여백, 띠, 상자)만 묘사하세요.
-- headline은 본문에 실제로 있는 사실(날짜·금액·대상·혜택·수치·단계 이름)로만 만드세요. 과장·낚시성 표현과 본문에 없는 내용은 금지입니다.
-  - 썸네일: 줄바꿈(\\n)으로 나눈 4~5줄. 1줄 제목 8~16자(제목을 그대로 옮기지 말고 한눈에 읽히게 줄임), 2줄 부제 10~24자, 3~5줄 핵심 포인트 2~3개(각 6~14자). 모두 본문에 있는 사실이어야 합니다. 문구와 핵심 대상은 가운데에 모아, 목록에서 정사각형으로 잘려도 보이게 하세요.
-  - 본문 이미지: 그림을 이해하는 데 도움이 될 때만 4~20자 한국어 라벨·수치·단계 이름. 글자가 필요 없으면 빈 문자열.
+- headline에 본문에 없는 내용과 과장·낚시성 표현은 금지입니다.
+  - 썸네일: ${THUMBNAIL_HEADLINE_RULE} basis에는 그 질문에 답하는 본문 문장을 쓰세요.
+  - 썸네일 그림(prompt): ${THUMBNAIL_SCENE_RULE}
+  - 본문 이미지: ${BODY_HEADLINE_RULE}
 - basis는 그 이미지의 근거가 된 본문 문장을 글에 쓴 그대로 인용하세요.
 - 요청된 key마다 정확히 하나씩 돌려주세요.`,
     prompt: `글 제목: ${post.title}\n요약: ${post.summary}\n\n## 본문 (앞의 [번호]는 블록 번호)\n${bodyOutline(post)}\n\n## 기획할 이미지\n${request}`,

@@ -196,3 +196,13 @@ describe("내 글 목록 필터 (블로그 × 상태)", () => {
     expect(furthestBlogStatus({})).toBeUndefined();
   });
 });
+
+describe("이미지 요청문", () => {
+  it("썸네일은 문구가 있든 없든 썸네일을 생성해 달라고 요청한다", async () => {
+    const { imageRequest } = await import("../server/images/styles");
+    expect(imageRequest("scene", "flat", "제목", "thumbnail")).toContain("블로그 썸네일 이미지를 생성해줘");
+    expect(imageRequest("scene", "flat", undefined, "thumbnail")).toContain("블로그 썸네일 이미지를 생성해줘");
+    expect(imageRequest("scene", "flat", undefined, "body")).not.toContain("썸네일");
+    expect(imageRequest("scene", "flat", "라벨", "body")).toContain("블로그 본문에 들어갈 이미지를 생성해줘");
+  });
+});

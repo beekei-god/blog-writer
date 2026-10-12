@@ -1,3 +1,5 @@
+import { TITLE_TECHNIQUES } from "./titleGuide";
+import { KEYWORD_RULES } from "../shared/keywords";
 import { MAX_TAGS, type ImageOptions, type Post, type PostBlock, type Source, type TagDetail, type WritingFormat, type WritingOptions, type WritingTone } from "../shared/types";
 import { countBodyChars, DEFAULT_TARGET_CHARS, maxBodyChars, targetRange } from "../shared/length";
 import { toneName, toneProblem } from "../shared/tone";
@@ -72,6 +74,8 @@ ${toneSection(writing?.tone)}${formatSection(writing)}
 - table의 headers와 모든 rows는 칸 수가 같아야 하고 모든 칸이 채워져 있어야 합니다. 채울 수 없는 행은 빼세요.
 - 규칙에서 "채팅 답변"이나 "사용자에게 안내"하라고 한 내용은 본문에 넣지 마세요. 본문에서 뺀 항목만 omittedItems에 짧게 적습니다.
 - titleCandidates는 3개, title은 그중 가장 좋은 것과 똑같이 쓰세요.
+${TITLE_TECHNIQUES}
+${KEYWORD_RULES}
 - tagDetails: 태그마다 source(출처)와 query(확인에 쓴 검색어)를 적습니다. tag에는 '#'을 붙이지 마세요.
   - source가 "자동완성"이면 아래 "네이버 자동완성" 목록에 실제로 있는 표현만, query에는 그 목록의 검색어를 쓰세요.
   - source가 "함께 많이 찾는"이면 아래 "네이버 함께 많이 찾는" 목록에 실제로 있는 표현만, query에는 그 목록의 검색어를 쓰세요. 규칙의 "연관검색어"는 이 출처에 해당합니다.
@@ -89,6 +93,18 @@ export const STYLE_GUIDE: Record<ImageOptions["style"], string> = {
     "일본 애니메이션 스타일 장면입니다. 글의 내용을 인물의 행동과 배경이 있는 한 장면으로 그리세요. 다이어그램·도표는 쓰지 마세요.",
   flat: "단순한 도형·아이콘·다이어그램 위주의 벡터 일러스트입니다. 개념이나 관계를 도식으로 보여 줘도 좋습니다.",
 };
+
+/** 썸네일 문구(headline) 지시. 글 작성과 이미지 기획이 같은 문구를 쓴다. 답(결론·수치)은 썸네일에 넣지 않고 본문에서 확인하게 한다 */
+export const THUMBNAIL_HEADLINE_RULE =
+  "줄바꿈(\\n)으로 나눈 1~4줄. 독자가 이 글을 누르기 전에 궁금해할 질문으로 만드세요. 앞의 1~2줄은 무엇에 대한 글인지 보여 주는 큰 주제(각 6~14자, 대상·주제어로, 제목을 그대로 옮기지 말고 한눈에 읽히게 줄임), 다음 줄은 본문이 실제로 답하는 질문입니다. 답은 본문에서 확인하게 남겨 두세요: 결론·결과·추천, 금액·날짜·수치·자격 조건 같은 본문 내용은 썸네일에 쓰지 마세요. 본문이 답하지 않는 질문과 과장·낚시성 표현은 금지입니다. 예: '2027 전기차 보조금\\n내년에 사면 더 유리할까?' (X: '보조금 최대 650만원', '10월 6일 단 하루').";
+
+/** 썸네일 장면(prompt) 지시. 글 작성과 이미지 기획이 같은 문구를 쓴다 */
+export const THUMBNAIL_SCENE_RULE =
+  "유튜브·블로그 썸네일처럼 시선이 가는 느낌으로 글의 핵심 대상(장소·건물·차량·상품·상황)을 크게 보여 주세요. 사람이 대상을 보며 고민하거나 확인하는 모습, 말풍선, 돈·그래프 같은 작은 아이콘은 글에 어울릴 때 자유롭게 쓰되 꼭 넣을 필요는 없습니다. 제목 글자가 들어갈 자리는 비교적 단순하게 두세요.";
+
+/** 본문 이미지 문구(headline) 지시. 글 작성과 이미지 기획이 같은 문구를 쓴다 */
+export const BODY_HEADLINE_RULE =
+  "이미지 안에 글자를 넣으면 그림을 이해하는 데 도움이 될 때만(핵심 수치·날짜·단계 이름·비교 항목) 4~20자 한국어 라벨로 쓰세요. 본문에 실제로 있는 사실로만 만들고, 글자가 필요 없는 그림이면 빈 문자열로 두세요.";
 
 function imageInstructions(o: ImageOptions): string {
   if (!o.thumbnail && o.bodyImages === 0) {
@@ -113,9 +129,9 @@ function imageInstructions(o: ImageOptions): string {
     o.thumbnail
       ? [
           "- thumbnail 필드 (검색 결과에서 클릭을 부르는 대표 이미지):",
-          "  - headline: 이미지에 들어갈 한국어 문구. 줄바꿈(\\n)으로 나눈 4~5줄로, 1줄은 제목 8~16자(제목을 그대로 옮기지 말고 한눈에 읽히게 줄임), 2줄은 부제 10~24자, 3~5줄은 핵심 포인트 2~3개(각 6~14자). 모두 본문에 실제로 있는 사실(날짜·금액·대상·혜택·숫자·단계 이름)로 만드세요. 과장·낚시성 표현과 본문에 없는 내용은 금지입니다. 예: '10월 6일 단 하루\\n무주택 세대주 대상 접수\\n접수 10/6 오전 9시\\n특별공급 · 일반공급\\n청약홈에서 신청'.",
-          "  - basis: headline의 근거가 된 본문 문장을 그대로 인용하세요.",
-          "  - prompt: headline과 함께 보일 배경 장면. 글의 핵심 대상(장소·사물·상황)이 바로 보이는 구체적인 장면으로, 글자가 여러 줄 들어갈 넓은 여백(띠·상자)을 가운데에 두고 대비가 강한 색으로 쓰세요. 글자 자체는 prompt에 쓰지 마세요 (headline이 따로 들어갑니다).",
+          `  - headline: 이미지에 들어갈 한국어 문구. ${THUMBNAIL_HEADLINE_RULE}`,
+          "  - basis: headline의 질문에 답하는 본문 문장을 그대로 인용하세요.",
+          `  - prompt: headline과 함께 보일 장면. ${THUMBNAIL_SCENE_RULE} 글자 자체는 prompt에 쓰지 마세요 (headline이 따로 들어갑니다).`,
           "  - alt: 한국어 대체 텍스트.",
         ].join("\n")
       : "- thumbnail 필드는 생략하세요.",
@@ -125,7 +141,7 @@ function imageInstructions(o: ImageOptions): string {
       ? [
           `- 본문 중간에 type이 "image"인 블록을 정확히 ${o.bodyImages}개 넣으세요. 각각 서로 다른 소제목 섹션 안에서, 그림이 설명하는 문단 바로 뒤에 두세요. 첫 블록이나 마지막 블록, "참고한 자료" 섹션에는 두지 마세요.`,
           "- 본문 이미지는 그것이 놓인 섹션의 문장에 나온 구체적인 대상·수치·단계·사례를 그리세요. 소제목 단어만 보고 일반적인 그림을 그리지 말고, basis 문장의 핵심 명사 2개 이상이 그림 요소(소품·장면·도형)로 드러나야 합니다.",
-          "- 본문 이미지의 headline: 이미지 안에 글자를 넣으면 이해에 도움이 될 때(핵심 수치·날짜·단계 이름·비교 항목) 4~20자 한국어 문구로 쓰세요. 본문에 있는 사실만 쓰고, 글자가 필요 없는 그림이면 빈 문자열로 두세요.",
+          `- 본문 이미지의 headline: ${BODY_HEADLINE_RULE}`,
         ].join("\n")
       : '- type이 "image"인 블록은 만들지 마세요.',
   );
