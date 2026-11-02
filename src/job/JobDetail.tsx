@@ -304,10 +304,19 @@ export function JobDetail({ job, ready, onChange, onDeleted, onOpenSettings }: P
             </button>
           </div>
 
-          {!draft.thumbnail && !busy && (
+          {(!draft.thumbnail || (draft.thumbnail.madeForTitle && draft.thumbnail.madeForTitle !== draft.title)) && !busy && (
             <div className="thumb-missing">
               <div>
-                <b>썸네일이 없습니다.</b> 블로그 본문 맨 위에 들어갈 대표 이미지를 만들 수 있습니다. 다른 이미지는 그대로 둡니다.
+                {draft.thumbnail ? (
+                  <>
+                    <b>제목이 바뀌었습니다.</b> 지금 썸네일은 “{draft.thumbnail.madeForTitle}” 제목으로 만들었습니다.
+                  </>
+                ) : (
+                  <>
+                    <b>썸네일이 없습니다.</b> 블로그 본문 맨 위에 들어갈 대표 이미지를 만들 수 있습니다. 다른 이미지는 그대로 둡니다.
+                  </>
+                )}{" "}
+                제목: <b>“{draft.title}”</b>
               </div>
               <AiPicker
                 provider={missingThumb.provider}
@@ -337,7 +346,7 @@ export function JobDetail({ job, ready, onChange, onDeleted, onOpenSettings }: P
                   })
                 }
               >
-                썸네일 만들기
+                이 제목으로 썸네일 {draft.thumbnail ? "다시 " : ""}만들기
               </button>
             </div>
           )}

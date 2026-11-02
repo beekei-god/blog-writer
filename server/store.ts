@@ -18,7 +18,7 @@ const IMAGES_DIR = path.join(DATA_DIR, "images");
 export const CHROME_PROFILE_DIR = path.join(DATA_DIR, "chrome-profile");
 
 const DEFAULT_SETTINGS: Settings = {
-  images: { thumbnail: true, bodyImages: 0, provider: "claude", style: "flat" },
+  images: { thumbnail: false, bodyImages: 0, provider: "claude", style: "flat" },
   writing: { targetChars: DEFAULT_TARGET_CHARS, tone: "info" },
   models: { ...RECOMMENDED_MODELS },
 };

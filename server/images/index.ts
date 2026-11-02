@@ -40,6 +40,7 @@ async function record(jobId: string, key: string, patch: Outcome) {
     if ("file" in patch) {
       oldFile = spec.file;
       spec.file = patch.file;
+      if (key === "thumbnail") spec.madeForTitle = j.post?.title;
       delete spec.error;
       delete spec.errorKind;
       delete spec.errorProvider;

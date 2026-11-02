@@ -13,7 +13,7 @@ describe("예전 설정 옮기기", () => {
   it("설정 파일이 없으면 기본값", async () => {
     await fs.rm(path.join(DATA_DIR, "settings.json"), { force: true });
     const s = await getSettings();
-    expect(s.images).toEqual({ thumbnail: true, bodyImages: 0, provider: "claude", style: "flat" });
+    expect(s.images).toEqual({ thumbnail: false, bodyImages: 0, provider: "claude", style: "flat" });
     expect(s.naverBlogId).toBeUndefined();
   });
 
@@ -36,7 +36,7 @@ describe("예전 설정 옮기기", () => {
     await writeRaw({ platform: "naver", blogId: "old", naverBlogId: "new", images: { bodyImages: 3 } });
     const s = await getSettings();
     expect(s.naverBlogId).toBe("new");
-    expect(s.images).toMatchObject({ thumbnail: true, bodyImages: 3 });
+    expect(s.images).toMatchObject({ thumbnail: false, bodyImages: 3 });
   });
 });
 

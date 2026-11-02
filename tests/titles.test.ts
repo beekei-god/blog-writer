@@ -36,8 +36,8 @@ describe("제목 후보 다시 만들기", () => {
     expect(await regenerateTitles({ ...base, post: post() })).toEqual(["새 제목 1", "새 제목 2", "새 제목 3"]);
     const { system, prompt } = claude.calls[0];
     expect(system).toContain("제목 규칙");
-    // 제목 기법 4가지(숫자·결론 먼저·손실 회피·질문)와 사실 근거 원칙
-    for (const t of ["구체적인 숫자", "결론과 이득 먼저", "손실 회피", "질문·호기심"]) expect(system).toContain(t);
+    // 제목 기법 6가지(숫자·결론 먼저·손실 회피·질문·호명·통념 뒤집기), 후킹 점검과 사실 근거 원칙
+    for (const t of ["구체적인 숫자", "결론과 이득 먼저", "손실 회피", "질문·호기심", "대상·상황 호명", "통념 뒤집기", "후킹 점검"]) expect(system).toContain(t);
     expect(system).toContain("실제로 있는 사실만");
     expect(system).toContain("## 키워드 횟수와 검색 의도");
     expect(prompt).toContain("지금 제목: 지금 제목");

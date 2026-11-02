@@ -53,11 +53,11 @@ describe("분량·말투 옵션 (글 작성)", () => {
     expect(system).not.toContain("## 말투");
   });
 
-  it("제목 후보는 제목 기법 4가지를 쓰게 한다", async () => {
+  it("제목 후보는 제목 기법 6가지와 후킹 점검을 쓰게 한다", async () => {
     claude.results.push(postOf(2500));
     await writePost(input());
     const { system } = claude.calls[0];
-    for (const t of ["구체적인 숫자", "결론과 이득 먼저", "손실 회피", "질문·호기심"]) expect(system).toContain(t);
+    for (const t of ["구체적인 숫자", "결론과 이득 먼저", "손실 회피", "질문·호기심", "대상·상황 호명", "통념 뒤집기", "후킹 점검"]) expect(system).toContain(t);
     expect(system).toContain("과장·공포 조장은 쓰지 마세요");
     expect(system).toContain("## 키워드 횟수와 검색 의도");
   });

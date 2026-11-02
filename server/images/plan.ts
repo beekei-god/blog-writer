@@ -80,7 +80,7 @@ export async function planImages(
   const request = targets
     .map((t) =>
       t.kind === "thumbnail"
-        ? `- key "thumbnail": 대표 썸네일 (글 전체의 핵심). 제목: ${post.title}`
+        ? `- key "thumbnail": 대표 썸네일 (글 전체의 핵심). 사용자가 고른 제목: ${post.title} (문구와 장면이 이 제목과 어긋나지 않게)`
         : `- key "${t.key}": 본문 블록 [${t.index}] 자리의 이미지. 연결된 본문: ${t.basis ? `“${t.basis.replace(/\*\*/g, "").slice(0, 200)}”` : "(없음)"} / 지금 설명: ${t.prompt.slice(0, 200)}`,
     )
     .join("\n");

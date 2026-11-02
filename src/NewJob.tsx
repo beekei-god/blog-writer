@@ -46,7 +46,7 @@ function linkProblem(list: string[]): string | null {
 
 export function NewJob({ topic, links, onTopicChange, onLinksChange, onCreated, onOpenRecommend }: Props) {
   const [images, setImages] = useState<ImageOptions>({
-    thumbnail: true,
+    thumbnail: false,
     bodyImages: 0,
     provider: "claude",
     style: "flat",
@@ -68,7 +68,7 @@ export function NewJob({ topic, links, onTopicChange, onLinksChange, onCreated, 
     setImages(fn);
   };
 
-  // 마지막으로 쓴 이미지 옵션(썸네일은 항상 켬)과 분량·말투를 기본값으로
+  // 마지막으로 쓴 이미지 옵션(썸네일은 글을 쓴 뒤 제목으로 따로 만든다)과 분량·말투를 기본값으로
   useEffect(() => {
     api
       .getSettings()
@@ -78,22 +78,14 @@ export function NewJob({ topic, links, onTopicChange, onLinksChange, onCreated, 
         const o = s.images;
         const tp = o.thumbnailProvider ?? o.provider;
         const ts = o.thumbnailStyle ?? o.style;
-        setImages({ ...o, thumbnail: true, thumbnailProvider: tp, thumbnailStyle: ts, method: methodFor(o, "body"), thumbnailMethod: methodFor(o, "thumbnail") });
+        setImages({ ...o, thumbnail: false, thumbnailProvider: tp, thumbnailStyle: ts, method: methodFor(o, "body"), thumbnailMethod: methodFor(o, "thumbnail") });
       })
       .catch(() => {});
   }, []);
 
   const setBodyImages = (n: number) => change((o) => ({ ...o, bodyImages: Math.min(MAX_BODY_IMAGES, Math.max(0, n)) }));
-  // 썸네일과 본문 이미지는 서로 영향을 주지 않는다 (한쪽을 바꿔도 다른 쪽은 그대로).
   const setBodyAi = (provider: ImageProvider, style: ImageStyle, method: ImageMethod) =>
     change((o) => ({ ...o, provider, style, method }));
-  const setThumbAi = (provider: ImageProvider, style: ImageStyle, method: ImageMethod) =>
-    change((o) => ({ ...o, thumbnailProvider: provider, thumbnailStyle: style, thumbnailMethod: method }));
-  // 만드는 방법은 Gemini·ChatGPT에만 있으므로 Claude끼리는 방법을 비교하지 않는다.
-  const thumbSame =
-    images.thumbnailProvider === images.provider &&
-    images.thumbnailStyle === images.style &&
-    (images.provider === "claude" || methodFor(images, "thumbnail") === methodFor(images, "body"));
   const apiStatus = useImageApi();
 
   const linkList = links.split("\n").map((l) => l.trim()).filter(Boolean);
@@ -170,29 +162,6 @@ export function NewJob({ topic, links, onTopicChange, onLinksChange, onCreated, 
 
       <section className="card">
         <h3 className="card-title">이미지</h3>
-        {/* 썸네일 설정과 본문 이미지 설정을 각각 한데 모은다 */}
-        <div className="image-group">
-          <div className="option-row">
-            <span>썸네일(대표 이미지)</span>
-            <label className="switch">
-              <input type="checkbox" checked={images.thumbnail} onChange={(e) => {
-                const thumbnail = e.target.checked;
-                change((o) => ({ ...o, thumbnail }));
-              }} />
-              <span>{images.thumbnail ? "만들기" : "안 만들기"}</span>
-            </label>
-          </div>
-          {images.thumbnail && (
-            <AiRows
-              title="썸네일"
-              provider={images.thumbnailProvider ?? images.provider}
-              style={images.thumbnailStyle ?? images.style}
-              method={methodFor(images, "thumbnail")}
-              apiStatus={apiStatus}
-              onChange={(p, st, m) => setThumbAi(p, fitStyle(p, st), m)}
-            />
-          )}
-        </div>
         <div className="image-group">
           <div className="option-row">
             <span>본문 이미지</span>
@@ -222,14 +191,6 @@ export function NewJob({ topic, links, onTopicChange, onLinksChange, onCreated, 
             />
           )}
         </div>
-        {images.thumbnail && images.bodyImages > 0 && !thumbSame && (
-          <Sentences className="hint small">
-            썸네일과 본문 이미지를 서로 다른 AI·스타일·방법으로 만듭니다.{" "}
-            <button type="button" className="link" onClick={() => setThumbAi(images.provider, images.style, methodFor(images, "body"))}>
-              본문 이미지와 같게 하기
-            </button>
-          </Sentences>
-        )}
       </section>
 
       {error && <p className="error">{error}</p>}

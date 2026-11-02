@@ -251,6 +251,15 @@ describe("이미지", () => {
     expect(await up("thumbnail", "text/plain")).toBe(400);
     expect(await up("body-0", "image/png")).toBe(404);
   });
+  it("썸네일 파일이 들어가면 그때의 글 제목을 기록한다 (제목이 바뀌면 다시 만들기 버튼의 기준)", async () => {
+    const id = await draftJob();
+    const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]);
+    const r = await fetch(`${base}/api/jobs/${id}/images/thumbnail`, { method: "POST", headers: { "Content-Type": "image/png" }, body: png });
+    expect(r.status).toBeLessThan(300);
+    const job = await call("GET", `/api/jobs/${id}`);
+    expect(job.body.post.thumbnail).toMatchObject({ madeForTitle: "제목" });
+    expect(job.body.post.blocks[1].madeForTitle).toBeUndefined();
+  });
   it("본문 이미지 자리 추가: 고른 블록 뒤에 이미지 없는 이미지 블록이 들어가고, 가까운 소제목을 이름으로 쓴다", async () => {
     const id = await draftJob();
     await updateJob(id, (j) => void (j.post!.blocks = [{ type: "paragraph", text: "도입" }, { type: "heading", text: "**둘째** 소제목" }, { type: "paragraph", text: "내용" }, { type: "image", prompt: "p", alt: "" }]));

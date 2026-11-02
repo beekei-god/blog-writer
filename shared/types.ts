@@ -199,6 +199,8 @@ export interface ImageSpec {
   alt: string;
   /** 생성된 파일명 (data/images/<jobId>/ 아래) */
   file?: string;
+  /** 이 파일을 넣을 때의 글 제목 (썸네일만 기록): 제목이 바뀌면 "이 제목으로 썸네일 다시 만들기"를 보여 주는 기준 */
+  madeForTitle?: string;
   /** 실패했을 때 원래 오류 메시지 */
   error?: string;
   /** 실패 원인 분류 (없으면 error 메시지로 분류) */

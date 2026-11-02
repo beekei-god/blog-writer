@@ -16,6 +16,7 @@ const ImageSpecShape = {
   alt: z.string(),
   // 서버가 생성한 파일명만 허용 (경로 구분자·".." 금지)
   file: z.string().regex(/^(?!\.)[\w.-]+$/).optional(),
+  madeForTitle: z.string().optional(),
   error: z.string().optional(),
   errorKind: z.enum(IMAGE_ERROR_KINDS).optional(),
   errorProvider: ProviderEnum.optional(),
