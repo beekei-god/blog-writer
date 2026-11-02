@@ -20,7 +20,7 @@ updated: 2026-11-02
 | `imagePlan`, `imageApi`, `imageParallel`, `webAi`, `svg` | image |
 | `wordpress`, `publish`, `categories`, `naverTopic`, `extensionOptions` | publishing |
 | `searchad`, `explore`, `datalab`, `recommend` | topic |
-| `claude`(가짜 `CLAUDE_BIN`으로 CLI 흉내), `claudeAuth`, `store`, `shared`, `api` | usage·저장·공용·API 검사 |
+| `claude`(가짜 `CLAUDE_BIN`으로 CLI 흉내), `usageSummary`, `claudeAuth`, `store`, `shared`, `api` | usage·저장·공용·API 검사 |
 
 각 규칙 페이지의 "구현 현황" 표와 도메인 `implementations`의 "테스트" 표에 규칙별 테스트가 있다.
 

@@ -23,4 +23,5 @@ updated: 2026-11-02
 |---|---|---|
 | `tests/claudeAuth.test.ts` | 로그인 상태·시작·취소 | BR-USG-006 |
 | `tests/imageParallel.test.ts` | 중지 전파 | BR-USG-002 |
+| `tests/usageSummary.test.ts` | 한국 시간 기준 오늘·주·7일 집계, 호출 수 중복 제거, 정렬 | BR-USG-005 |
 | `tests/claude.test.ts` | 모델 결정, 결과·오류, 시간 초과, 사용량 기록(가짜 CLI) | BR-USG-001/002/003 |

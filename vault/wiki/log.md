@@ -12,3 +12,6 @@ type: log
 - 열린 질문 14건 처리: writing 3·image 3·publishing 3·topic 3·usage 2를 닫고, usage #1은 일부만(집계 요약 테스트 없음) 남김.
 - 코드 변경 반영: 근거 없는 추천 후보 제거(BR-TOP-001), `validateSvg` export·전용 테스트(BR-IMG-009), 규칙 문서 용어 "함께 많이 찾는"(BR-WRT-007), 새 테스트 4개와 데이터랩 테스트 이동.
 - 각 도메인 `implementations`의 테스트 표와 `_system/modules/tests` 갱신.
+
+## [2026-11-02] update | usage (9a38c08 → ead1094)
+- `tests/usageSummary.test.ts` 추가로 usage 열린 질문 #1을 닫음. 구현 테스트 표와 BR-USG-005 이력 갱신.
