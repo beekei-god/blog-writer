@@ -114,6 +114,16 @@ export function Recommend({
       setError(errorText(err));
     }
   }
+  async function remove(r: Recommendation) {
+    if (!confirm(`“${r.field}” 추천 결과를 삭제할까요?`)) return;
+    try {
+      await api.deleteRecommendation(r.id);
+      if (selectedId === r.id) setSelectedId(null);
+    } catch (e) {
+      setError(errorText(e));
+    }
+    await refresh();
+  }
   const start = (e: React.FormEvent) => {
     e.preventDefault();
     void begin(field.trim());
@@ -151,13 +161,24 @@ export function Recommend({
       </form>
       {error && <p className="error">{error}</p>}
 
-      {recs.length > 1 && (
+      {recs.length > 0 && (
         <div className="rec-history">
           {recs.map((r) => (
-            <button key={r.id} className={r.id === selected?.id ? "active" : ""} onClick={() => setSelectedId(r.id)}>
-              {r.field} · {new Date(r.createdAt).toLocaleDateString("ko-KR")}
-              {r.status === "running" ? " (진행 중)" : r.status === "failed" ? " (실패)" : ""}
-            </button>
+            <div key={r.id} className={`rec-chip ${r.id === selected?.id ? "active" : ""}`}>
+              <button className="rec-pick" onClick={() => setSelectedId(r.id)}>
+                {r.field} · {new Date(r.createdAt).toLocaleDateString("ko-KR")}
+                {r.status === "running" ? " (진행 중)" : r.status === "failed" ? " (실패)" : ""}
+              </button>
+              <button
+                className="rec-del"
+                aria-label={`${r.field} 추천 결과 삭제`}
+                title={r.status === "running" ? "진행 중인 추천은 삭제할 수 없습니다" : "이 추천 결과 삭제"}
+                disabled={r.status === "running"}
+                onClick={() => void remove(r)}
+              >
+                ×
+              </button>
+            </div>
           ))}
         </div>
       )}
@@ -216,18 +237,6 @@ export function Recommend({
               추천 중지
             </button>
           )}
-          <button
-            className="danger ghost"
-            disabled={selected.status === "running"}
-            onClick={async () => {
-              if (!confirm("이 추천 결과를 삭제할까요?")) return;
-              await api.deleteRecommendation(selected.id).catch((e) => setError(String(e.message ?? e)));
-              setSelectedId(null);
-              await refresh();
-            }}
-          >
-            추천 결과 삭제
-          </button>
         </>
       )}
     </div>

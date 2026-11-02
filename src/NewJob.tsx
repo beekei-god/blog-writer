@@ -161,7 +161,7 @@ export function NewJob({ topic, links, onTopicChange, onLinksChange, onCreated, 
       </section>
 
       <section className="card">
-        <h3 className="card-title">이미지</h3>
+        <h3 className="card-title">본문 이미지</h3>
         <div className="image-group">
           <div className="option-row">
             <span>본문 이미지</span>

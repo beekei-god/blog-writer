@@ -1112,12 +1112,35 @@ details > summary:hover {
   flex-wrap: wrap;
   margin-bottom: 8px;
 }
-.rec-history button {
-  font-size: 12px;
+.rec-chip {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  overflow: hidden;
 }
-.rec-history button.active {
+.rec-chip.active {
   border-color: var(--accent);
   background: var(--accent-soft);
+}
+.rec-chip button {
+  border: 0;
+  border-radius: 0;
+  background: none;
+  font-size: 12px;
+}
+.rec-chip button.rec-del {
+  padding: 0 9px;
+  color: var(--muted);
+  border-left: 1px solid var(--line);
+}
+.rec-chip.active button.rec-del {
+  border-left-color: var(--accent);
+}
+.rec-chip button.rec-del:hover:not(:disabled) {
+  color: var(--danger);
+  background: var(--danger-soft);
 }
 .candidates {
   list-style: none;
