@@ -1,36 +1,21 @@
 ---
 type: integration
 project: blog-writer
-system: NAVER API HUB 검색어 트렌드 (데이터랩)
-confidence: high
+name: 네이버 데이터랩 (검색어 트렌드)
 source:
-  - blog-writer:server/datalab.ts:1-116
-  - blog-writer:server/secrets.ts:38-56
-  - blog-writer:server/routes/settings.ts:61-89
-updated: 2026-10-09
+  - blog-writer:server/datalab.ts
+updated: 2026-11-02
 ---
-# NAVER API HUB 검색어 트렌드 (데이터랩)
+# 네이버 데이터랩 (검색어 트렌드)
 
-## 무엇에 쓰나
-(키워드 탭의 월간 검색량은 이것이 아니라 별개의 [[_system/integrations/naver-searchad]]가 맡는다. 구글 트렌드는 [[_system/integrations/google-trends]].)
+## 무엇을 위해
+주제 추천에서 검색량 추이를 비교한다.
 
-주제 추천 후보들의 최근 4주 검색 관심도와 상승세를 비교해 순위를 매긴다 → [[topic/business-rules/BR-TOP-004 추천 순위]].
+## 엔드포인트·키
+`https://naverapihub.apigw.ntruss.com/search-trend/v1/search` (NAVER API HUB). 키: `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` 또는 설정 화면.
 
-## 호출 방식
-- `POST https://naverapihub.apigw.ntruss.com/search-trend/v1/search`, 헤더 `X-NCP-APIGW-API-KEY-ID`/`X-NCP-APIGW-API-KEY`(네이버 클라우드 플랫폼 Application 키. 개발자센터 키와 다름), 15초 타임아웃 (`blog-writer:server/datalab.ts:4-49`).
-- 요청: `startDate`~`endDate`(한국 시간 어제까지 28일), `timeUnit: "date"`, `keywordGroups` 최대 5개 = 기준 키워드 그룹 1 + 후보 4 (`PER_REQUEST = 4`), 후보 그룹당 검색어 최대 20개 (`:95-104`).
-- 응답 값은 요청 안의 최댓값을 100으로 한 상대값이라 요청끼리 비교할 수 없다 → 매 요청에 같은 기준 키워드를 넣어 환산한다 → [[topic/business-rules/BR-TOP-002 검색 관심도 환산]].
-- 하루 호출 한도 1,000회 (주석, `:9`).
-- 키 저장 전 확인: 최근 7일 "날씨" 한 그룹으로 호출해 본다 (`:52-55`).
+## 실패 형태
+키 없음, 인증 실패, 하루 호출 한도 초과(429) — `DatalabError` 한국어 문구.
 
-## 실패 처리
-| 상태 | 메시지 |
-|---|---|
-| 401 | 키가 올바르지 않음 |
-| 403 | Application에 '검색어 트렌드' 사용 설정 필요 |
-| 429 | 하루 호출 한도 초과 |
-| 그 밖 | "데이터랩 오류 <code>" |
-추천 중 실패하면 `datalab: "failed"`로 두고 순위 없이 끝낸다. 키가 없으면 `not_configured` (`blog-writer:server/recommend.ts:208-227`).
-
-## 바깥 변화에 취약한 지점
-엔드포인트·헤더 이름·응답 구조(`results[].title/data[].period/ratio`), 0인 날이 응답에서 빠지는 동작(코드가 0으로 채움, `:105-109`).
+## 주의
+쓰는 곳: [[topic/overview]]. 모듈: [[_system/modules/server-recommend]]

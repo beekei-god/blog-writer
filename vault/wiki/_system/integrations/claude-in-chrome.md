@@ -1,39 +1,24 @@
 ---
 type: integration
 project: blog-writer
-system: Claude in Chrome 확장 프로그램
-confidence: high
+name: Claude in Chrome 확장
 source:
-  - blog-writer:server/browser/claudeChrome.ts:1-105
-  - blog-writer:server/claude.ts:115-136
-  - blog-writer:server/browser/blogPost.ts:115-218
-  - blog-writer:server/images/webAi.ts:178-267
-updated: 2026-10-09
+  - blog-writer:server/browser/claudeChrome.ts
+  - blog-writer:server/browser/blockedSites.ts
+updated: 2026-11-02
 ---
-# Claude in Chrome 연동
+# Claude in Chrome 확장
 
-## 무엇에 쓰나
-사용자가 평소 쓰는 크롬(로그인 그대로)을 Claude가 조작하게 하는 확장(https://claude.ai/chrome). 블로그 글 입력과 Gemini·ChatGPT 이미지 생성에 쓴다.
+## 무엇을 위해
+Tistory 같은 블로그에 글을 올리고 Gemini/ChatGPT 웹에서 이미지를 만들 때, `claude -p --chrome`으로 사용자의 크롬을 조작한다. 설치: https://claude.ai/chrome (Claude Code와 같은 계정 로그인).
 
-## 호출 방식
-- `runClaude({ chrome: true })` → `claude -p --chrome --allowedTools mcp__claude-in-chrome`. Claude가 `tabs_context_mcp`, `tabs_create_mcp`, `navigate`, `javascript_tool`, `find`/`read_page`, `computer`, `file_upload` 등을 쓴다.
-- 설치 확인: 크롬 사용자 데이터 폴더의 `Local State`에서 프로필 목록을 읽고, 각 프로필의 `Secure Preferences`/`Preferences`에 확장 ID `fcoeoabgfenejglbffodgkkbkcdhcgfn`가 켜져 있는지 본다 (`blog-writer:server/browser/claudeChrome.ts:40-72`). 연결 여부는 실제 호출 결과로만 안다.
-- 연결 상태는 메모리에 마지막 결과만 기억한다 (`rememberConnection`, `blog-writer:server/browser/claudeChrome.ts:82-90`).
-- 공통 프롬프트 `BROWSER_RULES`: 새 탭 하나에서만 작업, 스크린샷 최소화(scale 0.5), 상태 확인은 find/read_page/javascript_tool, 대기는 JS Promise로 최대 60초, 파일 입력은 클릭하지 말고 `file_upload`, **로그인 화면이면 직접 로그인하지 말고 멈춤**, 결제·구독·설정 변경·발행 같은 되돌리기 어려운 동작 금지 (`blog-writer:server/browser/claudeChrome.ts:98-105`).
-- 블로그 발행 (2026-10-09): 사용자가 예약발행·자동발행을 고르면 블로그 입력 프롬프트의 목표가 "임시저장한 뒤 아래 발행 절차대로 발행"으로 바뀌고 `publishPrompt`가 붙는다. `BROWSER_RULES`의 "발행 금지"는 이 절차에 한해 예외라고 적는다. 절차: 임시저장 확인 → (본문 입력에 problems가 있어도 발행은 진행하고 problems에 적음) → 네이버 상단 "발행"(발행 창 태그 칸은 비움, 공개 설정은 바꾸지 않음) / 티스토리 하단 "완료"·"공개" → 예약이면 한국 시간 날짜·시각을 맞추고 다시 읽어 확인(다르면 누르지 않고 `saved`) → 마지막 버튼을 한 번만 누르고 글쓰기 화면을 벗어나는지 확인 → status `published`/`scheduled` (`blog-writer:server/browser/publish.ts:380-406`, `blog-writer:server/browser/blogPost.ts:145-165`).
-- 카테고리·주제 (2026-10-09): 블로그 입력 프롬프트에 `categoryPrompt`가 붙는다 (`blog-writer:server/browser/blogPost.ts:167`). 티스토리는 "글쓰기 화면 위쪽의 카테고리 선택에서 <이름>을 임시저장하기 전에 고르세요", 네이버는 임시저장이면 "발행 창에서만 고를 수 있어 이번에는 고르지 않습니다", 예약·자동이면 "발행 창의 카테고리에서 고르세요". 목록에 없거나 못 고르면 기본 카테고리로 두고 계속하되 problems에 "카테고리 선택 못 함"과 이유를 적게 한다. 네이버 예약·자동이고 주제가 정해졌으면 "발행 창의 주제 설정을 눌러 팝업이 열리면 <주제>를 고르고 팝업의 확인을 눌러 닫으라"고 지시하며, 목록에 없으면 주제는 비우고 problems에 적게 한다 (`blog-writer:server/browser/category.ts:253-265`). 이 경로는 단계 코드가 아니라 Claude의 판단이라 앱이 결과를 따로 검증하지 않는다.
-- 앱은 돌려받은 status만 본다: 기대한 `published`/`scheduled`가 아니면 `PublishStepError`(임시저장은 됨)로 처리한다 (`blog-writer:server/browser/blogPost.ts:214-216`). 실제로 발행됐는지는 앱이 따로 확인하지 않는다.
+## 동작
+- 연결 여부를 기억해 두었다가 설정 화면에 보여 준다(`rememberConnection`).
+- 안전 정책으로 막힌 사이트는 `SiteBlockedError`로 구분하고, 차단 목록을 `data/blocked-sites.json`에 저장해 다음부터 다른 방식으로 보낸다. 네이버는 막혀 있어 AppleScript 방식을 쓴다 → [[_system/integrations/chrome-applescript]]
 
-## 실패 처리
-| 상황 | 감지 | 결과 |
-|---|---|---|
-| 미설치 | 프로필 파일 검사 | `ChromeExtensionError("not_installed")`, 블로그 입력 API는 400 |
-| 미연결 | 도구 결과가 `/Browser extension is not connected|extension is not connected|No (connected )?browser/i` | CLI 즉시 종료, `not_connected` |
-| 사이트 차단 | 도구 결과가 `/not allowed due to safety restrictions|site is not allowed/i`, 또는 Claude가 결과 message/problems에 그 문구를 적음 | `SiteBlockedError` → 대체 경로 → [[publishing/business-rules/BR-PUB-003 입력 경로 선택과 막힌 사이트 기억]] |
+## 실패 형태
+확장 미설치/미연결(`NOT_CONNECTED_TEXT`), 사이트 차단(`SITE_BLOCKED_TEXT`), 로그인 풀림.
 
-## 바깥 변화에 취약한 지점
-- 확장 ID, 크롬 프로필 파일 구조, 오류 문구가 바뀌면 감지가 깨진다.
-- 확장의 안전 정책이 사이트(예: 네이버)를 막을 수 있다. 앱은 이 제한을 우회하지 않고 다른 경로를 쓴다고 명시한다 (`blog-writer:server/browser/claudeChrome.ts:30`).
-
-## 관련 규칙과 흐름
-[[publishing/business-rules/BR-PUB-001 발행하지 않고 임시저장까지만]], [[publishing/flows/블로그 임시저장 플로우]], [[publishing/flows/Claude in Chrome 연결 확인 플로우]], [[image/flows/이미지 생성 플로우]]
+## 주의
+- 같은 크롬을 동시에 쓰면 꼬이므로 브라우저 작업은 한 줄로 세운다(`enqueueBrowser`) → [[_system/modules/server-pipeline]]
+- 모듈: [[_system/modules/server-browser]]

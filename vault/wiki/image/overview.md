@@ -3,32 +3,37 @@ type: domain-overview
 domain: image
 aliases: [이미지, 썸네일, 본문 이미지]
 projects: [blog-writer]
-updated: 2026-10-09
+updated: 2026-11-02
 ---
-# image (이미지 생성) 도메인
+# image (이미지) 도메인
 
 ## 한 문단 요약
-초안의 썸네일(대표 이미지)과 본문 이미지(0~6장)를 만드는 업무(만든 뒤에도 이미지 자리를 직접 추가·삭제할 수 있다). 새 글 쓰기에서 썸네일·본문 따로 스타일 → 만들 AI(Claude(SVG 플랫 일러스트), Gemini, ChatGPT) → 만드는 방법(Gemini·ChatGPT만: API 또는 크롬)을 고르며, 두 설정은 서로 영향을 주지 않는다. Gemini·ChatGPT는 방법이 API이고 키가 연결되어 있으면 이미지 API로, 키가 없거나 크롬을 고르면 웹 화면을 Claude in Chrome으로 조작해 만든다. 만들기 직전에 본문을 다시 읽어 이미지마다 그릴 장면과 이미지 안 문구를 정하고, 한 장이 실패해도 글은 계속 진행하며 원인을 15종으로 분류해 그 이미지 자리에 실패 이유를 보여 준다. 사용자는 이미지마다 "이미지 다시 생성" 창에서 스타일·AI·방법(API/크롬)을 골라 버튼 하나로 한 장씩, 여러 장을 동시에 다시 만든다(고른 값은 그 이미지에만 적용).
+글의 본문 이미지(0~6장)와 대표 썸네일을 만든다. 만드는 AI는 Claude(SVG를 그려 PNG로 렌더링), Gemini, ChatGPT 중에서 고르고, Gemini·ChatGPT는 API 키가 있으면 API로, 아니면(또는 사용자가 고르면) Claude in Chrome으로 사이트에서 만든다. 이미지를 만들기 직전에 본문을 다시 읽고 장면(prompt)과 이미지 안 문구(headline)를 정하고, 한 장이 실패해도 글 전체는 실패시키지 않고 원인을 기록한다. **썸네일은 처음 글을 쓸 때 만들지 않고**, 제목이 정해진 뒤 사용자가 "이 제목으로 썸네일 만들기"를 눌러 만든다.
 
 ## 경계
-- 포함: 이미지 옵션, 기획(prompt·headline), SVG/이미지 API/웹 AI 생성, 이미지 API 키, 실패 기록·분류, 다시 만들기·직접 올리기, 이미지 자리 추가·삭제 ([[image/business-rules/BR-IMG-015 본문 이미지 자리 추가와 이미지 삭제]])
-- 제외(다른 도메인): 처음 이미지 블록을 배치하는 글 작성 → [[writing/overview]], 블로그에 이미지 올리기 → [[publishing/overview]], 크롬 작업 큐 → [[publishing/business-rules/BR-PUB-004 크롬 작업 직렬화]]
+- 포함: 이미지 옵션, 이미지 기획, 생성(SVG/API/크롬), 실패 원인, 한 장씩 다시 만들기, 직접 올리기·삭제·자리 추가
+- 제외(다른 도메인): 글·제목 → [[writing/overview]], 블로그에 이미지 올리기 → [[publishing/overview]], Claude 호출 한도 → [[usage/overview]]
 
 ## 핵심 개념
-- [[image/entities/ImageSpec]] — 이미지 한 장의 설계와 결과
-- [[image/entities/ImageOptions]] — 개수·AI·화풍
+- [[image/entities/이미지 명세]] — 이미지 한 장의 정보와 결과
+- [[image/entities/이미지 옵션]] — AI·스타일·방법·개수
+- [[image/entities/이미지 오류 종류]] — 실패 원인 15가지
 
 ## 주요 플로우
-- [[image/flows/이미지 생성 플로우]]
-- [[image/flows/이미지 다시 만들기 플로우]]
+- [[image/flows/이미지 생성]]
+- [[image/flows/제목 확정 후 썸네일 만들기]]
+
+## 규칙
+[[image/index]]의 규칙 표 참고 (BR-IMG-001~011).
 
 ## 레이어별 역할
 | 레이어 | 역할 | 주요 모듈 |
 |---|---|---|
-| 프롬프트 | 기획(섹션 연관성·문구), SVG 그리기, 웹 AI 조작, 이미지 요청문(API·웹 공용) | [[_system/integrations/claude-cli]], [[_system/integrations/gemini-chatgpt-web]], [[_system/integrations/image-api]] |
-| 서버 | 대상 수집, 생성 순서, 결과 기록, SVG 검증, 옵션 검증, 이미지 API | [[_system/modules/server-images]], [[_system/modules/server-pipeline]], [[_system/modules/server-routes]] |
-| 공용 | 스타일 제한, `fitStyle`·`aiFor`·`methodFor`, 이미지 키(`body-<n>`)·`imageSpecAt`, 오류 종류·분류 | [[_system/modules/shared]] |
-| 화면 | 옵션 선택(새 글: 썸네일·본문 묶음, 스타일→AI→방법), 진행 표시, 이미지 자리의 실패 이유, 이미지별 도구("이미지 다시 생성" 창: 스타일/만드는 곳/만드는 방법 + 버튼 하나, 공용 `StylePicker`·`ProviderPicker`·`MethodPicker`), 이미지 API 키 설정, 편집 | [[_system/modules/web-screens]], [[_system/modules/web-job]] |
+| 프롬프트 | 글 작성 때 이미지 블록 지시, 이미지 기획, SVG 지시 | [[_system/modules/server-images]], [[_system/modules/server-core]] |
+| 서버 | 생성·기록·오류 분류·동시 실행 | [[_system/modules/server-images]], [[_system/modules/server-pipeline]], [[_system/modules/server-routes]] |
+| 공용 | 옵션 해석(`aiFor`/`methodFor`/`fitStyle`), 오류 분류 | [[_system/modules/shared]] |
+| 화면 | 이미지 옵션, 이미지 카드, 썸네일 안내 | [[_system/modules/web-job]], [[_system/modules/web-screens]] |
+| 외부 | 이미지 API, 사이트 자동 조작 | [[_system/integrations/image-api]], [[_system/integrations/gemini-chatgpt-web]], [[_system/integrations/claude-in-chrome]] |
 
 ## 구현 지도
 - [[image/implementations/blog-writer 구현]]

@@ -1,55 +1,27 @@
 ---
 type: index
-updated: 2026-10-10
+updated: 2026-11-02
 ---
-# blog-writer Wiki
+# blog-writer wiki
 
-시작점: [[_system/overview]] · 용어: [[glossary]] · 기록: [[log]] · 설정: [[_registry]]
+기능을 추가하거나 고치기 전에 여기서 시작한다. 코드가 기준이고 이 wiki는 코드를 읽고 만든 요약이다.
 
-## 시스템
-- [[_system/overview]] — 무엇을 하는 프로그램인가, 구성도
-- [[_system/architecture]] — 서버·화면·claude CLI·크롬 3종, 요청 경로, 백그라운드·큐·중지
-- [[_system/api]] — HTTP 엔드포인트 33개, 로컬 전용 검사
-- [[_system/configuration]] — 환경 변수 7개, 설정 파일, 비밀 정보, 코드 상수
-- [[_system/data-storage]] — `data/` 아래 JSON/JSONL 파일과 스키마
-- [[_system/operations]] — 사전 준비, 실행 명령, 자주 생기는 실패
-- [[_system/known-issues]] — 불일치·미사용 코드·외부 의존 16건 (4건 해결)
-
-### 모듈
-- [[_system/modules/server-core]] — 라우터, 저장, 중지 신호, 규칙·키 파일
-- [[_system/modules/server-pipeline]] — 작업 실행, 리서치, 글 작성, 스키마, 네이버 수집
-- [[_system/modules/server-claude]] — claude CLI 호출, 사용량 기록·집계
-- [[_system/modules/server-recommend]] — 주제 추천, 데이터랩
-- [[_system/modules/server-images]] — 이미지 대상·기획·SVG·웹 AI
-- [[_system/modules/server-browser]] — 블로그 입력 3경로, 확장·로그인 창
-- [[_system/modules/shared]] — 공용 타입·분량·붙여넣기 HTML·이미지 오류
-- [[_system/modules/web-app]] — 화면 뼈대, API 클라이언트, 라벨
-- [[_system/modules/web-screens]] — 각 화면 컴포넌트
-- [[_system/modules/project-root]] — README, 빌드 설정, 기본 글쓰기 규칙
-
-### 외부 연동
-- [[_system/integrations/claude-cli]] — `claude -p` 호출 방식과 프롬프트 목록 (업무 로직)
-- [[_system/integrations/claude-in-chrome]] — 평소 크롬 조작 확장
-- [[_system/integrations/naver-search]] — 자동완성·함께 많이 찾는
-- [[_system/integrations/naver-datalab]] — NAVER API HUB 검색어 트렌드
-- [[_system/integrations/naver-searchad]] — 네이버 검색광고 키워드 도구(월간 검색량·경쟁)
-- [[_system/integrations/google-trends]] — 구글 트렌드 공개 RSS(지금 뜨는 검색어)
-- [[_system/integrations/gemini-chatgpt-web]] — 웹 화면으로 이미지 생성 (API 키가 없거나 "크롬에서"를 고를 때)
-- [[_system/integrations/image-api]] — Gemini·OpenAI 이미지 API (키가 있을 때 기본)
-- [[_system/integrations/chrome-applescript]] — macOS 평소 크롬 (네이버)
-- [[_system/integrations/playwright-chrome]] — SVG 렌더링, 앱 전용 크롬, 로그인 창
-- [[_system/integrations/blog-editors]] — 네이버·티스토리·워드프레스 에디터
+## 시작점
+- 기능을 추가하려면: [[_system/extending]] (새 블로그, 새 이미지 AI, 글쓰기 옵션, 규칙, Claude 단계, API, 외부 서비스)
+- 전체 그림: [[_system/overview]] · [[_system/architecture]] · [[_system/api]] · [[_system/data-storage]] · [[_system/configuration]] · [[_system/operations]]
+- 알려진 문제: [[_system/known-issues]]
+- 용어: [[glossary]] · 코드 위치 지도: [[_registry]] · 기록: [[log]]
 
 ## 도메인
-- [[writing/overview|writing (글 작성)]] — 작업·리서치·초안·규칙·태그. 프롬프트로 글 고치기(분량·말투 다시 쓰기), 글마다 고르는 분량·말투, 블로그별 글 상태, 제목 후보 다시 만들기 포함. 엔티티 3, 규칙 19, 플로우 5 → [[writing/index]]
-- [[image/overview|image (이미지 생성)]] — 썸네일·본문 이미지. 본문 이미지 추가·삭제 포함. 엔티티 2, 규칙 15(폐기 1), 플로우 2 → [[image/index]]
-- [[publishing/overview|publishing (블로그 등록)]] — 입력 경로·에디터 서식, 임시저장·예약발행·자동발행(네이버·티스토리·워드프레스), 글 상태 직접 변경, 카테고리·네이버 주제 선택. 엔티티 2, 규칙 21, 플로우 4 → [[publishing/index]]
-- [[topic/overview|topic (주제 추천·키워드 탐색)]] — 뉴스·통계·데이터랩·검색광고·구글 트렌드. 엔티티 3, 규칙 9, 플로우 2 → [[topic/index]]
-- [[usage/overview|usage (Claude 모델·사용량)]] — 모델 선택, 토큰·한도. 엔티티 2, 규칙 6, 플로우 1 → [[usage/index]]
+| 도메인 | 다루는 것 |
+|---|---|
+| [[writing/index]] | 글 작성: 분량·말투·키워드·제목·사실 확인·장소·고치기 |
+| [[image/index]] | 이미지: 개수·스타일·썸네일·생성 방법·실패 처리 |
+| [[publishing/index]] | 블로그 등록: 네이버·티스토리·워드프레스, 예약, 상태 |
+| [[topic/index]] | 주제 추천·키워드 탐색 |
+| [[usage/index]] | Claude 모델 선택·호출·사용량·로그인 |
 
-## 레이어 불일치 (consistency: conflict)
-- (현재 conflict인 규칙 없음)
-- 2026-10-05에 해결: BR-WRT-004, BR-WRT-006, BR-WRT-007, BR-WRT-010, BR-PUB-007, BR-PUB-012, BR-TOP-005 (consistent로 변경)
+## 시스템
+모듈: [[_system/modules/project-root]], [[_system/modules/server-core]], [[_system/modules/server-pipeline]], [[_system/modules/server-claude]], [[_system/modules/server-images]], [[_system/modules/server-browser]], [[_system/modules/server-wordpress]], [[_system/modules/server-recommend]], [[_system/modules/server-routes]], [[_system/modules/shared]], [[_system/modules/web-app]], [[_system/modules/web-job]], [[_system/modules/web-screens]], [[_system/modules/tests]]
 
-## 미해결 질문
-- [[writing/open-questions]] · [[image/open-questions]] · [[publishing/open-questions]] · [[topic/open-questions]] · [[usage/open-questions]]
+연동: [[_system/integrations/claude-cli]], [[_system/integrations/claude-in-chrome]], [[_system/integrations/chrome-applescript]], [[_system/integrations/playwright-chrome]], [[_system/integrations/blog-editors]], [[_system/integrations/wordpress-rest]], [[_system/integrations/image-api]], [[_system/integrations/gemini-chatgpt-web]], [[_system/integrations/naver-search]], [[_system/integrations/naver-datalab]], [[_system/integrations/naver-searchad]], [[_system/integrations/google-trends]]

@@ -1,36 +1,35 @@
 ---
 type: domain-overview
 domain: topic
-aliases: [주제 추천, 추천, 키워드 탐색]
+aliases: [주제 추천, 키워드 탐색]
 projects: [blog-writer]
-updated: 2026-10-09
+updated: 2026-11-02
 ---
 # topic (주제 추천) 도메인
 
 ## 한 문단 요약
-사용자가 분야(예: 청약·부동산)를 넣으면 Claude가 최근 2주 뉴스와 최근 공식 통계·공고에서 지금 검색이 많을 만한 블로그 주제 10~12개를 근거와 함께 찾고, 네이버 자동완성 개수와 데이터랩(NAVER API HUB 검색어 트렌드) 관심도·상승세로 보강·정렬하는 업무. 결과는 기록으로 남고, 후보 하나를 골라 바로 새 글 작성으로 넘긴다. 별도로 **키워드 탐색**(2026-10-09 추가)은 네이버 검색광고 키워드 도구로 키워드의 월간 검색량·경쟁을 보여 주고(입력이 없으면 구글 트렌드 급상승 검색어와 최근 추천 분야 기준), 키워드를 새 글 주제로 쓰거나 그 키워드로 주제 추천을 바로 시작하게 해 준다.
+무엇을 쓸지 모를 때 두 가지를 도와준다. ① **주제 추천**: 분야를 주면 Claude가 최근 2주 뉴스·공식 통계를 웹 검색해 근거가 있는 주제 후보 10~12개를 내고, 네이버 자동완성과 데이터랩 검색 관심도로 순위를 매긴다. ② **키워드 탐색**: 키워드나 지금 뜨는 검색어를 기준으로 네이버 월간 검색량과 경쟁 정도를 보여 준다. 근거 없는 후보는 만들지 않고, 검색량 근거(데이터랩)가 없으면 순위를 매기지 않는다.
 
 ## 경계
-- 포함: 추천 실행·기록, 후보 조건, 데이터랩 키, 관심도·상승세 계산, 순위, 키워드 탐색(검색량 표기·집계, 탐색 기준, 검색광고 키)
-- 제외(다른 도메인): 고른 주제로 글 쓰기 → [[writing/overview]]
+- 포함: 주제 추천(후보, 근거, 순위), 키워드 탐색(검색광고 키워드 도구, 구글 트렌드)
+- 제외: 글 작성 → [[writing/overview]] (후보를 주제로 쓰면 작업이 생김). 태그용 자동완성 수집은 글 작성의 일부 → [[writing/business-rules/BR-WRT-007 태그 수와 출처 확인]]
 
 ## 핵심 개념
-- [[topic/entities/Recommendation]] — 추천 실행 한 번
-- [[topic/entities/TopicCandidate]] — 주제 후보
-- [[topic/entities/KeywordRow]] — 키워드 탐색 결과 줄과 덩어리(KeywordSection)
+- [[topic/entities/주제 추천]] · [[topic/entities/주제 후보]] · [[topic/entities/키워드 행]]
 
 ## 주요 플로우
-- [[topic/flows/주제 추천 플로우]]
-- [[topic/flows/키워드 탐색 플로우]]
+- [[topic/flows/주제 추천]] · [[topic/flows/키워드 탐색]]
+
+## 규칙
+[[topic/index]]의 규칙 표 (BR-TOP-001~007)
 
 ## 레이어별 역할
 | 레이어 | 역할 | 주요 모듈 |
 |---|---|---|
-| 프롬프트 | 후보 조건(최신성·근거·중복 제외) | [[_system/integrations/claude-cli]] |
-| 서버 | 실행·저장, 자동완성·데이터랩 호출, 환산·정렬. 키워드 탐색: 검색광고·구글 트렌드 호출, 합산·정렬 (`server/searchad.ts`, `explore.ts`, `trends.ts`) | [[_system/modules/server-recommend]] |
-| API | 추천·데이터랩 키·검색광고 키·키워드 탐색 엔드포인트 (`server/routes/recommendations.ts`, `server/routes/settings.ts`, `server/routes/keywords.ts`) | [[_system/modules/server-routes]] |
-| 화면 | 입력, 기록, 카드, 새 글로 넘기기, 데이터랩·검색광고 키 설정, 키워드 탐색 탭(`src/Keywords.tsx`)과 거기서 주제 추천 시작 | [[_system/modules/web-screens]] |
-| 외부 | 네이버 자동완성, 데이터랩, 네이버 검색광고 키워드 도구, 구글 트렌드 RSS | [[_system/integrations/naver-search]], [[_system/integrations/naver-datalab]] |
+| 프롬프트 | 후보 찾기 지시(웹 검색, 근거 필수) | [[_system/modules/server-recommend]] |
+| 서버 | 추천 실행·저장, 데이터랩·검색광고·트렌드 호출 | [[_system/modules/server-recommend]], [[_system/modules/server-routes]] |
+| 화면 | 추천/키워드 화면 | [[_system/modules/web-screens]] |
+| 외부 | 네이버 자동완성·데이터랩·검색광고, 구글 트렌드 | [[_system/integrations/naver-search]], [[_system/integrations/naver-datalab]], [[_system/integrations/naver-searchad]], [[_system/integrations/google-trends]] |
 
 ## 구현 지도
 - [[topic/implementations/blog-writer 구현]]

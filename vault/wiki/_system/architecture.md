@@ -1,109 +1,43 @@
 ---
-type: architecture
+type: system-architecture
 project: blog-writer
-confidence: high
 source:
-  - blog-writer:package.json:6-13
+  - blog-writer:server/app.ts:1-44
   - blog-writer:server/index.ts:1-11
-  - blog-writer:server/app.ts:13-43
-  - blog-writer:server/explore.ts:1-74
-  - blog-writer:server/pipeline.ts:25-66
-  - blog-writer:server/pipeline.ts:149-203
-  - blog-writer:server/claude.ts:58-198
-  - blog-writer:vite.config.ts:1-10
-updated: 2026-10-09
+  - blog-writer:server/pipeline.ts:1-60
+updated: 2026-11-02
 ---
 # 아키텍처
 
-## 실행 단위
-| 프로세스 | 진입점 | 포트/실행 | 역할 |
-|---|---|---|---|
-| API 서버 | `server/index.ts` → `server/app.ts` `createApp()` | `tsx watch server/index.ts`, `127.0.0.1:${PORT ?? 5172}` | REST API, 파이프라인 실행, 파일 저장 |
-| 화면 | `index.html` → `src/main.tsx` | `vite` :5173, `/api`를 `127.0.0.1:5172`로 프록시 | React SPA |
-| Claude 호출 | `server/claude.ts` `runClaude` | 호출마다 `claude -p` 자식 프로세스 (cwd = OS 임시 폴더) | 리서치·글 작성·이미지 기획·SVG·브라우저 조작·추천 |
-| 앱 전용 크롬 | `server/browser/runner.ts` | Playwright `launchPersistentContext(data/chrome-profile)` | Claude in Chrome이 막는 블로그(네이버 외 OS 등)의 자동 조작, 고르면 발행 창 조작(`server/browser/publish.ts`) |
-| 헤드리스 크롬 | `server/images/svg.ts` | Playwright `chromium.launch({channel:"chrome", headless:true})` | SVG → PNG |
-| 평소 크롬 | `server/browser/userChrome.ts` | `osascript`로 탭 열고 JS 실행 (macOS) | 네이버 블로그 입력, 고르면 발행 창 조작(`server/browser/publish.ts`) |
-| 로그인 창 | `server/browser/loginWindow.ts` | Chrome 실행 파일을 `--user-data-dir=data/chrome-profile`로 직접 실행 (한 번에 한 블로그) | 앱 전용 크롬에 블로그 로그인 |
-| 워드프레스 | `server/wordpress.ts` | `fetch`로 사이트의 REST API 호출 (크롬 없음) | 임시저장·예약발행·자동발행 |
-| 자동 테스트 | `vitest.config.ts` | `npm test` (임시 데이터 폴더) | 규칙·API 검사 확인 |
-
-`npm run dev`가 서버와 화면을 함께 띄운다 (`blog-writer:package.json:7`).
-
-## 레이어와 책임
-- **화면** ([[_system/modules/web-app]], [[_system/modules/web-screens]], [[_system/modules/web-job]]): 입력, 진행 상황 폴링, 초안 편집·자동 저장, 복사.
-- **API 라우터** ([[_system/modules/server-routes]] `server/app.ts` + `server/routes/*.ts`): 입력 검증(zod), 상태를 먼저 "진행 중"으로 바꾼 뒤(`markBusy`) 백그라운드 작업 시작, 202 응답.
-- **파이프라인** ([[_system/modules/server-pipeline]] `server/pipeline.ts`): 작업 단위 실행·중복 방지·크롬 작업 직렬화.
-- **기능 모듈**: 리서치/작성·글 고치기·네이버 주제 고르기([[_system/modules/server-pipeline]]), 이미지([[_system/modules/server-images]]), 블로그 입력·카테고리 읽기([[_system/modules/server-browser]] 크롬, [[_system/modules/server-wordpress]] API), 추천·키워드 탐색([[_system/modules/server-recommend]]: `recommend.ts`, 2026-10-09부터 `explore.ts`·`searchad.ts`·`trends.ts`).
-- **외부 호출**: Claude CLI([[_system/modules/server-claude]]), 네이버 HTTP(자동완성·데이터랩·검색광고 키워드 도구), 구글 트렌드 RSS, 크롬 → [[_system/integrations/naver-searchad]], [[_system/integrations/google-trends]].
-- **저장**: 카테고리 기억 `server/categories.ts`, `server/fsutil.ts`의 원자적 쓰기 + 쓰기 줄(`server/store.ts`가 작업·설정에 사용) → [[_system/data-storage]].
-- **공용** ([[_system/modules/shared]]): 타입, 분량 계산, 붙여넣기 HTML, 이미지 오류 분류, 상태·블로그 이름. 서버와 화면이 같이 쓴다.
-
-## 모듈 의존
+## 구성
 ```mermaid
-flowchart TD
-  webjob[web-job] --> webscreens[web-screens]
-  webscreens --> webapp[web-app]
-  webjob --> webapp
-  webapp -->|HTTP /api| routes[server-routes]
-  webscreens --> shared
-  routes --> pipeline[server-pipeline]
-  routes --> recommend[server-recommend]
-  routes --> claudeM[server-claude]
-  routes --> browser[server-browser]
-  routes --> wordpress[server-wordpress]
-  pipeline --> wordpress
-  wordpress --> store
-  pipeline --> images[server-images]
-  pipeline --> browser
-  pipeline --> claudeM
-  images --> claudeM
-  images --> browser
-  browser --> claudeM
-  recommend --> claudeM
-  pipeline --> store[(server-core store·fsutil)]
-  images --> store
-  browser --> store
-  recommend --> store
-  routes -->|/api/keywords| recommend
-  recommend -->|서명 GET| searchad((검색광고 키워드 도구))
-  recommend -->|RSS| gtrends((구글 트렌드))
-  claudeM --> store
-  pipeline --> shared
-  images --> shared
-  browser --> shared
+flowchart LR
+  UI[화면 React :5173] -- /api 프록시 --> API[Express 127.0.0.1:5172]
+  API --> PIPE[pipeline 작업 실행]
+  PIPE --> CLAUDE[claude CLI]
+  PIPE --> IMG[images 생성]
+  PIPE --> BROWSER[browser 자동 조작]
+  PIPE --> WP[wordpress REST]
+  API --> REC[recommend 추천]
+  API --> STORE[(data/ JSON·이미지)]
+  CLAUDE -.-> CHROME[Claude in Chrome 확장]
+  BROWSER --> CHROME
+  IMG --> APIs[Gemini/OpenAI API]
 ```
 
-## 대표 요청의 경로: "딥서칭 시작"
-1. 화면 `NewJob.submit` → `POST /api/jobs` (`blog-writer:src/NewJob.tsx:92-107`).
-2. 서버가 주제(2~300자)·링크(http(s), 최대 20개)·이미지 옵션을 검증하고, 이미지 옵션을 설정에 기억한 뒤 `createJob` → `void runDraft(id)` → 201 응답 (`blog-writer:server/routes/jobs.ts:44-73`).
-3. `doDraft`: 규칙 읽기 → `deepResearch`(Claude + WebSearch/WebFetch) → 네이버 자동완성·함께 많이 찾는 수집 → `writePost`(Claude) → 분량 줄이기 → 태그 검증 → `makeImages` → `draft_ready` (`blog-writer:server/pipeline.ts:68-150`).
-4. 각 단계는 `updateJob`/`log`로 `data/jobs/<id>.json`에 바로 기록한다.
-5. 화면은 진행 중 작업이 있으면 1.5초마다 `GET /api/jobs`로 폴링한다 (`blog-writer:src/App.tsx:90-96`).
-자세한 흐름은 [[writing/flows/초안 작성 플로우]].
+## 핵심 설계
+- **로컬 전용 API**: Host와 Origin이 모두 localhost/127.0.0.1/[::1]이어야 한다(아니면 403). 다른 사이트가 브라우저로 호출(CSRF)하거나 DNS 리바인딩하는 것을 막는다. 서버는 `127.0.0.1`에만 listen한다. JSON 본문 한도 2MB(이미지 업로드는 별도 20MB).
+- **작업 = 파일 하나**: 글 작업은 `data/jobs/<id>.json`. 읽기-수정-쓰기를 id별 큐로 직렬화해(`updateJob`) 로그와 상태가 서로 덮어쓰지 않게 한다.
+- **비동기 작업 모델**: 라우트가 검사 후 상태를 먼저 "진행 중"으로 바꾸고(`markBusy`) 202를 돌려주면, 백그라운드 함수(`runDraft`, `runImages`, `runPost`, `startEdit`)가 실행한다. 화면은 작업을 주기적으로 읽어 진행을 따라간다. 같은 작업은 한 번에 하나(`running` 집합), 예외로 이미지 한 장씩은 동시에 가능.
+- **크롬 직렬화**: Claude in Chrome 작업(블로그 작성, Gemini·ChatGPT 이미지)은 같은 크롬을 쓰므로 `enqueueBrowser` 큐로 하나씩 한다.
+- **중지**: 작업마다 `AbortController`를 `AsyncLocalStorage`로 전달해, 그 안에서 부르는 `runClaude` 등이 바로 멈춘다.
+- **서버 재시작 복구**: 시작할 때 진행 중이던 작업·추천을 실패/초안 상태로 되돌린다(`recoverStuckJobs`, `recoverRecommendations`), 90일 지난 사용량 기록 정리.
+- **공용 코드**(`shared/`)를 서버와 화면이 함께 쓴다: 타입, 글자수·키워드·말투 판정, 붙여넣기 HTML, 상태 필터.
 
-## 대표 요청의 경로: "프롬프트로 글 고치기" (2026-10-09)
-1. 화면 `EditByPrompt`(글 전체 또는 편집 화면에서 고른 블록 범위) → `POST /api/jobs/:id/edit` ([[_system/api]]).
-2. `startEdit`가 `job.editProposal={status:"running"}`를 먼저 기록하고 `running`에 등록한다. 그래서 만드는 동안 글 수정·블로그 올리기·이미지 작업이 409이고, 화면은 폴링한다 (`blog-writer:server/pipeline.ts:157-170`).
-3. `doEdit` → `proposeEdit`(Claude, WebSearch·WebFetch)가 고친 블록을 만들어 `ready` 제안(`before`/`after`)으로 저장한다. 글은 아직 그대로다. 실패는 `failed`, 중지는 제안 삭제 (`blog-writer:server/pipeline.ts:172-198`).
-4. 화면이 바뀐 블록만 비교해 보여 주고(`shared/blockDiff.ts`), 사용자가 `POST …/edit/apply`(범위가 그 사이 바뀌었으면 409)나 `DELETE …/edit`를 고른다 → [[_system/modules/server-pipeline]] `editPost.ts`.
-
-## 대표 요청의 경로: "키워드 탐색" (2026-10-09)
-백그라운드 작업이 아니라 요청 한 번에 끝나는 동기 호출이다(진행 상태·저장 없음).
-1. 화면 `Keywords`가 `GET /api/keywords?q=<입력>` ([[_system/api]]). 입력 검사는 200자 이하뿐, 키가 없으면 400으로 설정 안내 (`blog-writer:server/routes/keywords.ts:11-25`).
-2. `exploreKeywords`: **입력이 있으면** 키워드를 정리해(최대 5개) 검색광고 키워드 도구로 연관 키워드와 월간 검색량을 조회한다. **입력이 없으면** ① 구글 트렌드 RSS(10분 캐시)의 상위 10개 검색어와 ② 최근 완료된 주제 추천 3개의 분야·기준 키워드를 각각 5개씩 나눠 조회한다. 구글 트렌드가 실패하면 ①만 오류 덩어리로 두고 ②는 보여 준다 (`blog-writer:server/explore.ts:21-74`).
-3. 검색광고는 서명 헤더가 붙은 `GET /keywordstool`을 5개 키워드씩 부르고 합쳐 검색량 순 상위 200개를 돌려준다 ([[_system/integrations/naver-searchad]]).
-4. 화면은 표로 보여 주고 정렬·거르기는 화면에서 한다. 줄에서 "글쓰기"는 새 글 주제로(`App`이 `topic` 설정), "주제 추천받기"는 `recommendRequest`로 주제 추천 탭에서 그 키워드를 분야로 바로 시작한다 ([[_system/modules/web-app]], [[topic/index]]).
-키 저장은 `PUT /api/searchad`가 "날씨"로 실제 호출해 확인한 뒤 `data/secrets.json`에 쓴다.
-
-## 비동기 / 백그라운드 작업
-- 장시간 작업(초안·이미지·블로그 입력·글 고치기·추천)은 HTTP 응답 후 `void` 프로미스로 돈다. 진행 상황은 job 파일의 `status`·`logs`에 쓰고 화면이 폴링한다(작업 1.5초, 추천 2초, 로그인 창 3초, 사용량 15초/60초).
-- 같은 작업은 동시에 한 번만 (`running` Set) → [[writing/business-rules/BR-WRT-011 작업 중복 실행과 진행 중 변경 금지]].
-- 크롬을 쓰는 작업(네이버·티스토리 입력, 카테고리 목록 불러오기, Gemini/ChatGPT 이미지)은 전역 줄 `enqueueBrowser`(`serialQueue`)로 하나씩. 워드프레스 API 등록은 크롬을 쓰지 않아 이 줄을 거치지 않는다 → [[publishing/business-rules/BR-PUB-004 크롬 작업 직렬화]].
-- 중지: 작업마다 AbortController를 두고 AsyncLocalStorage로 신호를 전달, `runClaude`가 자식 프로세스를 SIGTERM (`blog-writer:server/cancel.ts:1-39`, `blog-writer:server/claude.ts:91-96`).
-- 서버 시작 시 진행 중으로 남은 작업·추천(만드는 중이던 글 고치기 제안은 failed로)을 정리하고 90일 지난 사용량 기록을 지운다 (`blog-writer:server/index.ts:7-11`).
-
-## 오류 처리 방식
-- 라우터는 `wrap`으로 비동기 오류를 잡아 공통 핸들러로 보낸다. 4xx(본문 파싱 오류 등)는 "요청 형식이 올바르지 않습니다.", 500은 메시지를 그대로 (`blog-writer:server/routes/util.ts:6-10`, `blog-writer:server/app.ts:36-41`).
-- 파이프라인 오류는 job의 `error`와 로그에 남기고, 초안이 있으면 `draft_ready`, 없으면 `failed`로 둔다.
-- 이미지 하나의 실패는 그 이미지에만 기록하고 계속 진행한다 → [[image/business-rules/BR-IMG-007 이미지 실패 격리와 원인 분류]].
+## 레이어
+| 레이어 | 위치 | 모듈 |
+|---|---|---|
+| 프롬프트 | `server/writer.ts` 등 | [[_system/modules/server-core]] |
+| 서버 | `server/**` | [[_system/modules/server-pipeline]], [[_system/modules/server-routes]] |
+| 공용 | `shared/**` | [[_system/modules/shared]] |
+| 화면 | `src/**` | [[_system/modules/web-app]] |

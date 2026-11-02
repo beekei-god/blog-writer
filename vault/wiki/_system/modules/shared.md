@@ -4,35 +4,33 @@ project: blog-writer
 module: shared
 paths: [shared/**]
 source:
-  - blog-writer:shared/types.ts:1-413
-  - blog-writer:shared/blockDiff.ts:1-62
-  - blog-writer:shared/length.ts:1-53
-  - blog-writer:shared/keywords.ts:1-51
-  - blog-writer:shared/postHtml.ts:1-57
-  - blog-writer:shared/imageErrors.ts:1-118
-  - blog-writer:shared/labels.ts:1-26
-updated: 2026-10-09
+  - blog-writer:shared/types.ts
+  - blog-writer:shared/length.ts
+  - blog-writer:shared/keywords.ts
+  - blog-writer:shared/tone.ts
+updated: 2026-11-02
 ---
-# shared 모듈
+# shared (서버·화면 공용)
 
-## 책임
-서버와 화면이 함께 쓰는 타입·상수·순수 함수. 같은 규칙(분량, 태그 수, 스타일 제한, 붙여넣기 HTML, 상태·블로그 이름)을 양쪽에서 같은 값으로 쓰게 하는 장치다.
+## 역할
+서버와 화면이 같은 타입과 판정 함수를 쓰게 한다. 규칙 값이 여기 있으면 한 곳만 고치면 양쪽에 반영된다.
 
-## 파일
-| 파일 | 줄 | 역할 | 주요 export | 관련 페이지 |
-|---|---|---|---|---|
-| `shared/types.ts` | 413 | 모든 도메인 타입과 상수, 작은 순수 함수. 2026-10-09 추가: `NAVER_MINUTE_STEP`(10, 네이버 예약 분 단위), `MAX_LINKS`(20, 참고 링크 수), `ImageOptions.method`·`thumbnailMethod`와 `methodFor`(썸네일은 `thumbnailMethod ?? method`, 없으면 `api`), `imageSpecAt`(키로 이미지 찾기)·`imageSpecsOf`(썸네일+본문 이미지 목록), `MANUAL_STATUSES`·`ManualStatus`·`canSetStatus`(수기 상태 변경), 2026-10-09(2차) `BlogCategory`(`{id?, name}`: 워드프레스는 사이트 카테고리 ID, 네이버·티스토리는 이름), `EditProposal`(프롬프트로 글 고치기 제안: `prompt`·`range?`·`status` running/ready/failed·`before`/`after`·`title`/`summary`·`note`·`charsBefore`/`charsAfter`·`error`), `Job.editProposal`, 2026-10-09(3차) 키워드 탐색 `KeywordRow`(키워드·합계·PC·모바일·`lowPc`/`lowMobile`("< 10"은 5로 치고 표시)·`competition`·`seed`·`trend?`)와 `KeywordSection`(`id` input/trending/recommendation·`title`·`note?`·`seeds`·`rows`·`error?`, `blog-writer:shared/types.ts:282-310`). `Settings.wordpressCategoryId`는 삭제 | `Platform`, `BlogCategory`, `EditProposal`, `ImageProvider`, `ImageStyle`, `STYLES_BY_PROVIDER`, `MAX_BODY_IMAGES`, `NAVER_MINUTE_STEP`, `MAX_LINKS`, `ImageScope`, `ImageMethod`, `bodyImageKey`, `imageKey`, `bodyIndexOf`, `ImageOptions`, `fitStyle`, `aiFor`, `methodFor`, `STAGES`, `MODEL_CHOICES`, `RECOMMENDED_MODELS`, `PlanLimits`, `TokenTotals`, `UsageSummary`, `Settings`, `blogIdOf`, `PostSettings`, `settingsFor`, `ImageSpec`, `PostBlock`, `TAG_SOURCES`, `TagDetail`, `MAX_TAGS`, `Post`, `imageSpecAt`, `imageSpecsOf`, `Source`, `JobStatus`, `PublishMode`, `WordPressRecord`, `BUSY_STATUSES`, `MANUAL_STATUSES`, `ManualStatus`, `canSetStatus`, `Job`, `Evidence`, `InterestStat`, `TopicCandidate`, `Recommendation` | [[writing/entities/Job]], [[writing/entities/Post]], [[image/entities/ImageSpec]], [[publishing/entities/블로그 설정]] |
-| `shared/blockDiff.ts` | 62 | (2026-10-09 새 파일) 글 고치기 비교 화면용 순수 함수. 블록 하나를 보여 줄 글(`blockText`, 이미지는 대체 텍스트), 고치기 전·후 블록을 가장 긴 공통 부분 기준으로 비교(`diffBlocks`: 같은 블록은 same, 빠진 것 del, 새 것 add), 같은 블록이 이어지는 구간을 접기(`collapseSame`, 앞뒤 `keep`개만 남김) | `blockText`, `DiffRow`, `diffBlocks`, `collapseSame` | [[_system/modules/web-job]], [[_system/modules/tests]] |
-| `shared/length.ts` | 53 | 본문 분량 목표·상한과 글자수 계산. 본문 범위(`bodyTexts`, 2026-10-12)를 글자수와 키워드 횟수가 같이 쓴다 | `DEFAULT_TARGET_CHARS`, `maxBodyChars`, `targetRange`, `bodyTexts`, `countBodyChars` | [[writing/business-rules/BR-WRT-002 본문 글자수 계산]] |
-| `shared/keywords.ts` | 51 | (2026-10-12 새 파일) 키워드 횟수·검색 의도 지시문(`KEYWORD_RULES`, 글 작성·제목 다시 만들기 프롬프트에 들어감)과 횟수 세기(띄어쓰기·대소문자 무시, 긴 키워드 안의 짧은 키워드는 따로 세지 않음). 작성 리포트 경고가 씀 | `KEYWORD_LIMIT`, `KEYWORD_RULES`, `countKeywords`, `keywordOveruse` | [[writing/business-rules/BR-WRT-013 제목 후보와 키워드]] |
-| `shared/blogStatus.ts` | 43 | (2026-10-10 새 파일) 블로그별 상태 계산: 블로그 하나에서 본 글의 위치(`blogPositionOf`), 가장 앞선 블로그 상태(`furthestBlogStatus`, 진행 단계용), 내 글 목록의 블로그 × 상태 필터(`matchesFilter`) | `blogPositionOf`, `furthestBlogStatus`, `matchesFilter`, `StatusFilter`, `BlogFilter` | [[writing/flows/내 글 목록 상태 필터 플로우]], [[writing/entities/Job]] |
-| `shared/postHtml.ts` | 57 | 붙여넣기·워드프레스 등록용 HTML 조각(표·굵게·링크), 태그 줄, 건너뛴 이미지 이름. 2026-10-09에 화면 "본문 복사"가 없어지며 `postToHtml`·`postToText`(복사용 서식)를 지웠고, `tableHtml(b, cellExtra, tableExtra)`로 워드프레스 표도 같이 만든다. `plain`·`tagLine`·`skippedImageLabel`을 공용으로 export | `esc`, `rich`, `plain`, `tableHtml`, `skippedImageLabel`, `URL_RE`, `splitUrl`, `urlsIn`, `BLANK_LINE`, `TAG_GAP_LINES`, `tagLine`, `TABLE_COLORS` | [[publishing/business-rules/BR-PUB-006 태그 입력 위치]] |
-| `shared/labels.ts` | 26 | 상태 이름(2026-10-09에 진행 단계 이름과 맞춤: 자료 조사 중·글 작성 중·이미지 생성 중·초안 검토·블로그 임시저장 중·블로그 임시저장 완료·블로그 발행 예약·블로그 발행완료·실패. `statusLabel`의 워드프레스 분기는 없어짐), 블로그 이름(긴 것/문장용 짧은 것), 올리는 방식 이름 `PUBLISH_MODE_LABEL`(임시저장·예약발행·자동발행), 오류 메시지 꺼내기. 서버 오류 메시지와 화면이 같은 문구를 쓴다 | `STATUS_LABEL`, `statusLabel`, `PLATFORM_LABEL`, `PLATFORM_SHORT_LABEL`, `PUBLISH_MODE_LABEL`, `errorText` | [[glossary]] |
-| `shared/imageErrors.ts` | 118 | 이미지 실패 원인 15종(2026-10-09 `site_error` 추가: "문제가 발생"·"오류가 발생"·"Something went wrong"·"An error occurred" 같은 사이트 오류 안내), 원인별 안내 문구, 메시지 → 원인 분류 | `IMAGE_ERROR_KINDS`, `IMAGE_ERROR_INFO`, `classifyImageError` | [[image/business-rules/BR-IMG-007 이미지 실패 격리와 원인 분류]] |
+## 주요 파일과 export
+| 파일 | 내용 |
+|---|---|
+| `types.ts`(452줄) | 모든 도메인 타입·상수(`Platform`, `ImageOptions`, `WritingOptions`, `Post`, `Job`, `Settings`, `Recommendation` …) |
+| `length.ts` | 분량 상수·`countBodyChars` → [[writing/business-rules/BR-WRT-001 분량 목표와 상한]] |
+| `keywords.ts` | `KEYWORD_RULES`, 횟수 세기 → [[writing/business-rules/BR-WRT-004 키워드 횟수와 검색 의도]] |
+| `tone.ts` | 말투 판정 → [[writing/business-rules/BR-WRT-002 말투와 문장 끝 검사]] |
+| `place.ts` | 장소 카드 → [[writing/business-rules/BR-WRT-008 장소 블록]] |
+| `blockDiff.ts` | 고치기 비교 |
+| `blogStatus.ts` | 블로그별 위치·필터 → [[publishing/business-rules/BR-PUB-009 수동 상태 표시와 목록 필터]] |
+| `postHtml.ts` | 붙여넣기 HTML → [[publishing/business-rules/BR-PUB-008 본문 변환과 붙여넣기 형식]] |
+| `imageErrors.ts` | 이미지 오류 분류 → [[image/entities/이미지 오류 종류]] |
+| `labels.ts` | 화면·로그 공통 이름·문구 |
 
-## 의존
-- 사용하는 모듈: 없음
-- 사용되는 곳: 서버 모든 모듈, [[_system/modules/web-app]], [[_system/modules/web-screens]], [[_system/modules/web-job]]
+## 의존하는 모듈 / 쓰이는 곳
+서버 전체와 `src/`가 가져다 쓴다. 이 폴더는 서버·브라우저 어디서나 돌아야 하므로 Node 전용 API를 쓰지 않는다.
 
 ## 주의할 점
-- 2026-10-09 변경 뒤에도 남은 낡은 주석: `PUBLISH_MODE_LABEL`의 "워드프레스만 임시저장 외 방식을 고를 수 있다", `JobStatus`의 `scheduled`("워드프레스 API로 예약 발행")·`published`("앱은 발행하지 않는다") 설명. 지금은 네이버·티스토리도 앱이 예약발행·자동발행한다 (`blog-writer:shared/labels.ts:23-24`, `blog-writer:shared/types.ts:254-257`).
+- `KEYWORD_RULES` 같은 프롬프트 문구가 여기 있어 서버 프롬프트와 함께 바뀐다.
