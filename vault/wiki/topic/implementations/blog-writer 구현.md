@@ -24,4 +24,5 @@ updated: 2026-11-02
 |---|---|---|
 | `tests/searchad.test.ts` | 서명·검색량 파싱·묶음 처리 | BR-TOP-006 |
 | `tests/explore.test.ts` | 입력 유무에 따른 탐색, 트렌드 | BR-TOP-006/007 |
-| `tests/writer.test.ts` | 데이터랩 환산 | BR-TOP-004 |
+| `tests/datalab.test.ts` | 데이터랩 환산 | BR-TOP-004 |
+| `tests/recommend.test.ts` | 근거 없는 후보 제거, 한 번에 하나, 재시작 복구 | BR-TOP-001/005 |

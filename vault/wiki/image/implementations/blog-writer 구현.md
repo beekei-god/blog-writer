@@ -33,3 +33,4 @@ updated: 2026-11-02
 | `tests/imageParallel.test.ts` | 한 장씩 동시, 중복·중지, 요청 거절 | BR-IMG-010 |
 | `tests/webAi.test.ts` | 크롬 방식의 성공/실패 판정 | BR-IMG-004 |
 | `tests/writer.test.ts` | 이미지 개수 | BR-IMG-001 |
+| `tests/svg.test.ts` | SVG 검증: 형식, 거절 요소 7종, 내부 참조 통과 | BR-IMG-009 |

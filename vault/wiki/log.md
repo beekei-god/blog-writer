@@ -7,3 +7,8 @@ type: log
 - 기존 vault 내용을 백업하고 비운 뒤 코드(73f47a6)를 읽어 project-wiki 구조로 다시 만들었다. `.obsidian/`은 유지.
 - 도메인 5개(writing, image, publishing, topic, usage), `_system` 모듈 14·연동 12·`extending.md`.
 - 이전 wiki에서 해결된 열린 질문의 이력은 백업에만 있다.
+
+## [2026-11-02] update | writing, image, topic, usage (73f47a6 → 9a38c08)
+- 열린 질문 14건 처리: writing 3·image 3·publishing 3·topic 3·usage 2를 닫고, usage #1은 일부만(집계 요약 테스트 없음) 남김.
+- 코드 변경 반영: 근거 없는 추천 후보 제거(BR-TOP-001), `validateSvg` export·전용 테스트(BR-IMG-009), 규칙 문서 용어 "함께 많이 찾는"(BR-WRT-007), 새 테스트 4개와 데이터랩 테스트 이동.
+- 각 도메인 `implementations`의 테스트 표와 `_system/modules/tests` 갱신.

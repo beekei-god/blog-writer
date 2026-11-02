@@ -32,7 +32,7 @@ Claude는 단일 SVG를 그리고, 서버가 Chrome(Playwright)으로 PNG로 렌
 
 ## 예외 / 경계값 · 변경 시 같이 볼 곳
 - 허용 요소를 늘릴 때는 보안 영향이 있으니 정규식(`validateSvg`)과 렌더링 컨텍스트 설정을 같이 검토한다.
-- 테스트: 직접 검증하는 전용 테스트는 찾지 못했다 → [[image/open-questions]] 1번.
+- 테스트: `tests/svg.test.ts`가 `validateSvg`의 거절 대상 7종과 통과 사례를 확인한다(이를 위해 `validateSvg`를 export). → [[image/open-questions]] 1번.
 
 ## 영향받는 플로우
 [[image/flows/이미지 생성]]
@@ -41,3 +41,4 @@ Claude는 단일 SVG를 그리고, 서버가 Chrome(Playwright)으로 PNG로 렌
 | 날짜 | 변경 | 근거 |
 |---|---|---|
 | 2026-11-02 | wiki 재생성 때 코드(73f47a6) 기준으로 작성 | 코드 |
+| 2026-11-02 | `validateSvg` export, 전용 테스트 추가 | 9a38c08 |

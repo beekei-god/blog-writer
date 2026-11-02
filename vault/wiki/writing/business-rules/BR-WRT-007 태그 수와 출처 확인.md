@@ -40,7 +40,7 @@ updated: 2026-11-02
 | 테스트 | 태그 출처 확인 | | `blog-writer:tests/writer.test.ts:50` |
 
 ## 예외 / 경계값
-- 규칙 문서는 출처 이름을 "연관검색어"라고 부르고 코드는 "함께 많이 찾는"이라고 부른다(같은 것, 네이버가 이름을 바꿈). → [[writing/open-questions]] 1번
+- 규칙 문서와 코드 모두 출처 이름은 "함께 많이 찾는"이다(예전 이름은 연관검색어). 이미 `data/writing-rules.md`로 복사된 규칙에는 옛 이름이 남아 있을 수 있어 프롬프트(`server/writer.ts:81`)가 "연관검색어"도 이 출처로 안내한다. → [[writing/open-questions]] 1번
 - 연동 상세: [[_system/integrations/naver-search]]
 
 ## 영향받는 플로우
@@ -50,3 +50,4 @@ updated: 2026-11-02
 | 날짜 | 변경 | 근거 |
 |---|---|---|
 | 2026-11-02 | wiki 재생성 때 코드(73f47a6) 기준으로 작성 | 코드 |
+| 2026-11-02 | 규칙 문서(`rules/default-writing-rules.md`)의 "연관검색어"를 "함께 많이 찾는"으로 통일 | 9a38c08 |
