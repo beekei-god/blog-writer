@@ -26,7 +26,7 @@ const SIZE: Record<ImageKind, { w: number; h: number }> = {
   body: { w: 1200, h: 675 },
 };
 
-function validateSvg(svg: string): string {
+export function validateSvg(svg: string): string {
   const s = svg.trim();
   if (!/^<svg[\s>]/i.test(s) || !/<\/svg>\s*$/i.test(s)) throw new ImageGenError("svg_invalid", "SVG 형식이 아닙니다.");
   if (/<script|javascript:|\son\w+\s*=|<foreignObject|<image|<use[^>]+href=["']https?:|url\(\s*["']?https?:/i.test(s)) {

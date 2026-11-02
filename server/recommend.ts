@@ -190,7 +190,8 @@ async function run(id: string, field: string) {
       ...c,
       keywords: [...new Set(c.keywords.map((k) => k.trim()).filter(Boolean))].slice(0, 3),
       evidence: c.evidence.filter((e) => /^https?:\/\//i.test(e.url)),
-    }));
+    })).filter((c) => c.evidence.length > 0);
+    if (!candidates.length) throw new Error("근거가 확인된 후보가 없습니다. 분야를 바꾸거나 다시 시도해 주세요.");
     await update(id, (r) => {
       r.anchorKeyword = parsed.anchorKeyword;
       r.candidates = candidates;
