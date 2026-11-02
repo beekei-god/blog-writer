@@ -62,13 +62,37 @@ function osascript(script: string, args: string[]): Promise<string> {
   });
 }
 
+/**
+ * 글쓰기 탭을 연다. 앞에서부터 보이는 일반 창(시크릿·최소화 아님)을 찾아 거기에 탭을 붙이고, 없으면 맨 앞 창에 붙인다.
+ * 크롬 창이 하나도 없을 때만 새 창을 만들고(빈 탭이 남지 않게 그 창의 첫 탭에 주소를 넣는다) 결과에 "new"를 붙여 알린다.
+ * 마지막 값은 문제 확인용 창 목록: 창마다 종류(n=일반, i=시크릿)와 최소화 여부(m).
+ */
 const OPEN_TAB = `on run argv
   tell application "Google Chrome"
-    if (count of windows) = 0 then make new window
-    set w to front window
+    set summary to ""
+    set w to missing value
+    repeat with x in windows
+      set md to (mode of x) as string
+      set mini to (minimized of x)
+      set flag to ""
+      if mini then set flag to "m"
+      set summary to summary & (text 1 of md) & flag & ","
+      if w is missing value and md is "normal" and not mini then set w to contents of x
+    end repeat
+    set how to "existing"
+    if w is missing value and (count of windows) > 0 then
+      set w to front window
+      set how to "fallback"
+    end if
+    if w is missing value then
+      set w to make new window
+      set t to active tab of w
+      set URL of t to (item 1 of argv)
+      return (id of w as string) & " " & (id of t as string) & " new " & summary
+    end if
     set t to make new tab at end of tabs of w with properties {URL:(item 1 of argv)}
     set active tab index of w to (count of tabs of w)
-    return (id of w as string) & " " & (id of t as string)
+    return (id of w as string) & " " & (id of t as string) & " " & how & " " & summary
   end tell
 end run`;
 
@@ -93,6 +117,10 @@ end run`;
 interface Tab {
   windowId: string;
   tabId: string;
+  /** 탭을 붙인 곳: existing(보이는 일반 창) / fallback(맨 앞 창) / new(크롬 창이 없어 새 창) */
+  where?: string;
+  /** 크롬 창 목록 요약 (문제 확인용) */
+  windows?: string;
 }
 
 /** 탭을 닫는다 (이미 닫혔으면 조용히 넘어간다) */
@@ -101,8 +129,8 @@ async function closeTab(tab: Tab) {
 }
 
 async function openTab(url: string): Promise<Tab> {
-  const [windowId, tabId] = (await osascript(OPEN_TAB, [url])).split(" ");
-  return { windowId, tabId };
+  const [windowId, tabId, where, windows] = (await osascript(OPEN_TAB, [url])).split(" ");
+  return { windowId, tabId, where, windows };
 }
 
 /** 탭에서 스크립트를 실행하고 결과(JSON 문자열)를 돌려받는다. 스크립트는 파일로 넘겨 따옴표 처리를 피한다. */
@@ -458,6 +486,7 @@ export interface UserChromeResult {
 async function openNaverEditor(settings: PostSettings, log: (m: string) => void): Promise<Tab> {
   log("평소 크롬에 네이버 블로그 글쓰기 탭을 엽니다. 끝날 때까지 그 탭은 그대로 두세요.");
   const tab = await openTab(writeUrl("naver", settings.blogId));
+  if (tab.where !== "existing") log(`크롬 창 목록(n=일반, i=시크릿, m=최소화): ${tab.windows || "없음"} → ${tab.where === "new" ? "창이 없어 새 창에 열었습니다" : "일반 창이 없어 맨 앞 창에 열었습니다"}`);
 
   // 글쓰기 화면이 뜰 때까지 (로그인 화면이면 바로 알린다)
   const ready = await waitFor(async () => {
