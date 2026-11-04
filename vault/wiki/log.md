@@ -15,3 +15,7 @@ type: log
 
 ## [2026-11-02] update | usage (9a38c08 → ead1094)
 - `tests/usageSummary.test.ts` 추가로 usage 열린 질문 #1을 닫음. 구현 테스트 표와 BR-USG-005 이력 갱신.
+
+## [2026-11-04] update | publishing (ead1094 → 8fba1f8)
+- 네이버 장소 첨부 검색어를 정확한 주소(없으면 이름)로 변경 반영(BR-PUB-008), 평소 크롬 탭 열 창 선택·창 목록 로그 반영(BR-PUB-005), 구현 테스트 표 갱신.
+- writing(`NewJob.tsx`, `place.ts`)·topic(`Recommend.tsx`)의 변경은 이번에 읽지 않아 `_registry.md` 분석 커밋과 스냅샷은 갱신하지 않음.

@@ -4,7 +4,7 @@ domain: publishing
 project: blog-writer
 paths: [server/browser/**, server/wordpress.ts, server/naverTopic.ts, server/categories.ts, server/routes/browser.ts, server/routes/categories.ts, shared/blogStatus.ts, shared/postHtml.ts, server/pipeline.ts]
 last_ingested_commit: 73f47a6
-updated: 2026-11-02
+updated: 2026-11-04
 ---
 # blog-writer의 publishing 구현
 
@@ -34,4 +34,4 @@ updated: 2026-11-02
 | `tests/categories.test.ts` | 카테고리 기억·단계 | BR-PUB-007 |
 | `tests/naverTopic.test.ts` | 주제 선택 | BR-PUB-007 |
 | `tests/extensionOptions.test.ts` | 확장 설정 화면 열기 | BR-PUB-005 |
-| `tests/place.test.ts` | 붙여넣기 HTML의 장소 | BR-PUB-008 |
+| `tests/place.test.ts` | 붙여넣기 HTML의 장소, 장소 검색어(주소 우선) | BR-PUB-008 |

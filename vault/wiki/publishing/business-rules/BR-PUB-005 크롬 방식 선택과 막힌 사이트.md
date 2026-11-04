@@ -12,7 +12,7 @@ source:
   - blog-writer:server/browser/userChrome.ts:1-45
   - blog-writer:server/browser/runner.ts
 entities: [블로그 설정]
-updated: 2026-11-02
+updated: 2026-11-04
 ---
 # BR-PUB-005 크롬 방식 선택과 막힌 사이트
 
@@ -51,3 +51,4 @@ updated: 2026-11-02
 | 날짜 | 변경 | 근거 |
 |---|---|---|
 | 2026-11-02 | wiki 재생성 때 코드(73f47a6) 기준으로 작성 | 코드 |
+| 2026-11-04 | 평소 크롬 글쓰기 탭을 보이는 일반 창(시크릿·최소화 제외)에 붙이고, 일반 창이 없으면 맨 앞 창, 창이 없을 때만 새 창에 열며 창 목록을 로그에 남김 | 커밋 579a735 |
