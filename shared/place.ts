@@ -10,3 +10,6 @@ export const placeMapUrl = (b: Pick<PlaceBlock, "name" | "address">) =>
 export function placeLines(b: Pick<PlaceBlock, "name" | "address">): string[] {
   return [`📍 ${b.name.trim()}`, ...(b.address?.trim() ? [`주소: ${b.address.trim()}`] : []), `네이버 지도: ${placeMapUrl(b)}`];
 }
+
+/** 네이버 에디터의 장소 검색창에 넣을 검색어: 주소가 있으면 정확한 주소, 없으면 장소 이름 */
+export const placeSearchQuery = (b: Pick<PlaceBlock, "name" | "address">) => b.address?.trim() || b.name.trim();

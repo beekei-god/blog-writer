@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { blockText } from "../shared/blockDiff";
 import { countBodyChars } from "../shared/length";
-import { placeLines, placeMapUrl } from "../shared/place";
+import { placeLines, placeMapUrl, placeSearchQuery } from "../shared/place";
 import { PostSchema } from "../server/schema";
 import { pasteBlockHtml } from "../server/browser/postHtml";
 import { postToBlocks } from "../server/wordpress";
@@ -14,6 +14,10 @@ describe("장소 블록", () => {
     expect(placeMapUrl({ name: "단지" })).toBe(`https://map.naver.com/p/search/${encodeURIComponent("단지")}`);
     expect(placeLines(place)).toEqual(["📍 래미안 원베일리", "주소: 서울 서초구 반포동", `네이버 지도: ${placeMapUrl(place)}`]);
     expect(placeLines({ name: "단지" })).toHaveLength(2);
+  });
+  it("네이버 장소 검색어는 주소가 있으면 주소, 없으면 이름", () => {
+    expect(placeSearchQuery(place)).toBe("서울 서초구 반포동");
+    expect(placeSearchQuery({ name: " 단지 ", address: "  " })).toBe("단지");
   });
   it("글 저장 검사를 통과하고, 글자수에는 세지 않는다", () => {
     const parsed = PostSchema.parse({ title: "t", summary: "s", tags: [], blocks: [place, { type: "paragraph", text: "가나다" }] });
