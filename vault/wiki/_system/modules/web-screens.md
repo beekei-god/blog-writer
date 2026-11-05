@@ -18,7 +18,7 @@ updated: 2026-11-05
 | 파일 | 하는 일 | 도메인 |
 |---|---|---|
 | `NewJob.tsx`, `WritingPicker.tsx` | 새 글 폼: 주제, 링크, "본문 이미지" 카드의 이미지 옵션(썸네일 체크 없음), 분량·말투·형식·경험 메모 | [[writing/overview]], [[image/overview]] |
-| `Recommend.tsx`, `Keywords.tsx` | 주제 추천, 키워드 탐색 | [[topic/overview]] |
+| `Recommend.tsx`, `Keywords.tsx` | 주제 추천(이력 칩별 삭제), 키워드 탐색 | [[topic/overview]] |
 | `RulesEditor.tsx` | 글쓰기 규칙 편집·초기화 | [[writing/business-rules/BR-WRT-009 글쓰기 규칙 문서와 작업별 사본]] |
 | `Usage.tsx`, `ClaudeAuth.tsx` | 사용량·한도·모델, Claude 로그인 | [[usage/overview]] |
 | `SettingsPanel.tsx` + `ImageApiSettings.tsx`, `SearchAdSettings.tsx` | 블로그 ID, 모델, 키 설정 | [[_system/configuration]] |

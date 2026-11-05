@@ -23,3 +23,7 @@ type: log
 ## [2026-11-05] update | writing (ead1094 → 2763f99)
 - 제목 "직접 입력" 추가 반영(BR-WRT-005 화면 행·조건 표·이력, `web-job` 모듈), 장소 검색어 `placeSearchQuery` 반영(BR-WRT-008, writing 구현 지도), 새 글 폼 카드 이름 "본문 이미지"(`web-screens`).
 - topic(`Recommend.tsx`)의 변경은 이번에 읽지 않아 `_registry.md` 분석 커밋과 스냅샷은 갱신하지 않음.
+
+## [2026-11-05] update | topic (ead1094 → a32b2d0)
+- 추천 이력 칩별 × 삭제 버튼과 이력 항상 표시 반영(BR-TOP-005 화면 행·이력, `web-screens`). 규칙 값은 그대로.
+- 이로써 writing·publishing·topic 변경을 모두 읽어 `_registry.md` 분석 커밋을 a32b2d0으로 갱신하고 스냅샷을 새로 기록함. `JobDetail.tsx` 썸네일 안내 배너 줄 나눔은 문구·배치만 바뀌어 wiki 변경 없음.

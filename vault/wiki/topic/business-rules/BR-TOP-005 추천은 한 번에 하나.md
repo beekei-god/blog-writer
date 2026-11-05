@@ -10,7 +10,7 @@ source:
   - blog-writer:server/recommend.ts:startRecommendation
   - blog-writer:server/routes/recommendations.ts:1-42
 entities: [주제 추천]
-updated: 2026-11-02
+updated: 2026-11-05
 ---
 # BR-TOP-005 추천은 한 번에 하나
 
@@ -33,6 +33,7 @@ updated: 2026-11-02
 |---|---|---|---|
 | 서버 | `startRecommendation`, `isRecommending`, `recoverRecommendations`, `deleteRecommendation` | | `blog-writer:server/recommend.ts` |
 | 서버 | 라우트 | 검사·중지(`cancelJob` 재사용) | `blog-writer:server/routes/recommendations.ts` |
+| 화면 | 추천 이력 칩마다 × 삭제 버튼(확인 창 후 삭제, 진행 중인 추천은 비활성). 이력은 추천이 1개 이상이면 항상 보임 | `blog-writer:src/Recommend.tsx` |
 | 테스트 | 직접 검증하는 테스트는 찾지 못함 | | [[topic/open-questions]] 3번 |
 
 ## 영향받는 플로우
@@ -42,3 +43,4 @@ updated: 2026-11-02
 | 날짜 | 변경 | 근거 |
 |---|---|---|
 | 2026-11-02 | wiki 재생성 때 코드(73f47a6) 기준으로 작성 | 코드 |
+| 2026-11-05 | 화면: 추천 결과 삭제를 선택한 추천 아래 버튼에서 이력 칩별 × 버튼으로 옮김(규칙은 그대로) | 31db0c8 |
