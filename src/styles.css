@@ -1843,9 +1843,9 @@ details > summary:hover {
 /* ───── 썸네일 없음 ───── */
 .thumb-missing {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
   padding: 12px 14px;
   margin: 0 0 16px;
   border: 1px dashed var(--accent);
@@ -1853,8 +1853,11 @@ details > summary:hover {
   background: var(--accent-soft);
   font-size: 13px;
 }
-.thumb-missing > div:first-child {
-  flex: 1 1 260px;
+.thumb-missing-options {
+  display: flex;
+  align-items: center;
+  gap: 8px 12px;
+  flex-wrap: wrap;
 }
 
 .preview a {

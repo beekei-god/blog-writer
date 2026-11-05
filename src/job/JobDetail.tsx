@@ -315,25 +315,29 @@ export function JobDetail({ job, ready, onChange, onDeleted, onOpenSettings }: P
                   <>
                     <b>썸네일이 없습니다.</b> 블로그 본문 맨 위에 들어갈 대표 이미지를 만들 수 있습니다. 다른 이미지는 그대로 둡니다.
                   </>
-                )}{" "}
+                )}
+              </div>
+              <div>
                 제목: <b>“{draft.title}”</b>
               </div>
-              <AiPicker
-                provider={missingThumb.provider}
-                style={missingThumb.style}
-                onChange={(p, s) => setMissingThumb({ ...missingThumb, provider: p, style: s })}
-              />
-              {/* Gemini·ChatGPT는 API로 만들지 크롬에서 만들지 고른다 (Claude는 해당 없음) */}
-              {missingThumb.provider !== "claude" && (
-                <div className="ai-picker">
-                  <MethodPicker
-                    provider={missingThumb.provider}
-                    method={missingThumb.method}
-                    apiStatus={imageApi}
-                    onChange={(method) => setMissingThumb({ ...missingThumb, method })}
-                  />
-                </div>
-              )}
+              <div className="thumb-missing-options">
+                <AiPicker
+                  provider={missingThumb.provider}
+                  style={missingThumb.style}
+                  onChange={(p, s) => setMissingThumb({ ...missingThumb, provider: p, style: s })}
+                />
+                {/* Gemini·ChatGPT는 API로 만들지 크롬에서 만들지 고른다 (Claude는 해당 없음) */}
+                {missingThumb.provider !== "claude" && (
+                  <div className="ai-picker">
+                    <MethodPicker
+                      provider={missingThumb.provider}
+                      method={missingThumb.method}
+                      apiStatus={imageApi}
+                      onChange={(method) => setMissingThumb({ ...missingThumb, method })}
+                    />
+                  </div>
+                )}
+              </div>
               <button
                 className="primary"
                 onClick={() =>
