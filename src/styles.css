@@ -1913,6 +1913,14 @@ details > summary:hover {
   gap: 8px;
   flex-wrap: wrap;
 }
+.title-picker-actions {
+  display: flex;
+  gap: 8px;
+}
+.title-picker-head .title-input {
+  flex: 1;
+  min-width: 0;
+}
 .title-picker .title-candidates {
   margin: 0;
 }
