@@ -11,7 +11,7 @@ source:
   - blog-writer:server/titles.ts:1-63
   - blog-writer:server/writer.ts:70-78
 entities: [글]
-updated: 2026-11-02
+updated: 2026-11-05
 ---
 # BR-WRT-005 제목 후보와 후킹 기법
 
@@ -24,6 +24,7 @@ updated: 2026-11-02
 | 글 작성 | `titleCandidates` 3개 + 그중 `title` 1개 |
 | 제목 다시 만들기 | 글은 바꾸지 않고 후보만 새로 받음. 굵게(`**`)·중복 제거, 최대 3개 |
 | 후보가 하나도 없음 | 오류 "제목 후보를 만들지 못했습니다" |
+| 직접 입력 | 후보와 같은 경로(`onPick`)로 제목이 바뀌고 자동 저장. 길이·후킹 검사 없음, 빈 값은 적용 안 됨, 작업 진행 중에는 비활성 |
 | 본문이 길 때 | 다시 만들기는 본문 앞 4,000자만 보여 줌 |
 
 ## 구현 현황
@@ -34,7 +35,7 @@ updated: 2026-11-02
 | 서버 | `regenerateTitles` (low effort, 3분) | 지금 제목·예전 후보와 다르게 | `blog-writer:server/titles.ts` |
 | 서버 | `POST /api/jobs/:id/titles` | 작업의 규칙 사본 사용 | `blog-writer:server/routes/jobs.ts` |
 | 규칙 문서 | "3. 블로그 SEO" 제목 항목 | 35자, 기법 6가지 | `blog-writer:rules/default-writing-rules.md:13-30` |
-| 화면 | 제목 후보 선택, 다시 만들기, "이 제목으로 썸네일 만들기" | [[image/overview]] | [[_system/modules/web-job]] |
+| 화면 | 제목 후보 선택, 다시 만들기, 직접 입력(`TitlePicker`, 미리보기에서도 가능), "이 제목으로 썸네일 만들기" | [[image/overview]] | [[_system/modules/web-job]] |
 | 테스트 | 기법 6가지·후킹 점검 지시, 다시 만들기 | | `blog-writer:tests/writingOptions.test.ts:56`, `tests/titles.test.ts` |
 
 ## 예외 / 경계값
@@ -48,3 +49,4 @@ updated: 2026-11-02
 | 날짜 | 변경 | 근거 |
 |---|---|---|
 | 2026-11-02 | wiki 재생성 때 코드(73f47a6) 기준으로 작성 (기법 6가지는 73f47a6에서 도입) | 코드 |
+| 2026-11-05 | 미리보기 화면의 제목 후보 영역에 "직접 입력" 추가(규칙 값은 그대로) | 2763f99 |

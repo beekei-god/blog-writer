@@ -11,7 +11,7 @@ source:
   - blog-writer:server/writer.ts:50-80
   - blog-writer:server/editPost.ts:20-50
 entities: [글 블록]
-updated: 2026-11-02
+updated: 2026-11-05
 ---
 # BR-WRT-008 장소 블록
 
@@ -28,11 +28,12 @@ updated: 2026-11-02
 ## 구현 현황
 | 레이어 | 구현 | 값/내용 | 근거 |
 |---|---|---|---|
-| 공용 | `placeMapUrl`, `placeLines` | 카드 글자 | `blog-writer:shared/place.ts` |
+| 공용 | `placeMapUrl`, `placeLines` | 카드 글자 |
+| 공용 | `placeSearchQuery` | 네이버 에디터 장소 검색어: 주소가 있으면 주소, 없으면 이름 → [[publishing/business-rules/BR-PUB-008 본문 변환과 붙여넣기 형식]] | `blog-writer:shared/place.ts` |
 | 프롬프트 | 글 작성·고치기 시스템 프롬프트 | place 블록 규칙 | `blog-writer:server/writer.ts`, `server/editPost.ts` |
 | 서버 | `PostSchema` | place 블록 허용 | `blog-writer:server/schema.ts` |
 | 서버/공용 | 붙여넣기 HTML, 워드프레스 블록 | 이름·주소·링크 | `blog-writer:shared/postHtml.ts`, `server/wordpress.ts` |
-| 테스트 | 지도 주소, 저장 검사, HTML | | `blog-writer:tests/place.test.ts` |
+| 테스트 | 지도 주소, 검색어(주소 우선), 저장 검사, HTML | | `blog-writer:tests/place.test.ts` |
 
 ## 예외 / 경계값
 - 주소가 없으면 주소 줄을 뺀다.
@@ -44,3 +45,4 @@ updated: 2026-11-02
 | 날짜 | 변경 | 근거 |
 |---|---|---|
 | 2026-11-02 | wiki 재생성 때 코드(73f47a6) 기준으로 작성 (2af99a4에서 도입) | 코드 |
+| 2026-11-05 | `placeSearchQuery` 추가: 네이버 장소 첨부 검색어를 주소 우선으로 | 8fba1f8 |

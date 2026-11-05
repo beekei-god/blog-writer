@@ -19,3 +19,7 @@ type: log
 ## [2026-11-04] update | publishing (ead1094 → 8fba1f8)
 - 네이버 장소 첨부 검색어를 정확한 주소(없으면 이름)로 변경 반영(BR-PUB-008), 평소 크롬 탭 열 창 선택·창 목록 로그 반영(BR-PUB-005), 구현 테스트 표 갱신.
 - writing(`NewJob.tsx`, `place.ts`)·topic(`Recommend.tsx`)의 변경은 이번에 읽지 않아 `_registry.md` 분석 커밋과 스냅샷은 갱신하지 않음.
+
+## [2026-11-05] update | writing (ead1094 → 2763f99)
+- 제목 "직접 입력" 추가 반영(BR-WRT-005 화면 행·조건 표·이력, `web-job` 모듈), 장소 검색어 `placeSearchQuery` 반영(BR-WRT-008, writing 구현 지도), 새 글 폼 카드 이름 "본문 이미지"(`web-screens`).
+- topic(`Recommend.tsx`)의 변경은 이번에 읽지 않아 `_registry.md` 분석 커밋과 스냅샷은 갱신하지 않음.

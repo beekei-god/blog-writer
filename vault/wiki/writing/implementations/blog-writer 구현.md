@@ -4,7 +4,7 @@ domain: writing
 project: blog-writer
 paths: [server/writer.ts, server/research.ts, server/titles.ts, server/titleGuide.ts, server/editPost.ts, server/experience.ts, server/naver.ts, server/rules.ts, server/schema.ts, server/store.ts, server/cancel.ts, server/routes/jobs.ts, server/routes/edit.ts, shared/length.ts, shared/keywords.ts, shared/tone.ts, shared/place.ts, shared/blockDiff.ts, rules/default-writing-rules.md]
 last_ingested_commit: 73f47a6
-updated: 2026-11-02
+updated: 2026-11-05
 ---
 # blog-writer의 writing 구현
 
@@ -25,7 +25,7 @@ updated: 2026-11-02
 | `shared/length.ts` | 분량 상수·`countBodyChars` | BR-WRT-001 |
 | `shared/keywords.ts` | `KEYWORD_RULES`, `keywordOveruse` | BR-WRT-004 |
 | `shared/tone.ts` | `toneProblem` | BR-WRT-002 |
-| `shared/place.ts` | `placeLines` | BR-WRT-008 |
+| `shared/place.ts` | `placeLines`, `placeSearchQuery` | BR-WRT-008 |
 | `shared/blockDiff.ts` | `diffBlocks` | BR-WRT-011 |
 | `rules/default-writing-rules.md` | 기본 글쓰기 규칙 | BR-WRT-006/007/009/013 |
 
