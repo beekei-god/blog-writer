@@ -102,6 +102,22 @@ export function App() {
     setView(next);
   };
 
+  const removeJob = async (j: Job) => {
+    if (selectedId === j.id && !canLeave()) return; // 열어 둔 글이면 저장하지 않은 내용을 먼저 확인한다
+    if (!confirm("이 글을 삭제할까요? 초안과 생성된 이미지가 모두 지워집니다.")) return;
+    try {
+      await api.remove(j.id);
+      if (selectedId === j.id) {
+        setSelectedId(null);
+        setView("new");
+      }
+      setError("");
+    } catch (e) {
+      setError(errorText(e));
+    }
+    await refresh();
+  };
+
   const selected = view === "job" ? (jobs.find((j) => j.id === selectedId) ?? null) : null;
   // 블로그마다 연결되어 있는지 (워드프레스는 사이트 주소, 그 밖은 블로그 ID). 글을 올릴 때마다 올릴 블로그를 직접 고른다.
   const ready: Record<Platform, boolean> = {
@@ -176,6 +192,15 @@ export function App() {
                     </span>
                     <span className="hint small">{shortDate(j.createdAt)}</span>
                   </span>
+                </button>
+                <button
+                  className="job-del"
+                  aria-label={`${j.post?.title ?? j.topic} 글 삭제`}
+                  title={BUSY_STATUSES.includes(j.status) || j.editProposal?.status === "running" ? "진행 중인 글은 삭제할 수 없습니다" : "이 글 삭제"}
+                  disabled={BUSY_STATUSES.includes(j.status) || j.editProposal?.status === "running"}
+                  onClick={() => void removeJob(j)}
+                >
+                  ×
                 </button>
               </li>
             ))}

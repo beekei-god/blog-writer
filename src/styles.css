@@ -299,8 +299,14 @@ button.link {
   flex-direction: column;
   gap: 4px;
 }
+.job-list li {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+}
 .job-list button {
   width: 100%;
+  min-width: 0;
   text-align: left;
   display: flex;
   flex-direction: column;
@@ -315,6 +321,18 @@ button.link {
 }
 .job-list button.active {
   background: var(--accent-soft);
+}
+.job-list button.job-del {
+  width: auto;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 0 9px;
+  color: var(--muted);
+}
+.job-list button.job-del:hover:not(:disabled) {
+  color: var(--danger);
+  background: var(--danger-soft);
 }
 .job-list .topic {
   overflow: hidden;
