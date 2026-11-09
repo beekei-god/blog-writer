@@ -1,13 +1,13 @@
 ---
 type: registry
-updated: 2026-11-02
+updated: 2026-11-09
 ---
 # 레지스트리
 
 ## 프로젝트
 | 프로젝트 | 경로 | wiki | 마지막 분석 커밋 | 분석일 |
 |---|---|---|---|---|
-| blog-writer | `.` | `vault/wiki` | a32b2d0 | 2026-11-05 |
+| blog-writer | `.` | `vault/wiki` | dbd1f7b | 2026-11-09 |
 
 ## 모듈
 | 모듈 | 경로 | 페이지 |

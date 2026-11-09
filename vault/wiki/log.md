@@ -27,3 +27,7 @@ type: log
 ## [2026-11-05] update | topic (ead1094 → a32b2d0)
 - 추천 이력 칩별 × 삭제 버튼과 이력 항상 표시 반영(BR-TOP-005 화면 행·이력, `web-screens`). 규칙 값은 그대로.
 - 이로써 writing·publishing·topic 변경을 모두 읽어 `_registry.md` 분석 커밋을 a32b2d0으로 갱신하고 스냅샷을 새로 기록함. `JobDetail.tsx` 썸네일 안내 배너 줄 나눔은 문구·배치만 바뀌어 wiki 변경 없음.
+
+## [2026-11-09] update | writing (a32b2d0 → dbd1f7b)
+- writing 도메인 파일은 바뀐 것이 없어 규칙 페이지는 그대로. 공통 흐름 `App.tsx`의 "내 글" 목록 × 삭제 버튼만 `web-app` 모듈에 반영(규칙 변경 없음, 서버 API 그대로).
+- `styles.css`는 매핑 없음(스타일). `_registry.md` 분석 커밋을 dbd1f7b으로 갱신하고 스냅샷을 새로 기록함.
