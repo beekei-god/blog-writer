@@ -19,7 +19,7 @@ updated: 2026-11-02
 |---|---|---|
 | BR-WRT-001 | [[writing/business-rules/BR-WRT-001 분량 목표와 상한]] | 목표 1,000~8,000자, 상한 1.2배, 초과 시 최대 2번 줄이기 |
 | BR-WRT-002 | [[writing/business-rules/BR-WRT-002 말투와 문장 끝 검사]] | 문장 끝 80% 이상 맞아야 하고, 어긋나면 한 번 고쳐 쓰기 |
-| BR-WRT-003 | [[writing/business-rules/BR-WRT-003 글 형식과 경험 메모]] | 정보 제공/리뷰, 경험담은 지어내지 않기 |
+| BR-WRT-003 | [[writing/business-rules/BR-WRT-003 글 형식과 경험 메모]] | 정보 제공/방법 안내/리뷰, 경험담은 지어내지 않기 |
 | BR-WRT-004 | [[writing/business-rules/BR-WRT-004 키워드 횟수와 검색 의도]] | 제목 1번, 본문 2번까지 |
 | BR-WRT-005 | [[writing/business-rules/BR-WRT-005 제목 후보와 후킹 기법]] | 후보 3개, 기법 6가지 |
 | BR-WRT-006 | [[writing/business-rules/BR-WRT-006 확인된 사실만 쓰기]] | 못 찾은 항목은 뺀다 |

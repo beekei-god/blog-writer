@@ -31,3 +31,8 @@ type: log
 ## [2026-11-09] update | writing (a32b2d0 → dbd1f7b)
 - writing 도메인 파일은 바뀐 것이 없어 규칙 페이지는 그대로. 공통 흐름 `App.tsx`의 "내 글" 목록 × 삭제 버튼만 `web-app` 모듈에 반영(규칙 변경 없음, 서버 API 그대로).
 - `styles.css`는 매핑 없음(스타일). `_registry.md` 분석 커밋을 dbd1f7b으로 갱신하고 스냅샷을 새로 기록함.
+
+## [2026-11-15] update | writing (dbd1f7b → 7d8ac27)
+- 글 형식에 방법 안내(howto) 추가 반영: BR-WRT-003 규칙·조건 표·구현 현황(공용·화면·서버·프롬프트 레이어)·변경 시 같이 볼 곳·이력, 글쓰기 옵션 엔티티, writing index.
+- BR-WRT-003의 테스트 근거가 `tests/writer.test.ts`로 잘못 적혀 있던 것을 `tests/writingOptions.test.ts`로 바로잡음.
+- `shared/labels.ts`·`tests/writingOptions.test.ts`는 매핑 없음 그대로(공용 라벨·테스트). `_registry.md` 분석 커밋을 7d8ac27로 갱신하고 스냅샷을 새로 기록함.
