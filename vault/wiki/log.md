@@ -36,3 +36,7 @@ type: log
 - 글 형식에 방법 안내(howto) 추가 반영: BR-WRT-003 규칙·조건 표·구현 현황(공용·화면·서버·프롬프트 레이어)·변경 시 같이 볼 곳·이력, 글쓰기 옵션 엔티티, writing index.
 - BR-WRT-003의 테스트 근거가 `tests/writer.test.ts`로 잘못 적혀 있던 것을 `tests/writingOptions.test.ts`로 바로잡음.
 - `shared/labels.ts`·`tests/writingOptions.test.ts`는 매핑 없음 그대로(공용 라벨·테스트). `_registry.md` 분석 커밋을 7d8ac27로 갱신하고 스냅샷을 새로 기록함.
+
+## [2026-11-15] update | writing (7d8ac27 → 9396d81)
+- 방법 안내·리뷰 형식에서 구성 단계 이름을 소제목으로 그대로 쓰지 않게 한 지시 반영(BR-WRT-003 규칙·조건 표·테스트 행·이력). 규칙 값과 줄 위치는 그대로.
+- `_registry.md` 분석 커밋을 9396d81로 갱신하고 스냅샷을 새로 기록함.
