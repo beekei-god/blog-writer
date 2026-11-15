@@ -38,9 +38,10 @@ export const TONE_HINT: Record<WritingTone, string> = {
 };
 
 /** 글 형식 이름과 짧은 설명 (새 글 폼과 작업 로그) */
-export const FORMAT_LABEL: Record<WritingFormat, string> = { info: "정보 제공", review: "리뷰" };
+export const FORMAT_LABEL: Record<WritingFormat, string> = { info: "정보 제공", howto: "방법 안내", review: "리뷰" };
 export const FORMAT_HINT: Record<WritingFormat, string> = {
   info: "결론과 핵심을 먼저, 대상·방법·주의점 순서로 전달",
+  howto: "준비물·단계별 방법·확인·문제 해결 순서로 따라 하게 안내",
   review: "총평·좋았던 점·아쉬운 점·추천 대상 순서로 평가",
 };
 

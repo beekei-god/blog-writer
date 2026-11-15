@@ -71,14 +71,17 @@ describe("분량·말투 옵션 (글 작성)", () => {
     expect(system).not.toContain("질문이나 결론이 좋습니다");
   });
 
-  it("글 형식: 고르지 않으면 형식 지시 없음, 정보 제공·리뷰는 각 구성을 지시한다", async () => {
-    claude.results.push(postOf(2500), postOf(2500), postOf(2500));
+  it("글 형식: 고르지 않으면 형식 지시 없음, 정보 제공·방법 안내·리뷰는 각 구성을 지시한다", async () => {
+    claude.results.push(postOf(2500), postOf(2500), postOf(2500), postOf(2500));
     await writePost(input({ targetChars: 2500, tone: "info" }));
     expect(claude.calls[0].system).not.toContain("## 글 형식");
     await writePost(input({ targetChars: 2500, tone: "info", format: "info" }));
     expect(claude.calls[1].system).toContain("정보 제공 형식");
     await writePost(input({ targetChars: 2500, tone: "friendly", format: "review" }));
     expect(claude.calls[2].system).toContain("리뷰 형식");
+    await writePost(input({ targetChars: 2500, tone: "info", format: "howto", experience: "메모" }));
+    expect(claude.calls[3].system).toContain("방법 안내 형식");
+    expect(claude.calls[3].system).not.toContain("<글쓴이의_경험_메모>"); // 경험 메모는 리뷰에서만 쓴다
   });
 
   it("리뷰: 경험 메모가 있으면 그 내용만 후기로, 없으면 경험담을 지어내지 않게 한다", async () => {

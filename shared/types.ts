@@ -60,8 +60,8 @@ export type WritingTone = "info" | "friendly" | "story" | "summary";
 export const WRITING_TONES: WritingTone[] = ["info", "friendly", "story", "summary"];
 
 /** 글 형식: 정보 제공(정보를 순서대로 전달), 리뷰(써 본 느낌·장단점·추천 대상). 말투와 따로 고른다 */
-export type WritingFormat = "info" | "review";
-export const WRITING_FORMATS: WritingFormat[] = ["info", "review"];
+export type WritingFormat = "info" | "howto" | "review";
+export const WRITING_FORMATS: WritingFormat[] = ["info", "howto", "review"];
 /** 리뷰 형식의 경험 메모 최대 글자수 */
 export const MAX_EXPERIENCE_CHARS = 1500;
 
