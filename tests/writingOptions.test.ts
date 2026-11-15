@@ -79,8 +79,10 @@ describe("분량·말투 옵션 (글 작성)", () => {
     expect(claude.calls[1].system).toContain("정보 제공 형식");
     await writePost(input({ targetChars: 2500, tone: "friendly", format: "review" }));
     expect(claude.calls[2].system).toContain("리뷰 형식");
+    expect(claude.calls[2].system).toContain("소제목 문구가 아닙니다");
     await writePost(input({ targetChars: 2500, tone: "info", format: "howto", experience: "메모" }));
     expect(claude.calls[3].system).toContain("방법 안내 형식");
+    expect(claude.calls[3].system).toContain("소제목 문구가 아닙니다"); // 구성 단계 이름을 소제목으로 베끼지 않게
     expect(claude.calls[3].system).not.toContain("<글쓴이의_경험_메모>"); // 경험 메모는 리뷰에서만 쓴다
   });
 
