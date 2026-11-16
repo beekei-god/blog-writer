@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { ImageProvider, ImageStyle, Post } from "../../shared/types";
 import { runClaude } from "../claude";
-import { BODY_HEADLINE_RULE, STYLE_GUIDE, THUMBNAIL_HEADLINE_RULE, THUMBNAIL_SCENE_RULE } from "../writer";
+import { BODY_HEADLINE_RULE, BODY_SCENE_RULE, STYLE_GUIDE, THUMBNAIL_HEADLINE_RULE, THUMBNAIL_SCENE_RULE } from "../writer";
 
 /**
  * 이미지를 만들기 직전에 본문을 다시 보고, 이미지마다 "무엇을 그릴지(prompt)"와 "이미지 안에 넣을 문구(headline)"를 정한다.
@@ -92,9 +92,10 @@ export async function planImages(
 - 이미지는 그것이 놓인 섹션(바로 앞 소제목부터 다음 소제목 전까지)의 구체적인 대상·상황·수치·사례가 그림에서 드러나야 합니다. 어느 글에나 붙일 수 있는 범용 이미지(악수, 노트북 앞의 사람, 전구, 상승 화살표 등)는 금지입니다.
 - 화풍: ${STYLE_GUIDE[style]} 이 화풍에 맞게 그릴 수 있는 장면만 쓰세요.
 - 본문 이미지는 연결된 본문 블록 [번호]가 속한 섹션의 문장을 읽고, 그 문장에 나온 구체적인 대상·수치·단계·사례 중 2개 이상이 그림 요소(소품·장면·도형)로 드러나게 하세요. 소제목 단어만으로 일반적인 그림을 그리면 안 됩니다.
+- 본문 이미지 prompt: ${BODY_SCENE_RULE}
 - 한 글 안의 이미지는 서로 다른 내용을 그리되, 같은 화풍·색감·등장인물 설정을 유지하세요.
 - ${promptRule}
-- 이미지 안에 글자를 넣어도 됩니다. 단, 글자는 prompt에 쓰지 말고 headline에만 쓰세요(정확한 문구로 따로 넣습니다). prompt에는 글자가 들어갈 자리(여백, 띠, 상자)만 묘사하세요.
+- 이미지 안 글자는 기본적으로 넣지 않습니다. 글자 자체를 강조해야 할 때만 headline에 쓰고(정확한 문구로 따로 넣습니다), prompt에는 글자를 쓰지 마세요. headline이 있을 때만 prompt에 글자가 들어갈 자리(여백, 띠, 상자)를 묘사하고, 없으면 그런 빈 띠·상자·간판을 그리지 마세요.
 - headline에 본문에 없는 내용과 과장·낚시성 표현은 금지입니다.
   - 썸네일: ${THUMBNAIL_HEADLINE_RULE} basis에는 그 질문에 답하는 본문 문장을 쓰세요.
   - 썸네일 그림(prompt): ${THUMBNAIL_SCENE_RULE}

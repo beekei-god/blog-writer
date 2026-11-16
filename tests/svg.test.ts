@@ -44,3 +44,23 @@ describe("validateSvg", () => {
     expect(validateSvg(svg)).toBe(svg);
   });
 });
+
+describe("Claude SVG 글자", () => {
+  it("이미지 안 문구가 없으면 글자를 넣지 않게 한다", async () => {
+    const { vi } = await import("vitest");
+    vi.resetModules();
+    const calls: { system: string; prompt: string }[] = [];
+    vi.doMock("../server/claude", () => ({
+      runClaude: async (opts: { system: string; prompt: string }) => {
+        calls.push(opts);
+        return { svg: "bad" }; // 렌더링 전에 멈추게 한다
+      },
+    }));
+    const { generateSvgImage } = await import("../server/images/svg");
+    await expect(generateSvgImage("장면", "body", "/nonexistent/x.png", "주제")).rejects.toThrow("SVG 형식이 아닙니다");
+    expect(calls[0].system).toContain("없으면 <text>를 쓰지 말고");
+    expect(calls[0].system).not.toContain("꼭 필요한 짧은 한글 라벨");
+    expect(calls[0].prompt).not.toContain("이미지 안 문구");
+    vi.doUnmock("../server/claude");
+  });
+});

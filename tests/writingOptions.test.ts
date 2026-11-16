@@ -8,7 +8,7 @@ vi.mock("../server/claude", () => ({
   }),
 }));
 
-import { writePost, type WriteInput } from "../server/writer";
+import { BODY_HEADLINE_RULE, BODY_SCENE_RULE, writePost, type WriteInput } from "../server/writer";
 
 const NO_IMAGES = { thumbnail: false, bodyImages: 0, provider: "claude" as const, style: "flat" as const };
 const input = (writing?: WriteInput["writing"]): WriteInput => ({
@@ -70,6 +70,15 @@ describe("분량·말투 옵션 (글 작성)", () => {
     expect(system).toContain("궁금해할 질문");
     expect(system).toContain("썸네일에 쓰지 마세요");
     expect(system).not.toContain("질문이나 결론이 좋습니다");
+  });
+
+  it("본문 이미지는 기본으로 글자 없이, 한 장면을 깊게 묘사하게 한다", async () => {
+    claude.results.push(postOf(2500));
+    await writePost({ ...input(), options: { ...NO_IMAGES, thumbnail: true, bodyImages: 2 } });
+    const { system } = claude.calls[0];
+    expect(system).toContain(BODY_SCENE_RULE);
+    expect(system).toContain(BODY_HEADLINE_RULE);
+    expect(system).toContain("글자는 꼭 넣지 않아도 됩니다"); // 썸네일 문구도 선택
   });
 
   it("글 형식: 고르지 않으면 형식 지시 없음, 정보 제공·방법 안내·리뷰는 각 구성을 지시한다", async () => {
