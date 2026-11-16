@@ -302,7 +302,10 @@ function useCategories(platform: Platform | undefined) {
     setLoading(true);
     setError("");
     try {
-      setList(await api.refreshCategories(platform));
+      const r = await api.refreshCategories(platform);
+      setList(r);
+      // 고른 카테고리가 새 목록에 없으면(블로그에서 지워짐) 기본 카테고리로 되돌린다
+      setSelected((s) => (s && r.categories.some((c) => c.name === s.name) ? s : undefined));
     } catch (e) {
       setError(errorText(e));
     } finally {

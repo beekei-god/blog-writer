@@ -20,6 +20,14 @@ describe("블로그 카테고리 기억", () => {
     expect(await getLastCategory("naver")).toBeUndefined();
     expect(await getLastCategory("wordpress")).toEqual({ id: 7, name: "여행" });
   });
+  it("목록을 다시 저장할 때 마지막 선택이 새 목록에 없으면(블로그에서 지워짐) 기억을 지운다", async () => {
+    await saveLastCategory("naver", { name: "맛집" });
+    await saveCategoryList("naver", "myblog", ["맛집", "일상"]);
+    expect(await getLastCategory("naver")).toEqual({ name: "맛집" });
+    await saveCategoryList("naver", "myblog", ["일상"]);
+    expect(await getLastCategory("naver")).toBeUndefined();
+    expect(await getSavedCategories("naver", "myblog")).toMatchObject({ categories: [{ name: "일상" }] });
+  });
 });
 
 describe("카테고리 읽기·고르기 코드", () => {

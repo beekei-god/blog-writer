@@ -31,6 +31,9 @@ export const saveCategoryList = (platform: "naver" | "tistory", blogId: string, 
     const f = await read();
     const fetchedAt = new Date().toISOString();
     f.lists[platform] = { blogId, names, fetchedAt };
+    // 블로그에서 지워진 카테고리를 마지막 선택으로 기억하고 있으면 지운다 (다음에 처음 값으로 다시 나오지 않게)
+    const last = f.last[platform];
+    if (last && !names.includes(last.name)) delete f.last[platform];
     await writeJsonAtomic(FILE, f);
     return fetchedAt;
   });
