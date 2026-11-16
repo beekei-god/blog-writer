@@ -59,6 +59,7 @@ describe("분량·말투 옵션 (글 작성)", () => {
     const { system } = claude.calls[0];
     for (const t of ["구체적인 숫자", "결론과 이득 먼저", "손실 회피", "질문·호기심", "대상·상황 호명", "통념 뒤집기", "후킹 점검"]) expect(system).toContain(t);
     expect(system).toContain("과장·공포 조장은 쓰지 마세요");
+    for (const t of ["안 하면(모르면) 잃는 것", "모르고 지나치기 쉬운", "항목 개수", "실존하지 않는 인물"]) expect(system).toContain(t);
     expect(system).toContain("## 키워드 횟수와 검색 의도");
   });
 
