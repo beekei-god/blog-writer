@@ -9,7 +9,7 @@ consistency: consistent
 source:
   - blog-writer:server/images/svg.ts:1-80
 entities: [이미지 명세]
-updated: 2026-11-02
+updated: 2026-11-16
 ---
 # BR-IMG-009 SVG 안전 렌더링
 
@@ -20,7 +20,7 @@ Claude는 단일 SVG를 그리고, 서버가 Chrome(Playwright)으로 PNG로 렌
 | 조건 | 결과 |
 |---|---|
 | 크기 | 썸네일 1200×630, 본문 1200×675 |
-| 글자 | headline이 있으면 그 문구를 한 글자도 바꾸지 않고 넣음. 썸네일은 크고 굵게(글자 크기 70~110), 본문은 라벨(44~72) |
+| 글자 | headline이 있으면 그 문구를 한 글자도 바꾸지 않고 넣음. 썸네일은 크고 굵게(글자 크기 70~110), 본문은 라벨(44~72). headline이 없으면 `<text>` 없이 도형·장면만(예전의 "꼭 필요한 짧은 라벨"은 없앰) |
 | 글꼴 | Apple SD Gothic Neo, Noto Sans KR, sans-serif |
 | 크롬 없음 | `browser_missing` |
 
@@ -42,3 +42,4 @@ Claude는 단일 SVG를 그리고, 서버가 Chrome(Playwright)으로 PNG로 렌
 |---|---|---|
 | 2026-11-02 | wiki 재생성 때 코드(73f47a6) 기준으로 작성 | 코드 |
 | 2026-11-02 | `validateSvg` export, 전용 테스트 추가 | 9a38c08 |
+| 2026-11-16 | headline이 없으면 글자 없이 그리게(짧은 라벨 허용 지시 삭제), 테스트 추가 | 3207f97 |

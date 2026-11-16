@@ -17,7 +17,7 @@ updated: 2026-11-02
 ## 주요 파일과 export
 | 파일 | export |
 |---|---|
-| `writer.ts` | `writePost`, `enforceTone`, `enforceLength`, `verifyTagSources`, `isCompleteTable`, `stripUpdateLines`, `enforceImageOptions`, `TONE_GUIDE`, `FORMAT_GUIDE`, `STYLE_GUIDE`, `THUMBNAIL_*`, `BODY_HEADLINE_RULE` |
+| `writer.ts` | `writePost`, `enforceTone`, `enforceLength`, `verifyTagSources`, `isCompleteTable`, `stripUpdateLines`, `enforceImageOptions`, `TONE_GUIDE`, `FORMAT_GUIDE`, `STYLE_GUIDE`, `THUMBNAIL_*`, `BODY_HEADLINE_RULE`, `BODY_SCENE_RULE` |
 | `research.ts` | `deepResearch` |
 | `titles.ts`, `titleGuide.ts` | `regenerateTitles`, `TITLE_TECHNIQUES` |
 | `editPost.ts` | `proposeEdit`, `applyProposal`, `EDIT_PROMPT_MAX` |

@@ -1,7 +1,7 @@
 ---
 type: domain-index
 domain: image
-updated: 2026-11-02
+updated: 2026-11-16
 ---
 # image 목차
 
@@ -17,8 +17,8 @@ updated: 2026-11-02
 | BR-IMG-002 | [[image/business-rules/BR-IMG-002 AI별 허용 스타일]] | Claude는 플랫만 |
 | BR-IMG-003 | [[image/business-rules/BR-IMG-003 썸네일 AI와 본문 AI 분리]] | 썸네일만 다른 AI·스타일·방법 |
 | BR-IMG-004 | [[image/business-rules/BR-IMG-004 API와 크롬 생성 방법]] | 키 있으면 API, 실패해도 크롬으로 안 넘어감 |
-| BR-IMG-005 | [[image/business-rules/BR-IMG-005 이미지 기획과 문구]] | 만들기 직전 본문을 보고 prompt·headline 결정 |
-| BR-IMG-006 | [[image/business-rules/BR-IMG-006 썸네일 문구는 질문만]] | 답(결론·수치)은 본문에 |
+| BR-IMG-005 | [[image/business-rules/BR-IMG-005 이미지 기획과 문구]] | 만들기 직전 본문을 보고 prompt·headline 결정, 글자는 기본 없음, 본문은 한 장면을 깊게 |
+| BR-IMG-006 | [[image/business-rules/BR-IMG-006 썸네일 문구는 질문만]] | 문구는 선택, 넣으면 질문만. 답(결론·수치)은 본문에 |
 | BR-IMG-007 | [[image/business-rules/BR-IMG-007 제목 확정 후 썸네일 생성]] | 버튼으로만 생성, 제목이 바뀌면 다시 안내 |
 | BR-IMG-008 | [[image/business-rules/BR-IMG-008 실패 기록과 계속 진행]] | 한 장 실패가 글을 실패시키지 않음 |
 | BR-IMG-009 | [[image/business-rules/BR-IMG-009 SVG 안전 렌더링]] | 스크립트·외부 주소 금지, JS 끄고 렌더링 |

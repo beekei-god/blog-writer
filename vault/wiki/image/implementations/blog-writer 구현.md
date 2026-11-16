@@ -22,13 +22,15 @@ updated: 2026-11-02
 | `server/images/errors.ts` | `ImageGenError`, `errorKindOf` | BR-IMG-008 |
 | `server/pipeline.ts` | `runImages`, `runImage`, `makeImages`, `isImageBusy` | BR-IMG-010 |
 | `server/routes/images.ts` | 다시 만들기·한 장·올리기·자리 추가·삭제·미리보기 | BR-IMG-007/010/011 |
-| `server/writer.ts` | `imageInstructions`, `enforceImageOptions`, `THUMBNAIL_*`, `BODY_HEADLINE_RULE`, `STYLE_GUIDE` | BR-IMG-001/006 |
+| `server/writer.ts` | `imageInstructions`, `enforceImageOptions`, `THUMBNAIL_*`, `BODY_HEADLINE_RULE`, `BODY_SCENE_RULE`, `STYLE_GUIDE` | BR-IMG-001/005/006 |
 | `src/job/JobDetail.tsx` 외 | 이미지 카드, 썸네일 안내 | BR-IMG-007 |
 
 ## 테스트
 | 테스트 파일 | 확인하는 것 | 규칙 |
 |---|---|---|
-| `tests/imagePlan.test.ts` | 기획 프롬프트가 글 작성과 같은 문구 | BR-IMG-005/006 |
+| `tests/imagePlan.test.ts` | 기획 프롬프트가 글 작성과 같은 문구, 글자 기본 없음·한 장면 깊게 | BR-IMG-005/006 |
+| `tests/svg.test.ts` | SVG 검증, 문구 없으면 글자 없음 | BR-IMG-005/009 |
+| `tests/writingOptions.test.ts` | 글 작성 프롬프트의 썸네일·본문 이미지 지시 | BR-IMG-005/006 |
 | `tests/imageApi.test.ts` | API/크롬 선택, 실패 분류, 키 저장 | BR-IMG-004 |
 | `tests/imageParallel.test.ts` | 한 장씩 동시, 중복·중지, 요청 거절 | BR-IMG-010 |
 | `tests/webAi.test.ts` | 크롬 방식의 성공/실패 판정 | BR-IMG-004 |
