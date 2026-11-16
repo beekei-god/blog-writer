@@ -48,3 +48,7 @@ type: log
 ## [2026-11-16] update | image (b3934e4 → 3207f97)
 - 이미지 안 글자를 기본으로 넣지 않게 바꾼 변경 반영: BR-IMG-005(본문 headline 기본 빈 문자열, 새 상수 `BODY_SCENE_RULE`로 한 장면을 깊게, 문구 없으면 글자 자리 없음, Claude SVG 레이어·테스트 추가), BR-IMG-006(썸네일 문구 선택, 넣을 때 형식은 그대로), BR-IMG-009(문구 없으면 SVG에 글자 없음), 이미지 생성 플로우(변경 이력 절 새로 만듦), 구현 지도·테스트 표, image index, `server-core` 모듈 식별자.
 - `writer.ts`는 매핑상 writing이지만 바뀐 부분이 이미지 지시 상수뿐이라 writing 규칙 페이지는 그대로. 테스트 파일은 매핑 없음 그대로. `_registry.md` 분석 커밋을 3207f97으로 갱신하고 스냅샷을 새로 기록함.
+
+## [2026-11-16] update | publishing (3207f97 → aa3f4ad)
+- 카테고리 목록을 다시 불러올 때 블로그에서 지워진 카테고리를 마지막 선택 기억(`saveCategoryList`)과 화면 선택(`useCategories.refresh`)에서 지우게 한 변경 반영: BR-PUB-007 규칙·조건 표·구현 현황(화면 레이어 추가)·테스트 행·이력, 블로그 설정 엔티티의 카테고리 기억.
+- `categories.ts` source 줄 범위를 1-50으로 고침. 테스트 파일은 매핑 없음 그대로. `_registry.md` 분석 커밋을 aa3f4ad로 갱신하고 스냅샷을 새로 기록함.
